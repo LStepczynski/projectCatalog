@@ -1,11 +1,14 @@
 import { useEffect, useState } from "react";
-import { Box } from "@primer/react";
+import { Box, Button } from "@primer/react";
 import { debounce } from "lodash";
+import { ListUnorderedIcon } from "@primer/octicons-react";
+import { SideBar } from "./sideBar";
 
 export const NavBar = () => {
   const [visibility, setVisibility] = useState(true);
   const [prevScrollPos, setPrevScrollPos] = useState(window.pageYOffset);
   const [screenWidth, setScreenWidth] = useState(window.innerWidth);
+  const [showSideBar, setShowSideBar] = useState(false);
 
   const handleScroll = debounce(() => {
     const currentScrollPos = window.pageYOffset;
@@ -34,20 +37,48 @@ export const NavBar = () => {
   }, [handleScroll, handleResize]);
 
   return (
-    <Box
-      sx={{
-        width: "100%",
-        height: "90px",
-        backgroundColor: "canvas.subtle",
-        display: "flex",
-        justifyContent: "space-between",
-        px: 4,
-        position: "fixed",
-        top: 0,
-        zIndex: 1000,
-        transition: "transform 0.2s ease",
-        transform: visibility ? "translateY(0)" : "translateY(-100%)",
-      }}
-    ></Box>
+    <>
+      <Box
+        sx={{
+          transform: visibility ? "translateY(0)" : "translateY(-100%)",
+          transition: "transform 0.2s ease",
+          backgroundColor: "canvas.default",
+          justifyContent: "space-between",
+          borderBottom: "1px solid",
+          borderColor: "ansi.black",
+          alignItems: "center",
+          position: "fixed",
+          display: "flex",
+          height: "65px",
+          width: "100%",
+          zIndex: 1000,
+          top: 0,
+          px: 4,
+        }}
+      >
+        <Box>
+          <Box
+            sx={{
+              transition: ".3s background-color",
+              borderRadius: "8px",
+              px: 2,
+              py: 1,
+              ":hover": {
+                backgroundColor: "sidenav.selectedBg",
+              },
+            }}
+            onClick={() => {
+              setShowSideBar(!showSideBar);
+            }}
+          >
+            <ListUnorderedIcon size={32} />
+          </Box>
+        </Box>
+        <Box>
+          <Button>Sign In</Button>
+        </Box>
+      </Box>
+      <SideBar state={showSideBar} />
+    </>
   );
 };
