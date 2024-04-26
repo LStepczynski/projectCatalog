@@ -1,12 +1,47 @@
 service: backend
-frameworkVersion: '3'
 
-provider:
-  name: aws
-  runtime: nodejs18.x
+plugins:
+  - serverless-localstack
+
+custom:
+  localstack:
+    stages:
+      - local
+    host: http://localhost
+    autostart: true
+    endpoints:
+      S3: http://localhost:4572
+      DynamoDB: http://localhost:4570
+      CloudFormation: http://localhost:4581
+      Elasticsearch: http://localhost:4571
+      SNS: http://localhost:4575
+      SQS: http://localhost:4576
+      Lambda: http://localhost:4574
+    lambda:
+      mountCode: True
+
+stages:
+  local: ...
 
 functions:
   api:
     handler: index.handler
     events:
       - httpApi: '*'
+# plugins:
+#   - serverless-localstack
+
+# custom:
+#   localstack:
+#     stages:
+#       - local
+#     host: http://localhost # optional - LocalStack host to connect to
+#     edgePort: 4567 # optional - LocalStack edge port to connect to
+
+# provider:
+#   name: aws
+#   runtime: nodejs14.x
+#   region: us-east-1
+#   stage: local
+#   environment:
+#     DYNAMODB_ENDPOINT: http://localhost:4566 # Specify the LocalStack endpoint
