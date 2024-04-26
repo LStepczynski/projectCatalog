@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Box, Button } from "@primer/react";
 import { debounce } from "lodash";
-import { ListUnorderedIcon } from "@primer/octicons-react";
+import { ThreeBarsIcon } from "@primer/octicons-react";
 import { SideBar } from "./sideBar";
 
 export const NavBar = () => {
@@ -71,11 +71,17 @@ export const NavBar = () => {
               setShowSideBar(!showSideBar);
             }}
           >
-            <ListUnorderedIcon size={32} />
+            <ThreeBarsIcon size={32} />
           </Box>
         </Box>
         <Box>
-          <Button>Sign In</Button>
+          <Button
+            onClick={() => {
+              window.location.href = "sign-in";
+            }}
+          >
+            Sign Up
+          </Button>
         </Box>
       </Box>
       <SideBar state={showSideBar} />

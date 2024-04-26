@@ -3,6 +3,8 @@ import { Index } from "./pages/index";
 import { Account } from "./pages/account";
 import { Categories } from "./pages/categories";
 import { Category } from "./pages/category";
+import { Login } from "./pages/login";
+import { Register } from "./pages/register";
 
 export const Routes = () => {
   const router = createBrowserRouter([
@@ -17,6 +19,14 @@ export const Routes = () => {
     {
       path: "/account",
       element: <Account />,
+    },
+    {
+      path: "/sign-in",
+      element: <Login />,
+    },
+    {
+      path: "/sign-up",
+      element: <Register />,
     },
     {
       path: "/categories/:categoryName",
