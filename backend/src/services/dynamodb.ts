@@ -1,9 +1,9 @@
-import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
-import {
-  DynamoDBDocumentClient,
-  GetCommand,
-  PutCommand,
-} from '@aws-sdk/lib-dynamodb';
+import { DynamoDB } from '@aws-sdk/client-dynamodb';
 
-const client = new DynamoDBClient();
-const dynamoDbClient = DynamoDBDocumentClient.from(client);
+export const client = new DynamoDB({
+  region: 'local',
+  credentials: {
+    accessKeyId: 'ABC',
+    secretAccessKey: 'XYZ123',
+  },
+});
