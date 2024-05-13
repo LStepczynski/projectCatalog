@@ -4,9 +4,14 @@
       "module": "CommonJS",
       "outDir": "./dist",
       "strict": true,
-      "baseUrl": "./src/",
+      "baseUrl": ".",
       "esModuleInterop": true,
       "moduleResolution": "node",
+      "paths": {
+        ":api/services/*": [
+          "src/services/*"
+        ],
+      }
     },
     "include": [
       "src/**/*",
