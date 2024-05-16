@@ -1,12 +1,12 @@
 [
   {
-    "TableName": "Articles",
+    "TableName": "ArticlesPublished",
     "AttributeDefinitions": [
       { "AttributeName": "ID", "AttributeType": "S" },
       { "AttributeName": "Title", "AttributeType": "S" },
       { "AttributeName": "PrimaryCategory", "AttributeType": "S" },
       { "AttributeName": "Rating", "AttributeType": "N" },
-      { "AttributeName": "PublishedAt", "AttributeType": "S" },
+      { "AttributeName": "PublishedAt", "AttributeType": "N" },
       { "AttributeName": "Author", "AttributeType": "S" },
       { "AttributeName": "Difficulty", "AttributeType": "S" }
     ],
@@ -140,6 +140,157 @@
         "KeySchema": [
           { "AttributeName": "Author", "KeyType": "HASH" },
           { "AttributeName": "PublishedAt", "KeyType": "RANGE" }
+        ],
+        "Projection": { "ProjectionType": "ALL" },
+        "ProvisionedThroughput": {
+          "ReadCapacityUnits": 5,
+          "WriteCapacityUnits": 5
+        }
+      }
+    ],
+    "ProvisionedThroughput": {
+      "ReadCapacityUnits": 10,
+      "WriteCapacityUnits": 10
+    }
+  },
+  {
+    "TableName": "ArticlesUnpublished",
+    "AttributeDefinitions": [
+      { "AttributeName": "ID", "AttributeType": "S" },
+      { "AttributeName": "Title", "AttributeType": "S" },
+      { "AttributeName": "PrimaryCategory", "AttributeType": "S" },
+      { "AttributeName": "Rating", "AttributeType": "N" },
+      { "AttributeName": "CreatedAt", "AttributeType": "N" },
+      { "AttributeName": "Author", "AttributeType": "S" },
+      { "AttributeName": "Difficulty", "AttributeType": "S" }
+    ],
+    "KeySchema": [{ "AttributeName": "ID", "KeyType": "HASH" }],
+    "GlobalSecondaryIndexes": [
+      {
+        "IndexName": "TitleCreated",
+        "KeySchema": [
+          { "AttributeName": "Title", "KeyType": "HASH" },
+          { "AttributeName": "CreatedAt", "KeyType": "RANGE" }
+        ],
+        "Projection": { "ProjectionType": "ALL" },
+        "ProvisionedThroughput": {
+          "ReadCapacityUnits": 5,
+          "WriteCapacityUnits": 5
+        }
+      },
+      {
+        "IndexName": "TitleRating",
+        "KeySchema": [
+          { "AttributeName": "Title", "KeyType": "HASH" },
+          { "AttributeName": "Rating", "KeyType": "RANGE" }
+        ],
+        "Projection": { "ProjectionType": "ALL" },
+        "ProvisionedThroughput": {
+          "ReadCapacityUnits": 5,
+          "WriteCapacityUnits": 5
+        }
+      },
+      {
+        "IndexName": "TitleAuthor",
+        "KeySchema": [
+          { "AttributeName": "Title", "KeyType": "HASH" },
+          { "AttributeName": "Author", "KeyType": "RANGE" }
+        ],
+        "Projection": { "ProjectionType": "ALL" },
+        "ProvisionedThroughput": {
+          "ReadCapacityUnits": 5,
+          "WriteCapacityUnits": 5
+        }
+      },
+      {
+        "IndexName": "TitleCategory",
+        "KeySchema": [
+          { "AttributeName": "Title", "KeyType": "HASH" },
+          { "AttributeName": "PrimaryCategory", "KeyType": "RANGE" }
+        ],
+        "Projection": { "ProjectionType": "ALL" },
+        "ProvisionedThroughput": {
+          "ReadCapacityUnits": 5,
+          "WriteCapacityUnits": 5
+        }
+      },
+      {
+        "IndexName": "PrimaryCategoryCreated",
+        "KeySchema": [
+          { "AttributeName": "PrimaryCategory", "KeyType": "HASH" },
+          { "AttributeName": "CreatedAt", "KeyType": "RANGE" }
+        ],
+        "Projection": { "ProjectionType": "ALL" },
+        "ProvisionedThroughput": {
+          "ReadCapacityUnits": 5,
+          "WriteCapacityUnits": 5
+        }
+      },
+      {
+        "IndexName": "PrimaryCategoryRating",
+        "KeySchema": [
+          { "AttributeName": "PrimaryCategory", "KeyType": "HASH" },
+          { "AttributeName": "Rating", "KeyType": "RANGE" }
+        ],
+        "Projection": { "ProjectionType": "ALL" },
+        "ProvisionedThroughput": {
+          "ReadCapacityUnits": 5,
+          "WriteCapacityUnits": 5
+        }
+      },
+      {
+        "IndexName": "PrimaryCategoryDifficulty",
+        "KeySchema": [
+          { "AttributeName": "PrimaryCategory", "KeyType": "HASH" },
+          { "AttributeName": "Difficulty", "KeyType": "RANGE" }
+        ],
+        "Projection": { "ProjectionType": "ALL" },
+        "ProvisionedThroughput": {
+          "ReadCapacityUnits": 5,
+          "WriteCapacityUnits": 5
+        }
+      },
+      {
+        "IndexName": "AuthorRating",
+        "KeySchema": [
+          { "AttributeName": "Author", "KeyType": "HASH" },
+          { "AttributeName": "Rating", "KeyType": "RANGE" }
+        ],
+        "Projection": { "ProjectionType": "ALL" },
+        "ProvisionedThroughput": {
+          "ReadCapacityUnits": 5,
+          "WriteCapacityUnits": 5
+        }
+      },
+      {
+        "IndexName": "AuthorDifficulty",
+        "KeySchema": [
+          { "AttributeName": "Author", "KeyType": "HASH" },
+          { "AttributeName": "Difficulty", "KeyType": "RANGE" }
+        ],
+        "Projection": { "ProjectionType": "ALL" },
+        "ProvisionedThroughput": {
+          "ReadCapacityUnits": 5,
+          "WriteCapacityUnits": 5
+        }
+      },
+      {
+        "IndexName": "AuthorPrimaryCategory",
+        "KeySchema": [
+          { "AttributeName": "Author", "KeyType": "HASH" },
+          { "AttributeName": "PrimaryCategory", "KeyType": "RANGE" }
+        ],
+        "Projection": { "ProjectionType": "ALL" },
+        "ProvisionedThroughput": {
+          "ReadCapacityUnits": 5,
+          "WriteCapacityUnits": 5
+        }
+      },
+      {
+        "IndexName": "AuthorCreated",
+        "KeySchema": [
+          { "AttributeName": "Author", "KeyType": "HASH" },
+          { "AttributeName": "CreatedAt", "KeyType": "RANGE" }
         ],
         "Projection": { "ProjectionType": "ALL" },
         "ProvisionedThroughput": {

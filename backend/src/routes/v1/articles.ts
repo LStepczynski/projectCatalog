@@ -20,6 +20,20 @@ router.get('/', async (req: any, res: any) => {
   }
 });
 
+router.get('/:id', async (req: any, res: any) => {
+  const articleId = req.params.id;
+
+  if (typeof articleId != 'string') {
+    return res.status(400).send('invalid article id data type');
+  }
+
+  const result = await Articles.get(articleId, 'ArticlesUnpublished');
+  if (result.response.return != undefined) {
+    return res.status(result.status).send(result);
+  }
+  return res.status(result.status).send(result);
+});
+
 router.post('/', async (req: any, res: any) => {
   const body = req.body.body;
   const metadata = req.body.metadata;
@@ -31,7 +45,11 @@ router.post('/', async (req: any, res: any) => {
     return;
   }
 
-  const { status, response } = await Articles.create(metadata, body);
+  const { status, response } = await Articles.create(
+    'ArticlesUnpublished',
+    metadata,
+    body
+  );
   console.log(status, response);
   res.status(status).send(response);
 });
