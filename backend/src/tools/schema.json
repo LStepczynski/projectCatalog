@@ -203,10 +203,10 @@
         }
       },
       {
-        "IndexName": "TitleCategory",
+        "IndexName": "CategoryTitle",
         "KeySchema": [
-          { "AttributeName": "Title", "KeyType": "HASH" },
-          { "AttributeName": "PrimaryCategory", "KeyType": "RANGE" }
+          { "AttributeName": "PrimaryCategory", "KeyType": "HASH" },
+          { "AttributeName": "Title", "KeyType": "RANGE" }
         ],
         "Projection": { "ProjectionType": "ALL" },
         "ProvisionedThroughput": {

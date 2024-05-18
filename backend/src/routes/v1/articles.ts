@@ -20,7 +20,7 @@ router.get('/', async (req: any, res: any) => {
   }
 });
 
-router.get('/:id', async (req: any, res: any) => {
+router.get('/get/:id', async (req: any, res: any) => {
   const articleId = req.params.id;
 
   if (typeof articleId != 'string') {
@@ -28,9 +28,34 @@ router.get('/:id', async (req: any, res: any) => {
   }
 
   const result = await Articles.get(articleId, 'ArticlesUnpublished');
-  if (result.response.return != undefined) {
-    return res.status(result.status).send(result);
-  }
+  return res.status(result.status).send(result);
+});
+
+router.get('/:categoryName/:page/:limit', async (req: any, res: any) => {
+  const category = req.params.categoryName;
+  const limit = Number(req.params.limit);
+  const page = Number(req.params.page);
+
+  const result = await Articles.getCategoryPage(
+    'ArticlesUnpublished',
+    category,
+    page,
+    limit
+  );
+  return res.status(result.status).send(result);
+});
+
+router.get('/author/:authorName/:page/:limit', async (req: any, res: any) => {
+  const author = req.params.authorName;
+  const limit = Number(req.params.limit);
+  const page = Number(req.params.page);
+
+  const result = await Articles.getAuthorPage(
+    'ArticlesUnpublished',
+    author,
+    page,
+    limit
+  );
   return res.status(result.status).send(result);
 });
 
@@ -50,7 +75,6 @@ router.post('/', async (req: any, res: any) => {
     metadata,
     body
   );
-  console.log(status, response);
   res.status(status).send(response);
 });
 

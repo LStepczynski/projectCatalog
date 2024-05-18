@@ -67,7 +67,6 @@ export class Articles {
     return false;
   }
 
-  // PROBLEM VALIDATION KEY ERROR
   public static async get(
     articleId: string,
     tableName: string
@@ -196,44 +195,79 @@ export class Articles {
     }
   }
 
-  // public static async getCategoryPage(
-  //   tableName: string,
-  //   category: string,
-  //   page: number,
-  //   limit: number
-  // ): Promise<any | void> {
-  //   if (this.findTable(tableName) == false) {
-  //     return { status: 400, response: { error: 'table not found' } };
-  //   }
+  public static async getPaginationItems(
+    tableName: string,
+    page: number,
+    limit: number,
+    params: any
+  ) {
+    if (this.findTable(tableName) == false) {
+      return { status: 400, response: { error: 'table not found' } };
+    }
 
-  //   const params: QueryCommandInput = {
-  //     TableName: Articles.TABLE_NAMES,
-  //     IndexName: 'PrimaryCategoryIndex',
-  //     KeyConditionExpression: 'primaryCategory = :c',
-  //     ExpressionAttributeValues: {
-  //       ':c': { S: category },
-  //     },
-  //     Limit: limit,
-  //     ScanIndexForward: false,
-  //   };
+    if (Number.isNaN(limit) || Number.isNaN(page)) {
+      return { status: 400, message: 'invalid limit or page data type' };
+    }
 
-  //   let count = 0;
-  //   while (true) {
-  //     count += 1;
+    if (limit < 1 || page < 1) {
+      return { status: 400, message: 'invalid limit or page number range' };
+    }
 
-  //     // Use the query method to retrieve items for the specified category
-  //     const data = await client.send(new QueryCommand(params));
-  //     if (data.LastEvaluatedKey) {
-  //       params.ExclusiveStartKey = data.LastEvaluatedKey;
-  //     }
+    let count = 0;
+    while (true) {
+      count += 1;
 
-  //     // Return items if the desired page is reached or if there are no more pages
-  //     if (count === page || !data.LastEvaluatedKey) {
-  //       const items: any = data.Items
-  //         ? data.Items.map((item) => unmarshall(item))
-  //         : [];
-  //       return items;
-  //     }
-  //   }
-  // }
+      // Use the query method to retrieve items for the specified category
+      const data = await client.send(new QueryCommand(params));
+      if (data.LastEvaluatedKey) {
+        params.ExclusiveStartKey = data.LastEvaluatedKey;
+      }
+
+      // Return items if the desired page is reached or if there are no more pages
+      if (count === page || !data.LastEvaluatedKey) {
+        const items: any = data.Items
+          ? data.Items.map((item) => unmarshall(item))
+          : [];
+        return { status: 200, response: { return: items } };
+      }
+    }
+  }
+
+  public static async getCategoryPage(
+    tableName: string,
+    category: string,
+    page: number,
+    limit: number
+  ): Promise<any | void> {
+    const params: QueryCommandInput = {
+      TableName: tableName,
+      IndexName: 'PrimaryCategoryCreated',
+      KeyConditionExpression: 'PrimaryCategory = :c',
+      ExpressionAttributeValues: {
+        ':c': { S: category },
+      },
+      Limit: limit,
+      ScanIndexForward: false,
+    };
+    return await this.getPaginationItems(tableName, page, limit, params);
+  }
+
+  public static async getAuthorPage(
+    tableName: string,
+    author: string,
+    page: number,
+    limit: number
+  ): Promise<any | void> {
+    const params: QueryCommandInput = {
+      TableName: tableName,
+      IndexName: 'AuthorCreated',
+      KeyConditionExpression: 'Author = :c',
+      ExpressionAttributeValues: {
+        ':c': { S: author },
+      },
+      Limit: limit,
+      ScanIndexForward: false,
+    };
+    return await this.getPaginationItems(tableName, page, limit, params);
+  }
 }
