@@ -68,7 +68,55 @@ export class Articles {
     return false;
   }
 
-  public static async get(
+  public static async validateArticle(article: Dictionary, model: Dictionary) {
+    const articleModelFields = Object.keys(model);
+
+    // Check if all fields in ARTICLE_MODEL are present and not empty in the article
+    for (const field of articleModelFields) {
+      const isEmpty =
+        article[field] === undefined ||
+        article[field] === '' ||
+        (Array.isArray(article[field]) && article[field].length === 0);
+      const isRequired = model[field].required == true;
+      const isSameType = typeof model[field].value == typeof article[field];
+
+      if ((isEmpty && isRequired) || (!isSameType && !isEmpty)) {
+        return false; // Field is missing, empty, or incorrect type
+      }
+    }
+
+    // Check if there are no additional fields in article that are not in ARTICLE_MODEL
+    for (const field of Object.keys(article)) {
+      if (!articleModelFields.includes(field)) {
+        return false; // Additional field found in article
+      }
+    }
+
+    return true;
+  }
+
+  public static async addToS3(tableName: string, metadata: any, body: string) {
+    try {
+      const markdownString = matter.stringify(body, metadata);
+      fs.writeFileSync(
+        `src/assets/${tableName}/${metadata.ID}.md`,
+        markdownString,
+        'utf8'
+      );
+      return true;
+    } catch (err: any) {
+      return false;
+    }
+  }
+
+  public static removeFromS3(tableName: string, id: string) {
+    fs.unlink(`src/assets/${tableName}/${id}.md`, (err) => {
+      return false;
+    });
+    return true;
+  }
+
+  public static async getArticle(
     articleId: string,
     tableName: string
   ): Promise<any | void> {
@@ -103,7 +151,7 @@ export class Articles {
     }
   }
 
-  public static async create(
+  public static async createArticle(
     tableName: string,
     metadata: any,
     body: string
@@ -155,47 +203,6 @@ export class Articles {
     }
   }
 
-  public static async validateArticle(article: Dictionary, model: Dictionary) {
-    const articleModelFields = Object.keys(model);
-
-    // Check if all fields in ARTICLE_MODEL are present and not empty in the article
-    for (const field of articleModelFields) {
-      const isEmpty =
-        article[field] === undefined ||
-        article[field] === '' ||
-        (Array.isArray(article[field]) && article[field].length === 0);
-      const isRequired = model[field].required == true;
-      const isSameType = typeof model[field].value == typeof article[field];
-
-      if ((isEmpty && isRequired) || (!isSameType && !isEmpty)) {
-        return false; // Field is missing, empty, or incorrect type
-      }
-    }
-
-    // Check if there are no additional fields in article that are not in ARTICLE_MODEL
-    for (const field of Object.keys(article)) {
-      if (!articleModelFields.includes(field)) {
-        return false; // Additional field found in article
-      }
-    }
-
-    return true;
-  }
-
-  public static async addToS3(tableName: string, metadata: any, body: string) {
-    try {
-      const markdownString = matter.stringify(body, metadata);
-      fs.writeFileSync(
-        `src/assets/${tableName}/${metadata.ID}.md`,
-        markdownString,
-        'utf8'
-      );
-      return true;
-    } catch (err: any) {
-      return false;
-    }
-  }
-
   public static async removeArticle(tableName: string, id: string) {
     const tableInfo: TableReturn = this.findTable(tableName);
 
@@ -224,13 +231,6 @@ export class Articles {
     } catch {
       return { status: 500, response: { error: 'server error' } };
     }
-  }
-
-  public static removeFromS3(tableName: string, id: string) {
-    fs.unlink(`src/assets/${tableName}/${id}.md`, (err) => {
-      return false;
-    });
-    return true;
   }
 
   public static async getPaginationItems(
@@ -311,7 +311,7 @@ export class Articles {
     return await this.getPaginationItems(tableName, page, limit, params);
   }
 
-  public static async getAuthorPage(
+  public static async getAuthorCreated(
     tableName: string,
     author: string,
     page: number,
@@ -320,6 +320,25 @@ export class Articles {
     const params: QueryCommandInput = {
       TableName: tableName,
       IndexName: 'AuthorCreated',
+      KeyConditionExpression: 'Author = :c',
+      ExpressionAttributeValues: {
+        ':c': { S: author },
+      },
+      Limit: limit,
+      ScanIndexForward: false,
+    };
+    return await this.getPaginationItems(tableName, page, limit, params);
+  }
+
+  public static async getAuthorRating(
+    tableName: string,
+    author: string,
+    page: number,
+    limit: number
+  ): Promise<any | void> {
+    const params: QueryCommandInput = {
+      TableName: tableName,
+      IndexName: 'AuthorRating',
       KeyConditionExpression: 'Author = :c',
       ExpressionAttributeValues: {
         ':c': { S: author },

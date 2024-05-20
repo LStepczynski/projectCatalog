@@ -20,17 +20,7 @@ router.get('/', async (req: any, res: any) => {
   }
 });
 
-router.get('/get/:id', async (req: any, res: any) => {
-  const articleId = req.params.id;
-
-  if (typeof articleId != 'string') {
-    return res.status(400).send('invalid article id data type');
-  }
-
-  const result = await Articles.get(articleId, 'ArticlesUnpublished');
-  return res.status(result.status).send(result);
-});
-
+// Delete
 router.delete('/delete', async (req: any, res: any) => {
   const articleId = req.body.id;
 
@@ -46,6 +36,34 @@ router.delete('/delete', async (req: any, res: any) => {
   return res.status(result.status).send(result);
 });
 
+// By id
+router.get('/get/:id', async (req: any, res: any) => {
+  const articleId = req.params.id;
+
+  if (typeof articleId != 'string') {
+    return res.status(400).send('invalid article id data type');
+  }
+
+  const result = await Articles.getArticle(articleId, 'ArticlesUnpublished');
+  return res.status(result.status).send(result);
+});
+
+// By author
+router.get('/author/:authorName/:page/:limit', async (req: any, res: any) => {
+  const author = req.params.authorName;
+  const limit = Number(req.params.limit);
+  const page = Number(req.params.page);
+
+  const result = await Articles.getAuthorRating(
+    'ArticlesUnpublished',
+    author,
+    page,
+    limit
+  );
+  return res.status(result.status).send(result);
+});
+
+// By category
 router.get('/:categoryName/:page/:limit', async (req: any, res: any) => {
   const category = req.params.categoryName;
   const limit = Number(req.params.limit);
@@ -60,20 +78,7 @@ router.get('/:categoryName/:page/:limit', async (req: any, res: any) => {
   return res.status(result.status).send(result);
 });
 
-router.get('/author/:authorName/:page/:limit', async (req: any, res: any) => {
-  const author = req.params.authorName;
-  const limit = Number(req.params.limit);
-  const page = Number(req.params.page);
-
-  const result = await Articles.getAuthorPage(
-    'ArticlesUnpublished',
-    author,
-    page,
-    limit
-  );
-  return res.status(result.status).send(result);
-});
-
+// By category/difficulty
 router.get(
   '/:category/:difficulty/:page/:limit',
   async (req: any, res: any) => {
@@ -110,7 +115,7 @@ router.post('/', async (req: any, res: any) => {
     return;
   }
 
-  const { status, response } = await Articles.create(
+  const { status, response } = await Articles.createArticle(
     'ArticlesUnpublished',
     metadata,
     body
