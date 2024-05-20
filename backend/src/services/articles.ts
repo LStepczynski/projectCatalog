@@ -124,10 +124,17 @@ export class Articles {
       return { status: 400, response: { error: 'table not found' } };
     }
 
+    if (articleId == undefined) {
+      return {
+        status: 400,
+        response: { message: 'missing article id' },
+      };
+    }
+
     if (typeof articleId != 'string') {
       return {
         status: 400,
-        response: { error: 'invalid article id data type' },
+        response: { message: 'invalid article id data type' },
       };
     }
 
@@ -144,7 +151,7 @@ export class Articles {
       if (Object.keys(resp).includes('Item') && resp.Item) {
         return { status: 200, response: { return: [unmarshall(resp.Item)] } };
       }
-      return { status: 500, response: { error: 'server error' } };
+      return { status: 200, response: { return: [] } };
     } catch (err) {
       console.log(err);
       return { status: 500, response: { error: 'server error' } };
@@ -244,7 +251,7 @@ export class Articles {
     }
 
     if (Number.isNaN(limit) || Number.isNaN(page)) {
-      return { status: 400, message: 'invalid limit or page data type' };
+      return { status: 400, message: 'missing or invalid limit or page value' };
     }
 
     if (limit < 1 || page < 1) {
@@ -311,12 +318,35 @@ export class Articles {
     return await this.getPaginationItems(tableName, page, limit, params);
   }
 
+  public static async getCategoryRating(
+    tableName: string,
+    category: string,
+    page: number,
+    limit: number
+  ): Promise<any | void> {
+    const params: QueryCommandInput = {
+      TableName: tableName,
+      IndexName: 'PrimaryCategoryRating',
+      KeyConditionExpression: 'PrimaryCategory = :c',
+      ExpressionAttributeValues: {
+        ':c': { S: category },
+      },
+      Limit: limit,
+      ScanIndexForward: false,
+    };
+    return await this.getPaginationItems(tableName, page, limit, params);
+  }
+
   public static async getAuthorCreated(
     tableName: string,
     author: string,
     page: number,
     limit: number
   ): Promise<any | void> {
+    if (author == undefined) {
+      return { status: 400, message: 'missing author value' };
+    }
+
     const params: QueryCommandInput = {
       TableName: tableName,
       IndexName: 'AuthorCreated',
@@ -336,6 +366,10 @@ export class Articles {
     page: number,
     limit: number
   ): Promise<any | void> {
+    if (author == undefined) {
+      return { status: 400, message: 'missing author value' };
+    }
+
     const params: QueryCommandInput = {
       TableName: tableName,
       IndexName: 'AuthorRating',

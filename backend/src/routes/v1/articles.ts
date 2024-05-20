@@ -25,11 +25,11 @@ router.delete('/delete', async (req: any, res: any) => {
   const articleId = req.body.id;
 
   if (articleId == undefined) {
-    return res.status(400).send('missing article id');
+    return res.status(400).send({ message: 'missing article id' });
   }
 
   if (typeof articleId != 'string') {
-    return res.status(400).send('invalid or article id data type');
+    return res.status(400).send({ message: 'invalid or article id data type' });
   }
 
   const result = await Articles.removeArticle('ArticlesUnpublished', articleId);
@@ -37,22 +37,18 @@ router.delete('/delete', async (req: any, res: any) => {
 });
 
 // By id
-router.get('/get/:id', async (req: any, res: any) => {
-  const articleId = req.params.id;
-
-  if (typeof articleId != 'string') {
-    return res.status(400).send('invalid article id data type');
-  }
+router.get('/get', async (req: any, res: any) => {
+  const articleId = req.query.id;
 
   const result = await Articles.getArticle(articleId, 'ArticlesUnpublished');
   return res.status(result.status).send(result);
 });
 
 // By author
-router.get('/author/:authorName/:page/:limit', async (req: any, res: any) => {
-  const author = req.params.authorName;
-  const limit = Number(req.params.limit);
-  const page = Number(req.params.page);
+router.get('/author', async (req: any, res: any) => {
+  const author = req.query.authorName;
+  const limit = Number(req.query.limit);
+  const page = Number(req.query.page);
 
   const result = await Articles.getAuthorRating(
     'ArticlesUnpublished',
@@ -64,10 +60,10 @@ router.get('/author/:authorName/:page/:limit', async (req: any, res: any) => {
 });
 
 // By category
-router.get('/:categoryName/:page/:limit', async (req: any, res: any) => {
+router.get('/:categoryName', async (req: any, res: any) => {
   const category = req.params.categoryName;
-  const limit = Number(req.params.limit);
-  const page = Number(req.params.page);
+  const limit = Number(req.query.limit);
+  const page = Number(req.query.page);
 
   const result = await Articles.getCategoryCreated(
     'ArticlesUnpublished',
@@ -79,30 +75,27 @@ router.get('/:categoryName/:page/:limit', async (req: any, res: any) => {
 });
 
 // By category/difficulty
-router.get(
-  '/:category/:difficulty/:page/:limit',
-  async (req: any, res: any) => {
-    const category = req.params.category;
-    const difficulty = req.params.difficulty;
-    const limit = Number(req.params.limit);
-    const page = Number(req.params.page);
+router.get('/:category/:difficulty', async (req: any, res: any) => {
+  const category = req.params.category;
+  const difficulty = req.params.difficulty;
+  const limit = Number(req.query.limit);
+  const page = Number(req.query.page);
 
-    if (!['EASY', 'MEDIUM', 'HARD'].includes(difficulty)) {
-      return res
-        .status(400)
-        .send({ status: 400, message: 'invalid difficulty value' });
-    }
-
-    const result = await Articles.getCategoryDifficulty(
-      'ArticlesUnpublished',
-      category,
-      difficulty,
-      page,
-      limit
-    );
-    return res.status(result.status).send(result);
+  if (!['EASY', 'MEDIUM', 'HARD'].includes(difficulty)) {
+    return res
+      .status(400)
+      .send({ status: 400, message: 'invalid difficulty value' });
   }
-);
+
+  const result = await Articles.getCategoryDifficulty(
+    'ArticlesUnpublished',
+    category,
+    difficulty,
+    page,
+    limit
+  );
+  return res.status(result.status).send(result);
+});
 
 router.post('/', async (req: any, res: any) => {
   const body = req.body.body;
