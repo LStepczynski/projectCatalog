@@ -31,12 +31,27 @@ router.get('/get/:id', async (req: any, res: any) => {
   return res.status(result.status).send(result);
 });
 
+router.delete('/delete', async (req: any, res: any) => {
+  const articleId = req.body.id;
+
+  if (articleId == undefined) {
+    return res.status(400).send('missing article id');
+  }
+
+  if (typeof articleId != 'string') {
+    return res.status(400).send('invalid or article id data type');
+  }
+
+  const result = await Articles.removeArticle('ArticlesUnpublished', articleId);
+  return res.status(result.status).send(result);
+});
+
 router.get('/:categoryName/:page/:limit', async (req: any, res: any) => {
   const category = req.params.categoryName;
   const limit = Number(req.params.limit);
   const page = Number(req.params.page);
 
-  const result = await Articles.getCategoryPage(
+  const result = await Articles.getCategoryCreated(
     'ArticlesUnpublished',
     category,
     page,
@@ -59,6 +74,31 @@ router.get('/author/:authorName/:page/:limit', async (req: any, res: any) => {
   return res.status(result.status).send(result);
 });
 
+router.get(
+  '/:category/:difficulty/:page/:limit',
+  async (req: any, res: any) => {
+    const category = req.params.category;
+    const difficulty = req.params.difficulty;
+    const limit = Number(req.params.limit);
+    const page = Number(req.params.page);
+
+    if (!['EASY', 'MEDIUM', 'HARD'].includes(difficulty)) {
+      return res
+        .status(400)
+        .send({ status: 400, message: 'invalid difficulty value' });
+    }
+
+    const result = await Articles.getCategoryDifficulty(
+      'ArticlesUnpublished',
+      category,
+      difficulty,
+      page,
+      limit
+    );
+    return res.status(result.status).send(result);
+  }
+);
+
 router.post('/', async (req: any, res: any) => {
   const body = req.body.body;
   const metadata = req.body.metadata;
@@ -75,7 +115,7 @@ router.post('/', async (req: any, res: any) => {
     metadata,
     body
   );
-  res.status(status).send(response);
+  return res.status(status).send(response);
 });
 
 export default router;

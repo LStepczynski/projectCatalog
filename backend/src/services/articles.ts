@@ -2,6 +2,7 @@ import {
   GetItemCommand,
   PutItemCommand,
   PutItemCommandInput,
+  DeleteItemCommand,
   BatchGetItemCommand,
   QueryCommandInput,
   QueryCommand,
@@ -195,6 +196,43 @@ export class Articles {
     }
   }
 
+  public static async removeArticle(tableName: string, id: string) {
+    const tableInfo: TableReturn = this.findTable(tableName);
+
+    // Validations
+    if (tableInfo == false) {
+      return { status: 400, response: { error: 'table not found' } };
+    }
+
+    if (typeof id !== 'string') {
+      return { status: 400, response: { error: 'invalid id data type' } };
+    }
+
+    const params = {
+      TableName: tableName,
+      Key: {
+        ID: { S: id },
+      },
+    };
+
+    try {
+      await client.send(new DeleteItemCommand(params));
+      if (!(await this.removeFromS3(tableName, id))) {
+        return { status: 500, response: { error: 'server error' } };
+      }
+      return { status: 200, response: { error: 'item deleted succesfuly' } };
+    } catch {
+      return { status: 500, response: { error: 'server error' } };
+    }
+  }
+
+  public static removeFromS3(tableName: string, id: string) {
+    fs.unlink(`src/assets/${tableName}/${id}.md`, (err) => {
+      return false;
+    });
+    return true;
+  }
+
   public static async getPaginationItems(
     tableName: string,
     page: number,
@@ -233,7 +271,7 @@ export class Articles {
     }
   }
 
-  public static async getCategoryPage(
+  public static async getCategoryCreated(
     tableName: string,
     category: string,
     page: number,
@@ -245,6 +283,27 @@ export class Articles {
       KeyConditionExpression: 'PrimaryCategory = :c',
       ExpressionAttributeValues: {
         ':c': { S: category },
+      },
+      Limit: limit,
+      ScanIndexForward: false,
+    };
+    return await this.getPaginationItems(tableName, page, limit, params);
+  }
+
+  public static async getCategoryDifficulty(
+    tableName: string,
+    category: string,
+    difficulty: string,
+    page: number,
+    limit: number
+  ): Promise<any | void> {
+    const params: QueryCommandInput = {
+      TableName: tableName,
+      IndexName: 'PrimaryCategoryDifficulty',
+      KeyConditionExpression: 'PrimaryCategory = :c AND Difficulty = :d',
+      ExpressionAttributeValues: {
+        ':c': { S: category },
+        ':d': { S: difficulty },
       },
       Limit: limit,
       ScanIndexForward: false,
