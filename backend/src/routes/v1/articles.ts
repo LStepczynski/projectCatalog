@@ -8,7 +8,9 @@ const router = Router();
 
 router.get('/', async (req: any, res: any) => {
   try {
-    const data = await client.send(new ScanCommand({ TableName: 'Articles' }));
+    const data = await client.send(
+      new ScanCommand({ TableName: 'ArticlesUnpublished' })
+    );
     // Extract the 'Items' property from the data object
     const items = data.Items || [];
     // Map each item to its unmarshalled form
@@ -59,6 +61,21 @@ router.get('/author', async (req: any, res: any) => {
   return res.status(result.status).send(result);
 });
 
+// By title
+router.get('/title', async (req: any, res: any) => {
+  const title = req.query.title;
+  const limit = Number(req.query.limit);
+  const page = Number(req.query.page);
+
+  const result = await Articles.getTitleRating(
+    'ArticlesUnpublished',
+    title,
+    page,
+    limit
+  );
+  return res.status(result.status).send(result);
+});
+
 // By category
 router.get('/:categoryName', async (req: any, res: any) => {
   const category = req.params.categoryName;
@@ -80,12 +97,6 @@ router.get('/:category/:difficulty', async (req: any, res: any) => {
   const difficulty = req.params.difficulty;
   const limit = Number(req.query.limit);
   const page = Number(req.query.page);
-
-  if (!['EASY', 'MEDIUM', 'HARD'].includes(difficulty)) {
-    return res
-      .status(400)
-      .send({ status: 400, message: 'invalid difficulty value' });
-  }
 
   const result = await Articles.getCategoryDifficulty(
     'ArticlesUnpublished',

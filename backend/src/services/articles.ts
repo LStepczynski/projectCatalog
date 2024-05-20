@@ -187,14 +187,14 @@ export class Articles {
     if (tableName == 'ArticlesUnpublished' && metadata.CreatedAt == undefined) {
       metadata.CreatedAt = currentTime;
     }
-    console.log(metadata.CreatedAt);
+
     // Adding the body to S3
     if (!(await Articles.addToS3(tableName, metadata, body))) {
       return { status: 500, response: { error: 'server error' } };
     }
 
     // Converting any lists into sets
-    metadata.SecondaryCategories = new Set(metadata.SecondaryCategories);
+    // metadata.SecondaryCategories = new Set(metadata.SecondaryCategories);
 
     // Adding the articles to the database
     const params: PutItemCommandInput = {
@@ -304,6 +304,10 @@ export class Articles {
     page: number,
     limit: number
   ): Promise<any | void> {
+    if (!['EASY', 'MEDIUM', 'HARD'].includes(difficulty)) {
+      return { status: 400, message: 'invalid difficulty value' };
+    }
+
     const params: QueryCommandInput = {
       TableName: tableName,
       IndexName: 'PrimaryCategoryDifficulty',
@@ -376,6 +380,52 @@ export class Articles {
       KeyConditionExpression: 'Author = :c',
       ExpressionAttributeValues: {
         ':c': { S: author },
+      },
+      Limit: limit,
+      ScanIndexForward: false,
+    };
+    return await this.getPaginationItems(tableName, page, limit, params);
+  }
+
+  public static async getTitleRating(
+    tableName: string,
+    title: string,
+    page: number,
+    limit: number
+  ): Promise<any | void> {
+    if (title == undefined) {
+      return { status: 400, message: 'missing author value' };
+    }
+
+    const params: QueryCommandInput = {
+      TableName: tableName,
+      IndexName: 'TitleRating',
+      KeyConditionExpression: 'Title = :c',
+      ExpressionAttributeValues: {
+        ':c': { S: title },
+      },
+      Limit: limit,
+      ScanIndexForward: false,
+    };
+    return await this.getPaginationItems(tableName, page, limit, params);
+  }
+
+  public static async getTitleCreated(
+    tableName: string,
+    title: string,
+    page: number,
+    limit: number
+  ): Promise<any | void> {
+    if (title == undefined) {
+      return { status: 400, message: 'missing author value' };
+    }
+
+    const params: QueryCommandInput = {
+      TableName: tableName,
+      IndexName: 'TitleCreated',
+      KeyConditionExpression: 'Title = :c',
+      ExpressionAttributeValues: {
+        ':c': { S: title },
       },
       Limit: limit,
       ScanIndexForward: false,
