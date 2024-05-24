@@ -151,7 +151,7 @@ export class Articles {
       if (Object.keys(resp).includes('Item') && resp.Item) {
         return { status: 200, response: { return: [unmarshall(resp.Item)] } };
       }
-      return { status: 200, response: { return: [] } };
+      return { status: 404, response: { return: [] } };
     } catch (err) {
       console.log(err);
       return { status: 500, response: { error: 'server error' } };
@@ -282,7 +282,8 @@ export class Articles {
     tableName: string,
     category: string,
     page: number,
-    limit: number
+    limit: number,
+    forward: boolean
   ): Promise<any | void> {
     const params: QueryCommandInput = {
       TableName: tableName,
@@ -292,8 +293,9 @@ export class Articles {
         ':c': { S: category },
       },
       Limit: limit,
-      ScanIndexForward: false,
+      ScanIndexForward: forward,
     };
+    console.log('siema2');
     return await this.getPaginationItems(tableName, page, limit, params);
   }
 
@@ -326,7 +328,8 @@ export class Articles {
     tableName: string,
     category: string,
     page: number,
-    limit: number
+    limit: number,
+    forward: boolean
   ): Promise<any | void> {
     const params: QueryCommandInput = {
       TableName: tableName,
@@ -336,8 +339,9 @@ export class Articles {
         ':c': { S: category },
       },
       Limit: limit,
-      ScanIndexForward: false,
+      ScanIndexForward: forward,
     };
+    console.log('siema');
     return await this.getPaginationItems(tableName, page, limit, params);
   }
 

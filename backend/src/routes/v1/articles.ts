@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { client } from ':api/services/dynamodb';
+import { Request, Response } from 'express';
 import { Articles } from ':api/services/articles';
 import { ScanCommand } from '@aws-sdk/client-dynamodb';
 import { marshall, unmarshall } from '@aws-sdk/util-dynamodb';
@@ -77,17 +78,41 @@ router.get('/title', async (req: any, res: any) => {
 });
 
 // By category
-router.get('/:categoryName', async (req: any, res: any) => {
+router.get('/:categoryName', async (req: Request, res: Response) => {
   const category = req.params.categoryName;
-  const limit = Number(req.query.limit);
-  const page = Number(req.query.page);
+  const searchBy = req.query.searchBy || 'rating';
+  const sortBy = req.query.sortBy || 'highest';
+  const limit = Number(req.query.limit) || 10;
+  const page = Number(req.query.page) || 1;
 
-  const result = await Articles.getCategoryCreated(
+  let getFunc = Articles.getCategoryRating.bind(Articles);
+  let scanIndexForward: boolean = false;
+
+  if (searchBy === 'date') {
+    getFunc = Articles.getCategoryCreated.bind(Articles);
+  } else if (searchBy != 'rating') {
+    return res
+      .status(400)
+      .send({ status: 400, message: 'Invalid searchBy value' });
+  }
+
+  if (sortBy === 'lowest') {
+    scanIndexForward = true;
+  } else if (sortBy != 'highest') {
+    return res
+      .status(400)
+      .send({ status: 400, message: 'Invalid sortBy value' });
+  }
+
+  const args: [string, string, number, number, boolean] = [
     'ArticlesUnpublished',
     category,
     page,
-    limit
-  );
+    limit,
+    scanIndexForward,
+  ];
+
+  const result = await getFunc(...args);
   return res.status(result.status).send(result);
 });
 
