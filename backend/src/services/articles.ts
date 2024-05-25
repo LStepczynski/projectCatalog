@@ -341,7 +341,6 @@ export class Articles {
       Limit: limit,
       ScanIndexForward: forward,
     };
-    console.log('siema');
     return await this.getPaginationItems(tableName, page, limit, params);
   }
 
@@ -395,10 +394,11 @@ export class Articles {
     tableName: string,
     title: string,
     page: number,
-    limit: number
+    limit: number,
+    forward: boolean,
   ): Promise<any | void> {
     if (title == undefined) {
-      return { status: 400, message: 'missing author value' };
+      return { status: 400, message: 'missing title value' };
     }
 
     const params: QueryCommandInput = {
@@ -409,7 +409,7 @@ export class Articles {
         ':c': { S: title },
       },
       Limit: limit,
-      ScanIndexForward: false,
+      ScanIndexForward: forward,
     };
     return await this.getPaginationItems(tableName, page, limit, params);
   }
@@ -418,10 +418,11 @@ export class Articles {
     tableName: string,
     title: string,
     page: number,
-    limit: number
+    limit: number,
+    forward: boolean,
   ): Promise<any | void> {
     if (title == undefined) {
-      return { status: 400, message: 'missing author value' };
+      return { status: 400, message: 'missing title value' };
     }
 
     const params: QueryCommandInput = {
@@ -432,7 +433,7 @@ export class Articles {
         ':c': { S: title },
       },
       Limit: limit,
-      ScanIndexForward: false,
+      ScanIndexForward: forward,
     };
     return await this.getPaginationItems(tableName, page, limit, params);
   }
