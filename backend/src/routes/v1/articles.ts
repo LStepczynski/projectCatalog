@@ -50,15 +50,39 @@ router.get('/get', async (req: any, res: any) => {
 // By author
 router.get('/author', async (req: any, res: any) => {
   const author = req.query.authorName;
-  const limit = Number(req.query.limit);
-  const page = Number(req.query.page);
+  const searchBy = req.query.searchBy || 'rating';
+  const sortBy = req.query.sortBy || 'highest';
+  const limit = Number(req.query.limit) || 10;
+  const page = Number(req.query.page) || 1;
 
-  const result = await Articles.getAuthorRating(
+  let getFunc = Articles.getAuthorRating.bind(Articles);
+  let scanIndexForward: boolean = false;
+
+  if (searchBy === 'date') {
+    getFunc = Articles.getAuthorCreated.bind(Articles);
+  } else if (searchBy != 'rating') {
+    return res
+      .status(400)
+      .send({ status: 400, message: 'Invalid searchBy value' });
+  }
+
+  if (sortBy === 'lowest') {
+    scanIndexForward = true;
+  } else if (sortBy != 'highest') {
+    return res
+      .status(400)
+      .send({ status: 400, message: 'Invalid sortBy value' });
+  }
+
+  const args: [string, string, number, number, boolean] = [
     'ArticlesUnpublished',
     author,
     page,
-    limit
-  );
+    limit,
+    scanIndexForward,
+  ];
+
+  const result = await getFunc(...args);
   return res.status(result.status).send(result);
 });
 

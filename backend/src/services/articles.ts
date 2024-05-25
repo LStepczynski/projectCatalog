@@ -348,7 +348,8 @@ export class Articles {
     tableName: string,
     author: string,
     page: number,
-    limit: number
+    limit: number,
+    forward: boolean,
   ): Promise<any | void> {
     if (author == undefined) {
       return { status: 400, message: 'missing author value' };
@@ -362,7 +363,7 @@ export class Articles {
         ':c': { S: author },
       },
       Limit: limit,
-      ScanIndexForward: false,
+      ScanIndexForward: forward,
     };
     return await this.getPaginationItems(tableName, page, limit, params);
   }
@@ -371,7 +372,8 @@ export class Articles {
     tableName: string,
     author: string,
     page: number,
-    limit: number
+    limit: number,
+    forward: boolean,
   ): Promise<any | void> {
     if (author == undefined) {
       return { status: 400, message: 'missing author value' };
@@ -385,7 +387,7 @@ export class Articles {
         ':c': { S: author },
       },
       Limit: limit,
-      ScanIndexForward: false,
+      ScanIndexForward: forward,
     };
     return await this.getPaginationItems(tableName, page, limit, params);
   }
