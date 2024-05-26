@@ -59,6 +59,11 @@ export class Articles {
     },
   ];
 
+  public static isValidUUID(uuid: string) {
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    return uuidRegex.test(uuid);
+}
+
   public static findTable(name: string): TableReturn {
     for (const tableName of Articles.TABLE_NAMES) {
       if (name === tableName.tableName) {
@@ -161,7 +166,8 @@ export class Articles {
   public static async createArticle(
     tableName: string,
     metadata: any,
-    body: string
+    body: string,
+    id: string = "",
   ): Promise<any | void> {
     const tableInfo: TableReturn = this.findTable(tableName);
 
@@ -179,7 +185,11 @@ export class Articles {
     }
 
     // Adding attributes to the metadata
-    metadata.ID = uuidv4();
+    if (!this.isValidUUID(id)) {
+      metadata.ID = uuidv4();
+    } else {
+      metadata.ID = id
+    }
     const currentTime = Math.floor(new Date().getTime() / 1000);
     if (tableName == 'ArticlesPublished' && metadata.PublishedAt == undefined) {
       metadata.PublishedAt = currentTime;
@@ -196,9 +206,6 @@ export class Articles {
       return { status: 500, response: { error: 'server error' } };
     }
 
-    // Converting any lists into sets
-    // metadata.SecondaryCategories = new Set(metadata.SecondaryCategories);
-
     // Adding the articles to the database
     const params: PutItemCommandInput = {
       TableName: tableName,
@@ -209,7 +216,7 @@ export class Articles {
       await client.send(new PutItemCommand(params));
       return { status: 200, response: { message: 'item added succesfully' } };
     } catch (err: any) {
-      return { status: 500, response: { error: err } };
+      return { status: 500, response: { error: "server error" } };
     }
   }
 
@@ -223,6 +230,10 @@ export class Articles {
 
     if (typeof id !== 'string') {
       return { status: 400, response: { error: 'invalid id data type' } };
+    }
+
+    if (!this.isValidUUID(id)) {
+      return { status: 400, response: { error: 'invalid id format' } };
     }
 
     const params = {
@@ -241,6 +252,44 @@ export class Articles {
     } catch {
       return { status: 500, response: { error: 'server error' } };
     }
+  }
+
+  public static async updateArticle(tableName: string, metadata: any, body: any) {
+    const tableInfo: TableReturn = this.findTable(tableName);
+
+    // Validations
+    if (tableInfo == false) {
+      return { status: 400, response: { error: 'table not found' } };
+    }
+    
+    if (typeof metadata.ID != "string") {
+      return { status: 400, response: { error: "missing or invalid ID parameter"} };
+    }
+    
+    if (typeof body !== 'string') {
+      return { status: 400, response: { error: 'invalid body data type' } };
+    }
+    
+    metadata.UpdatedAt = Math.floor(new Date().getTime() / 1000);
+    
+    const {ID, ...article} = metadata
+
+    if (!(await this.validateArticle(article, tableInfo.item))) {
+      console.log(article)
+      return { status: 400, response: { error: 'invalid metadata format' } };
+    }
+
+    const removeResponse = await this.removeArticle(tableName, ID);
+    if (removeResponse.status != 200) {
+      return removeResponse;
+    }
+
+    const addResponse = await this.createArticle(tableName, article, body, ID);
+    if (addResponse.status != 200) {
+      return addResponse;
+    }
+
+    return { status: 200, response: { message: "item eddited succesfully"} };
   }
 
   public static async getPaginationItems(

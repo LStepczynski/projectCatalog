@@ -200,4 +200,23 @@ router.post('/', async (req: any, res: any) => {
   return res.status(status).send(response);
 });
 
+router.put('/', async(req: any, res: any) => {
+  const body = req.body.body;
+  const metadata = req.body.metadata;
+
+  if (body == undefined || metadata == undefined) {
+    res
+      .status(400)
+      .send({ error: 'invalid request - missing body or metadata' });
+    return;
+  }
+
+  const result = await Articles.updateArticle(
+    "ArticlesUnpublished",
+    metadata,
+    body,
+  );
+  return res.status(result.status).send(result);
+})
+
 export default router;
