@@ -168,8 +168,8 @@ router.get('/:categoryName', async (req: Request, res: Response) => {
 router.get('/:category/:difficulty', async (req: any, res: any) => {
   const category = req.params.category;
   const difficulty = req.params.difficulty;
-  const limit = Number(req.query.limit);
-  const page = Number(req.query.page);
+  const limit = Number(req.query.limit) || 10;
+  const page = Number(req.query.page) || 1;
 
   const result = await Articles.getCategoryDifficulty(
     'ArticlesUnpublished',

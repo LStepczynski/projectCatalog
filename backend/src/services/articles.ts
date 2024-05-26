@@ -38,7 +38,7 @@ export class Articles {
         SecondaryCategories: { value: [], required: true },
         Rating: { value: 0, required: true },
         CreatedAt: { value: 0, required: true },
-        UpdatedAt: { value: 0, required: true },
+        UpdatedAt: { value: 0, required: false },
         PublishedAt: { value: 0, required: false },
         Difficulty: { value: '', required: true },
       },
@@ -53,7 +53,7 @@ export class Articles {
         SecondaryCategories: { value: [], required: true },
         Rating: { value: 0, required: true },
         CreatedAt: { value: 0, required: false },
-        UpdatedAt: { value: 0, required: true },
+        UpdatedAt: { value: 0, required: false },
         Difficulty: { value: '', required: true },
       },
     },
@@ -186,6 +186,9 @@ export class Articles {
     }
     if (tableName == 'ArticlesUnpublished' && metadata.CreatedAt == undefined) {
       metadata.CreatedAt = currentTime;
+    }
+    if (metadata.UpdatedAt == undefined) {
+      metadata.UpdatedAt = null;
     }
 
     // Adding the body to S3
