@@ -121,6 +121,24 @@ export class Articles {
     return true;
   }
 
+  public static readFromS3(tableName: string, id: string) {
+    const filePath = `src/assets/${tableName}/${id}.md`
+  
+    try {
+      const fileContents = fs.readFileSync(filePath, 'utf8');
+
+      const parsed = matter(fileContents);
+  
+      return {
+        body: parsed.content,
+        metadata: parsed.data,
+      };
+    } catch (error) {
+      console.error("Error reading file:", error);
+      return undefined;
+    }
+  };
+
   public static async getArticle(
     articleId: string,
     tableName: string
@@ -143,20 +161,13 @@ export class Articles {
       };
     }
 
-    const command = new GetItemCommand({
-      TableName: tableName,
-      Key: {
-        ID: { S: articleId },
-      },
-    });
-
     try {
-      let resp = await client.send(command);
-
-      if (Object.keys(resp).includes('Item') && resp.Item) {
-        return { status: 200, response: { return: [unmarshall(resp.Item)] } };
+      const response = this.readFromS3(tableName, articleId);
+      if (response == undefined) {
+        return { status: 404, response: { error: "item not found" } };
       }
-      return { status: 404, response: { return: [] } };
+
+      return { status: 200, response: { return: response } };
     } catch (err) {
       console.log(err);
       return { status: 500, response: { error: 'server error' } };
@@ -218,6 +229,35 @@ export class Articles {
     } catch (err: any) {
       return { status: 500, response: { error: "server error" } };
     }
+  }
+
+  public static async publishArticle(id: string) {
+    if (typeof id !== 'string') {
+      return { status: 400, response: { error: 'invalid id data type' } };
+    }
+
+    if (!this.isValidUUID(id)) {
+      return { status: 400, response: { error: 'invalid id format' } };
+    }
+
+    const getResponse = await this.getArticle(id, "ArticlesUnpublished");
+    if (getResponse.status != 200) {
+      return getResponse;
+    }
+    const getRespItems = getResponse.response.return;
+    delete getRespItems.metadata.ID;    
+
+    const addResponse = await this.createArticle("ArticlesPublished", getRespItems.metadata, getRespItems.body, id);
+    if (addResponse.status != 200) {
+      return addResponse;
+    }
+
+    const removeResponse = await this.removeArticle("ArticlesUnpublished", id);
+    if (removeResponse.status != 200) {
+      return removeResponse;
+    }
+
+    return { status: 200, response: { message: "item published succesfully"} };
   }
 
   public static async removeArticle(tableName: string, id: string) {

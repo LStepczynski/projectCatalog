@@ -39,6 +39,18 @@ router.delete('/delete', async (req: any, res: any) => {
   return res.status(result.status).send(result);
 });
 
+// Publish
+router.post("/publish", async (req: any, res: any) => {
+  const ID = req.body.ID;
+
+  if (ID == undefined) {
+    return res.status(400).send({ error: "missing article id"});
+  }
+
+  const result = await Articles.publishArticle(ID);
+  return res.status(result.status).send(result);
+})
+
 // By id
 router.get('/get', async (req: any, res: any) => {
   const articleId = req.query.id;
