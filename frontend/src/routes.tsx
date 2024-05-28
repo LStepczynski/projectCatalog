@@ -29,7 +29,7 @@ export const Routes = () => {
       element: <Register />,
     },
     {
-      path: "/categories/:categoryName",
+      path: "/categories/:categoryName/:page",
       element: <Category />,
     },
   ]);
