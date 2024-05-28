@@ -60,9 +60,10 @@ export class Articles {
   ];
 
   public static isValidUUID(uuid: string) {
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    const uuidRegex =
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
     return uuidRegex.test(uuid);
-}
+  }
 
   public static findTable(name: string): TableReturn {
     for (const tableName of Articles.TABLE_NAMES) {
@@ -122,29 +123,29 @@ export class Articles {
   }
 
   public static readFromS3(tableName: string, id: string) {
-    const filePath = `src/assets/${tableName}/${id}.md`
-  
+    const filePath = `src/assets/${tableName}/${id}.md`;
+
     try {
       const fileContents = fs.readFileSync(filePath, 'utf8');
 
       const parsed = matter(fileContents);
-  
+
       return {
         body: parsed.content,
         metadata: parsed.data,
       };
     } catch (error) {
-      console.error("Error reading file:", error);
+      console.error('Error reading file:', error);
       return undefined;
     }
-  };
+  }
 
   public static async getArticle(
     articleId: string,
     tableName: string
   ): Promise<any | void> {
     if (this.findTable(tableName) == false) {
-      return { status: 400, response: { error: 'table not found' } };
+      return { status: 400, response: { message: 'table not found' } };
     }
 
     if (articleId == undefined) {
@@ -164,13 +165,13 @@ export class Articles {
     try {
       const response = this.readFromS3(tableName, articleId);
       if (response == undefined) {
-        return { status: 404, response: { error: "item not found" } };
+        return { status: 404, response: { message: 'item not found' } };
       }
 
       return { status: 200, response: { return: response } };
     } catch (err) {
       console.log(err);
-      return { status: 500, response: { error: 'server error' } };
+      return { status: 500, response: { message: 'server error' } };
     }
   }
 
@@ -178,28 +179,28 @@ export class Articles {
     tableName: string,
     metadata: any,
     body: string,
-    id: string = "",
+    id: string = ''
   ): Promise<any | void> {
     const tableInfo: TableReturn = this.findTable(tableName);
 
     // Validations
     if (tableInfo == false) {
-      return { status: 400, response: { error: 'table not found' } };
+      return { status: 400, response: { message: 'table not found' } };
     }
 
     if (!(await this.validateArticle(metadata, tableInfo.item))) {
-      return { status: 400, response: { error: 'invalid metadata format' } };
+      return { status: 400, response: { message: 'invalid metadata format' } };
     }
 
     if (typeof body !== 'string') {
-      return { status: 400, response: { error: 'invalid body data type' } };
+      return { status: 400, response: { message: 'invalid body data type' } };
     }
 
     // Adding attributes to the metadata
     if (!this.isValidUUID(id)) {
       metadata.ID = uuidv4();
     } else {
-      metadata.ID = id
+      metadata.ID = id;
     }
     const currentTime = Math.floor(new Date().getTime() / 1000);
     if (tableName == 'ArticlesPublished' && metadata.PublishedAt == undefined) {
@@ -214,7 +215,7 @@ export class Articles {
 
     // Adding the body to S3
     if (!(await Articles.addToS3(tableName, metadata, body))) {
-      return { status: 500, response: { error: 'server error' } };
+      return { status: 500, response: { message: 'server error' } };
     }
 
     // Adding the articles to the database
@@ -227,37 +228,42 @@ export class Articles {
       await client.send(new PutItemCommand(params));
       return { status: 200, response: { message: 'item added succesfully' } };
     } catch (err: any) {
-      return { status: 500, response: { error: "server error" } };
+      return { status: 500, response: { message: 'server error' } };
     }
   }
 
   public static async publishArticle(id: string) {
     if (typeof id !== 'string') {
-      return { status: 400, response: { error: 'invalid id data type' } };
+      return { status: 400, response: { message: 'invalid id data type' } };
     }
 
     if (!this.isValidUUID(id)) {
-      return { status: 400, response: { error: 'invalid id format' } };
+      return { status: 400, response: { message: 'invalid id format' } };
     }
 
-    const getResponse = await this.getArticle(id, "ArticlesUnpublished");
+    const getResponse = await this.getArticle(id, 'ArticlesUnpublished');
     if (getResponse.status != 200) {
       return getResponse;
     }
     const getRespItems = getResponse.response.return;
-    delete getRespItems.metadata.ID;    
+    delete getRespItems.metadata.ID;
 
-    const addResponse = await this.createArticle("ArticlesPublished", getRespItems.metadata, getRespItems.body, id);
+    const addResponse = await this.createArticle(
+      'ArticlesPublished',
+      getRespItems.metadata,
+      getRespItems.body,
+      id
+    );
     if (addResponse.status != 200) {
       return addResponse;
     }
 
-    const removeResponse = await this.removeArticle("ArticlesUnpublished", id);
+    const removeResponse = await this.removeArticle('ArticlesUnpublished', id);
     if (removeResponse.status != 200) {
       return removeResponse;
     }
 
-    return { status: 200, response: { message: "item published succesfully"} };
+    return { status: 200, response: { message: 'item published succesfully' } };
   }
 
   public static async removeArticle(tableName: string, id: string) {
@@ -265,15 +271,15 @@ export class Articles {
 
     // Validations
     if (tableInfo == false) {
-      return { status: 400, response: { error: 'table not found' } };
+      return { status: 400, response: { message: 'table not found' } };
     }
 
     if (typeof id !== 'string') {
-      return { status: 400, response: { error: 'invalid id data type' } };
+      return { status: 400, response: { message: 'invalid id data type' } };
     }
 
     if (!this.isValidUUID(id)) {
-      return { status: 400, response: { error: 'invalid id format' } };
+      return { status: 400, response: { message: 'invalid id format' } };
     }
 
     const params = {
@@ -286,37 +292,44 @@ export class Articles {
     try {
       await client.send(new DeleteItemCommand(params));
       if (!(await this.removeFromS3(tableName, id))) {
-        return { status: 500, response: { error: 'server error' } };
+        return { status: 500, response: { message: 'server error' } };
       }
-      return { status: 200, response: { error: 'item deleted succesfuly' } };
+      return { status: 200, response: { message: 'item deleted succesfuly' } };
     } catch {
-      return { status: 500, response: { error: 'server error' } };
+      return { status: 500, response: { message: 'server error' } };
     }
   }
 
-  public static async updateArticle(tableName: string, metadata: any, body: any) {
+  public static async updateArticle(
+    tableName: string,
+    metadata: any,
+    body: any
+  ) {
     const tableInfo: TableReturn = this.findTable(tableName);
 
     // Validations
     if (tableInfo == false) {
-      return { status: 400, response: { error: 'table not found' } };
+      return { status: 400, response: { message: 'table not found' } };
     }
-    
-    if (typeof metadata.ID != "string") {
-      return { status: 400, response: { error: "missing or invalid ID parameter"} };
+
+    if (typeof metadata.ID != 'string') {
+      return {
+        status: 400,
+        response: { message: 'missing or invalid ID parameter' },
+      };
     }
-    
+
     if (typeof body !== 'string') {
-      return { status: 400, response: { error: 'invalid body data type' } };
+      return { status: 400, response: { message: 'invalid body data type' } };
     }
-    
+
     metadata.UpdatedAt = Math.floor(new Date().getTime() / 1000);
-    
-    const {ID, ...article} = metadata
+
+    const { ID, ...article } = metadata;
 
     if (!(await this.validateArticle(article, tableInfo.item))) {
-      console.log(article)
-      return { status: 400, response: { error: 'invalid metadata format' } };
+      console.log(article);
+      return { status: 400, response: { message: 'invalid metadata format' } };
     }
 
     const removeResponse = await this.removeArticle(tableName, ID);
@@ -329,7 +342,7 @@ export class Articles {
       return addResponse;
     }
 
-    return { status: 200, response: { message: "item eddited succesfully"} };
+    return { status: 200, response: { message: 'item eddited succesfully' } };
   }
 
   public static async getPaginationItems(
@@ -339,15 +352,21 @@ export class Articles {
     params: any
   ) {
     if (this.findTable(tableName) == false) {
-      return { status: 400, response: { error: 'table not found' } };
+      return { status: 400, response: { message: 'table not found' } };
     }
 
     if (Number.isNaN(limit) || Number.isNaN(page)) {
-      return { status: 400, message: 'missing or invalid limit or page value' };
+      return {
+        status: 400,
+        response: { message: 'missing or invalid limit or page value' },
+      };
     }
 
     if (limit < 1 || page < 1) {
-      return { status: 400, message: 'invalid limit or page number range' };
+      return {
+        status: 400,
+        response: { message: 'invalid limit or page number range' },
+      };
     }
 
     let count = 0;
@@ -387,7 +406,6 @@ export class Articles {
       Limit: limit,
       ScanIndexForward: forward,
     };
-    console.log('siema2');
     return await this.getPaginationItems(tableName, page, limit, params);
   }
 
@@ -399,7 +417,7 @@ export class Articles {
     limit: number
   ): Promise<any | void> {
     if (!['EASY', 'MEDIUM', 'HARD'].includes(difficulty)) {
-      return { status: 400, message: 'invalid difficulty value' };
+      return { status: 400, response: { message: 'invalid difficulty value' } };
     }
 
     const params: QueryCommandInput = {
@@ -441,10 +459,10 @@ export class Articles {
     author: string,
     page: number,
     limit: number,
-    forward: boolean,
+    forward: boolean
   ): Promise<any | void> {
     if (author == undefined) {
-      return { status: 400, message: 'missing author value' };
+      return { status: 400, response: { message: 'missing author value' } };
     }
 
     const params: QueryCommandInput = {
@@ -465,10 +483,10 @@ export class Articles {
     author: string,
     page: number,
     limit: number,
-    forward: boolean,
+    forward: boolean
   ): Promise<any | void> {
     if (author == undefined) {
-      return { status: 400, message: 'missing author value' };
+      return { status: 400, response: { message: 'missing author value' } };
     }
 
     const params: QueryCommandInput = {
@@ -489,10 +507,10 @@ export class Articles {
     title: string,
     page: number,
     limit: number,
-    forward: boolean,
+    forward: boolean
   ): Promise<any | void> {
     if (title == undefined) {
-      return { status: 400, message: 'missing title value' };
+      return { status: 400, response: { message: 'missing title value' } };
     }
 
     const params: QueryCommandInput = {
@@ -513,10 +531,10 @@ export class Articles {
     title: string,
     page: number,
     limit: number,
-    forward: boolean,
+    forward: boolean
   ): Promise<any | void> {
     if (title == undefined) {
-      return { status: 400, message: 'missing title value' };
+      return { status: 400, response: { message: 'missing title value' } };
     }
 
     const params: QueryCommandInput = {
