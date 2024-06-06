@@ -10,10 +10,7 @@
       { "AttributeName": "Author", "AttributeType": "S" },
       { "AttributeName": "Difficulty", "AttributeType": "S" }
     ],
-    "KeySchema": [
-      { "AttributeName": "ID", "KeyType": "HASH" },
-      { "AttributeName": "Title", "KeyType": "RANGE" }
-    ],
+    "KeySchema": [{ "AttributeName": "ID", "KeyType": "HASH" }],
     "GlobalSecondaryIndexes": [
       {
         "IndexName": "TitlePublished",

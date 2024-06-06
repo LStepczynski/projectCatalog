@@ -3,7 +3,8 @@ import serverless from 'serverless-http';
 import cors from 'cors';
 
 import routes from './routes/index';
-
+import fs from 'fs/promises';
+import path from 'path';
 const app = express();
 
 app.use(express.json());
@@ -23,8 +24,6 @@ app.use((err: any, req: any, res: any, next: any) => {
   }
   next(err);
 });
-
-app.use(express.json());
 
 app.use('/', routes);
 
