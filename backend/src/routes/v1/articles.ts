@@ -5,6 +5,16 @@ import { Articles } from ':api/services/articles';
 import { ScanCommand } from '@aws-sdk/client-dynamodb';
 import { marshall, unmarshall } from '@aws-sdk/util-dynamodb';
 
+import multer from 'multer';
+import { v4 as uuidv4 } from 'uuid';
+import dotenv from 'dotenv';
+import { S3 } from ':api/services/s3';
+
+const storage = multer.memoryStorage();
+const upload = multer({ storage: storage });
+
+dotenv.config();
+
 const router = Router();
 
 router.get('/', async (req: any, res: any) => {
@@ -25,7 +35,7 @@ router.get('/', async (req: any, res: any) => {
 
 // Delete
 router.delete('/delete', async (req: any, res: any) => {
-  const articleId = req.body.id;
+  const articleId = req.query.id;
   const visibility = req.query.visibility || 'public';
 
   // Validate the visibility parameter and choose a corresponding table
@@ -62,7 +72,7 @@ router.delete('/delete', async (req: any, res: any) => {
 
 // Publish
 router.post('/publish', async (req: any, res: any) => {
-  const ID = req.body.ID;
+  const ID = req.body.id;
 
   // Validate the ID parameter
   if (ID == undefined) {
@@ -315,13 +325,21 @@ router.post('/', async (req: any, res: any) => {
     return;
   }
 
+  const imageId = uuidv4();
+  if (req.file) {
+    metadata.Image = imageId;
+  } else {
+    metadata.Image = '';
+  }
+
   // Fetch the result and return it
-  const { status, response } = await Articles.createArticle(
+  const result = await Articles.createArticle(
     'ArticlesUnpublished',
     metadata,
     body
   );
-  return res.status(status).send(response);
+
+  return res.status(result.status).send(result);
 });
 
 router.put('/', async (req: any, res: any) => {
@@ -344,17 +362,72 @@ router.put('/', async (req: any, res: any) => {
 
   // Check for the body and metadata parameters
   if (body == undefined || metadata == undefined) {
-    res
-      .status(400)
-      .send({
-        status: 400,
-        response: { message: 'invalid request - missing body or metadata' },
-      });
+    res.status(400).send({
+      status: 400,
+      response: { message: 'invalid request - missing body or metadata' },
+    });
     return;
   }
 
   // Fetch the result and return it
   const result = await Articles.updateArticle(tableName, metadata, body);
+  return res.status(result.status).send(result);
+});
+
+router.post('/image', upload.single('image'), async (req: any, res: any) => {
+  const ID = req.query.id;
+  const visibility = req.query.visibility || 'public';
+
+  // Validate the visibility parameter and choose a corresponding table
+  let tableName = '';
+  if (visibility == 'public') {
+    tableName = 'ArticlesPublished';
+  } else if (visibility == 'private') {
+    tableName = 'ArticlesUnpublished';
+  } else {
+    return res.status(400).send({
+      status: 400,
+      response: { message: 'invalid visibility parameter' },
+    });
+  }
+
+  let article = await Articles.getArticle(ID, tableName);
+
+  if (article.status != 200) {
+    return res.status(article.status).send(article);
+  }
+
+  article = article.response.return;
+
+  if (!req.file) {
+    return res.status(400).send({
+      status: 400,
+      response: { message: 'missing image' },
+    });
+  }
+
+  const imageId = uuidv4();
+
+  article.metadata.Image = `${process.env.AWS_S3_LINK}/images/${imageId}.png`;
+
+  try {
+    const response = await S3.saveImage(imageId, req.file);
+    if (!response) {
+      throw new Error('S3 error');
+    }
+  } catch (err) {
+    console.log(err);
+    return res.status(500).send({
+      status: 500,
+      response: { message: 'server error' },
+    });
+  }
+
+  const result = await Articles.updateArticle(
+    tableName,
+    article.metadata,
+    article.body
+  );
   return res.status(result.status).send(result);
 });
 

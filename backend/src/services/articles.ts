@@ -6,13 +6,12 @@ import {
   BatchGetItemCommand,
   QueryCommandInput,
   QueryCommand,
+  ReturnValue,
 } from '@aws-sdk/client-dynamodb';
 import { unmarshall, marshall } from '@aws-sdk/util-dynamodb';
 
-import matter from 'gray-matter';
-import fs, { stat } from 'fs';
-
 import { v4 as uuidv4 } from 'uuid';
+import { S3 } from './s3';
 
 import { client } from './dynamodb';
 
@@ -41,6 +40,7 @@ export class Articles {
         UpdatedAt: { value: 0, required: false },
         PublishedAt: { value: 0, required: false },
         Difficulty: { value: '', required: true },
+        Image: { value: '', required: false },
       },
     },
     {
@@ -55,6 +55,7 @@ export class Articles {
         CreatedAt: { value: 0, required: false },
         UpdatedAt: { value: 0, required: false },
         Difficulty: { value: '', required: true },
+        Image: { value: '', required: false },
       },
     },
   ];
@@ -87,6 +88,7 @@ export class Articles {
       const isSameType = typeof model[field].value == typeof article[field];
 
       if ((isEmpty && isRequired) || (!isSameType && !isEmpty)) {
+        console.log(field);
         return false; // Field is missing, empty, or incorrect type
       }
     }
@@ -99,45 +101,6 @@ export class Articles {
     }
 
     return true;
-  }
-
-  public static async addToS3(tableName: string, metadata: any, body: string) {
-    try {
-      const markdownString = matter.stringify(body, metadata);
-      fs.writeFileSync(
-        `src/assets/${tableName}/${metadata.ID}.md`,
-        markdownString,
-        'utf8'
-      );
-      return true;
-    } catch (err: any) {
-      return false;
-    }
-  }
-
-  public static removeFromS3(tableName: string, id: string) {
-    fs.unlink(`src/assets/${tableName}/${id}.md`, (err) => {
-      return false;
-    });
-    return true;
-  }
-
-  public static readFromS3(tableName: string, id: string) {
-    const filePath = `src/assets/${tableName}/${id}.md`;
-
-    try {
-      const fileContents = fs.readFileSync(filePath, 'utf8');
-
-      const parsed = matter(fileContents);
-
-      return {
-        body: parsed.content,
-        metadata: parsed.data,
-      };
-    } catch (error) {
-      console.error('Error reading file:', error);
-      return undefined;
-    }
   }
 
   public static async getArticle(
@@ -163,7 +126,7 @@ export class Articles {
     }
 
     try {
-      const response = this.readFromS3(tableName, articleId);
+      const response = await S3.readFromS3(tableName, articleId);
       if (response == undefined) {
         return { status: 404, response: { message: 'item not found' } };
       }
@@ -213,8 +176,12 @@ export class Articles {
       metadata.UpdatedAt = null;
     }
 
+    if (metadata.Image == '' || metadata.Image == undefined) {
+      metadata.Image = null;
+    }
+
     // Adding the body to S3
-    if (!(await Articles.addToS3(tableName, metadata, body))) {
+    if (!(await S3.addToS3(tableName, metadata, body))) {
       return { status: 500, response: { message: 'server error' } };
     }
 
@@ -287,15 +254,32 @@ export class Articles {
       Key: {
         ID: { S: id },
       },
+      ReturnValues: ReturnValue.ALL_OLD,
     };
 
     try {
-      await client.send(new DeleteItemCommand(params));
-      if (!(await this.removeFromS3(tableName, id))) {
+      const response = await client.send(new DeleteItemCommand(params));
+
+      if (!response.Attributes) {
+        return { status: 404, response: { message: 'item not found' } };
+      }
+      console.log(unmarshall(response.Attributes));
+      if (!(await S3.removeArticleFromS3(tableName, id))) {
         return { status: 500, response: { message: 'server error' } };
       }
+
+      const returnItem = unmarshall(response.Attributes);
+      if (returnItem.Image != null) {
+        const regex =
+          /[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/i;
+        const match = returnItem.Image.match(regex);
+        const imageId = match ? match[0] : null;
+
+        await S3.removeImageFromS3(imageId);
+      }
+
       return { status: 200, response: { message: 'item deleted succesfuly' } };
-    } catch {
+    } catch (err) {
       return { status: 500, response: { message: 'server error' } };
     }
   }
@@ -328,7 +312,6 @@ export class Articles {
     const { ID, ...article } = metadata;
 
     if (!(await this.validateArticle(article, tableInfo.item))) {
-      console.log(article);
       return { status: 400, response: { message: 'invalid metadata format' } };
     }
 
