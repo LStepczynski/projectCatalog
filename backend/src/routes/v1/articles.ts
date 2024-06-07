@@ -1,14 +1,18 @@
 import { Router } from 'express';
-import { client } from ':api/services/dynamodb';
 import { Request, Response } from 'express';
-import { Articles } from ':api/services/articles';
-import { ScanCommand } from '@aws-sdk/client-dynamodb';
-import { marshall, unmarshall } from '@aws-sdk/util-dynamodb';
 
-import multer from 'multer';
-import { v4 as uuidv4 } from 'uuid';
-import dotenv from 'dotenv';
+import { marshall, unmarshall } from '@aws-sdk/util-dynamodb';
+import { ScanCommand } from '@aws-sdk/client-dynamodb';
+import { client } from ':api/services/dynamodb';
+
+import { Articles } from ':api/services/articles';
 import { S3 } from ':api/services/s3';
+
+import dotenv from 'dotenv';
+
+import { v4 as uuidv4 } from 'uuid';
+import multer from 'multer';
+import { Helper } from ':api/services/helper';
 
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
@@ -39,12 +43,8 @@ router.delete('/delete', async (req: any, res: any) => {
   const visibility = req.query.visibility || 'public';
 
   // Validate the visibility parameter and choose a corresponding table
-  let tableName = '';
-  if (visibility == 'public') {
-    tableName = 'ArticlesPublished';
-  } else if (visibility == 'private') {
-    tableName = 'ArticlesUnpublished';
-  } else {
+  let tableName = Helper.visibilityToTable(visibility);
+  if (tableName == false) {
     return res.status(400).send({
       status: 400,
       response: { message: 'invalid visibility parameter' },
@@ -72,7 +72,7 @@ router.delete('/delete', async (req: any, res: any) => {
 
 // Publish
 router.post('/publish', async (req: any, res: any) => {
-  const ID = req.body.id;
+  const ID = req.query.id;
 
   // Validate the ID parameter
   if (ID == undefined) {
@@ -92,12 +92,8 @@ router.get('/get', async (req: any, res: any) => {
   const visibility = req.query.visibility || 'public';
 
   // Validate the visibility parameter and choose a corresponding table
-  let tableName = '';
-  if (visibility == 'public') {
-    tableName = 'ArticlesPublished';
-  } else if (visibility == 'private') {
-    tableName = 'ArticlesUnpublished';
-  } else {
+  let tableName = Helper.visibilityToTable(visibility);
+  if (tableName == false) {
     return res.status(400).send({
       status: 400,
       response: { message: 'invalid visibility parameter' },
@@ -119,12 +115,8 @@ router.get('/author', async (req: any, res: any) => {
   const visibility = req.query.visibility || 'public';
 
   // Validate the visibility parameter and choose a corresponding table
-  let tableName = '';
-  if (visibility == 'public') {
-    tableName = 'ArticlesPublished';
-  } else if (visibility == 'private') {
-    tableName = 'ArticlesUnpublished';
-  } else {
+  let tableName = Helper.visibilityToTable(visibility);
+  if (tableName == false) {
     return res.status(400).send({
       status: 400,
       response: { message: 'invalid visibility parameter' },
@@ -176,12 +168,8 @@ router.get('/title', async (req: any, res: any) => {
   const visibility = req.query.visibility || 'public';
 
   // Validate the visibility parameter and choose a corresponding table
-  let tableName = '';
-  if (visibility == 'public') {
-    tableName = 'ArticlesPublished';
-  } else if (visibility == 'private') {
-    tableName = 'ArticlesUnpublished';
-  } else {
+  let tableName = Helper.visibilityToTable(visibility);
+  if (tableName == false) {
     return res.status(400).send({
       status: 400,
       response: { message: 'invalid visibility parameter' },
@@ -224,7 +212,7 @@ router.get('/title', async (req: any, res: any) => {
 });
 
 // By category
-router.get('/:categoryName', async (req: Request, res: Response) => {
+router.get('/:categoryName', async (req: any, res: any) => {
   const category = req.params.categoryName;
   const searchBy = req.query.searchBy || 'rating';
   const sortBy = req.query.sortBy || 'highest';
@@ -233,12 +221,8 @@ router.get('/:categoryName', async (req: Request, res: Response) => {
   const visibility = req.query.visibility || 'public';
 
   // Validate the visibility parameter and choose a corresponding table
-  let tableName = '';
-  if (visibility == 'public') {
-    tableName = 'ArticlesPublished';
-  } else if (visibility == 'private') {
-    tableName = 'ArticlesUnpublished';
-  } else {
+  let tableName = Helper.visibilityToTable(visibility);
+  if (tableName == false) {
     return res.status(400).send({
       status: 400,
       response: { message: 'invalid visibility parameter' },
@@ -289,12 +273,8 @@ router.get('/:category/:difficulty', async (req: any, res: any) => {
   const visibility = req.query.visibility || 'public';
 
   // Validate the visibility parameter and choose a corresponding table
-  let tableName = '';
-  if (visibility == 'public') {
-    tableName = 'ArticlesPublished';
-  } else if (visibility == 'private') {
-    tableName = 'ArticlesUnpublished';
-  } else {
+  let tableName = Helper.visibilityToTable(visibility);
+  if (tableName == false) {
     return res.status(400).send({
       status: 400,
       response: { message: 'invalid visibility parameter' },
@@ -318,18 +298,17 @@ router.post('/', async (req: any, res: any) => {
 
   // Check for the body and metadata parameters
   if (body == undefined || metadata == undefined) {
-    res.status(400).send({
+    return res.status(400).send({
       status: 400,
       response: { message: 'invalid request - missing body or metadata' },
     });
-    return;
   }
 
-  const imageId = uuidv4();
-  if (req.file) {
-    metadata.Image = imageId;
-  } else {
-    metadata.Image = '';
+  if (metadata.Image != undefined) {
+    return res.status(400).send({
+      status: 400,
+      response: { message: 'invalid metadata format' },
+    });
   }
 
   // Fetch the result and return it
@@ -348,12 +327,8 @@ router.put('/', async (req: any, res: any) => {
   const visibility = req.query.visibility || 'public';
 
   // Validate the visibility parameter and choose a corresponding table
-  let tableName = '';
-  if (visibility == 'public') {
-    tableName = 'ArticlesPublished';
-  } else if (visibility == 'private') {
-    tableName = 'ArticlesUnpublished';
-  } else {
+  let tableName = Helper.visibilityToTable(visibility);
+  if (tableName == false) {
     return res.status(400).send({
       status: 400,
       response: { message: 'invalid visibility parameter' },
@@ -379,15 +354,18 @@ router.post('/image', upload.single('image'), async (req: any, res: any) => {
   const visibility = req.query.visibility || 'public';
 
   // Validate the visibility parameter and choose a corresponding table
-  let tableName = '';
-  if (visibility == 'public') {
-    tableName = 'ArticlesPublished';
-  } else if (visibility == 'private') {
-    tableName = 'ArticlesUnpublished';
-  } else {
+  let tableName = Helper.visibilityToTable(visibility);
+  if (tableName == false) {
     return res.status(400).send({
       status: 400,
       response: { message: 'invalid visibility parameter' },
+    });
+  }
+
+  if (!req.file) {
+    return res.status(400).send({
+      status: 400,
+      response: { message: 'missing image' },
     });
   }
 
@@ -398,13 +376,6 @@ router.post('/image', upload.single('image'), async (req: any, res: any) => {
   }
 
   article = article.response.return;
-
-  if (!req.file) {
-    return res.status(400).send({
-      status: 400,
-      response: { message: 'missing image' },
-    });
-  }
 
   const imageId = uuidv4();
 

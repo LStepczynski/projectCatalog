@@ -8,12 +8,14 @@ import {
   QueryCommand,
   ReturnValue,
 } from '@aws-sdk/client-dynamodb';
+
+import { client } from './dynamodb';
+import { S3 } from './s3';
+
 import { unmarshall, marshall } from '@aws-sdk/util-dynamodb';
 
 import { v4 as uuidv4 } from 'uuid';
-import { S3 } from './s3';
-
-import { client } from './dynamodb';
+import { Helper } from './helper';
 
 interface Dictionary {
   [key: string]: any;
@@ -60,12 +62,6 @@ export class Articles {
     },
   ];
 
-  public static isValidUUID(uuid: string) {
-    const uuidRegex =
-      /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-    return uuidRegex.test(uuid);
-  }
-
   public static findTable(name: string): TableReturn {
     for (const tableName of Articles.TABLE_NAMES) {
       if (name === tableName.tableName) {
@@ -87,7 +83,7 @@ export class Articles {
       const isRequired = model[field].required == true;
       const isSameType = typeof model[field].value == typeof article[field];
 
-      if ((isEmpty && isRequired) || (!isSameType && !isEmpty)) {
+      if ((isEmpty && isRequired) || (!isSameType && isRequired)) {
         console.log(field);
         return false; // Field is missing, empty, or incorrect type
       }
@@ -160,12 +156,13 @@ export class Articles {
     }
 
     // Adding attributes to the metadata
-    if (!this.isValidUUID(id)) {
+    if (!Helper.isValidUUID(id)) {
       metadata.ID = uuidv4();
     } else {
       metadata.ID = id;
     }
-    const currentTime = Math.floor(new Date().getTime() / 1000);
+    const currentTime = Helper.getUNIXTimestamp();
+
     if (tableName == 'ArticlesPublished' && metadata.PublishedAt == undefined) {
       metadata.PublishedAt = currentTime;
     }
@@ -204,7 +201,7 @@ export class Articles {
       return { status: 400, response: { message: 'invalid id data type' } };
     }
 
-    if (!this.isValidUUID(id)) {
+    if (!Helper.isValidUUID(id)) {
       return { status: 400, response: { message: 'invalid id format' } };
     }
 
@@ -245,7 +242,7 @@ export class Articles {
       return { status: 400, response: { message: 'invalid id data type' } };
     }
 
-    if (!this.isValidUUID(id)) {
+    if (!Helper.isValidUUID(id)) {
       return { status: 400, response: { message: 'invalid id format' } };
     }
 
@@ -263,7 +260,7 @@ export class Articles {
       if (!response.Attributes) {
         return { status: 404, response: { message: 'item not found' } };
       }
-      console.log(unmarshall(response.Attributes));
+
       if (!(await S3.removeArticleFromS3(tableName, id))) {
         return { status: 500, response: { message: 'server error' } };
       }
@@ -307,7 +304,7 @@ export class Articles {
       return { status: 400, response: { message: 'invalid body data type' } };
     }
 
-    metadata.UpdatedAt = Math.floor(new Date().getTime() / 1000);
+    metadata.UpdatedAt = Helper.getUNIXTimestamp();
 
     const { ID, ...article } = metadata;
 

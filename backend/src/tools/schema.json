@@ -7,6 +7,7 @@
       { "AttributeName": "PrimaryCategory", "AttributeType": "S" },
       { "AttributeName": "Rating", "AttributeType": "N" },
       { "AttributeName": "PublishedAt", "AttributeType": "N" },
+      { "AttributeName": "CreatedAt", "AttributeType": "N" },
       { "AttributeName": "Author", "AttributeType": "S" },
       { "AttributeName": "Difficulty", "AttributeType": "S" }
     ],
@@ -89,6 +90,18 @@
         "KeySchema": [
           { "AttributeName": "PrimaryCategory", "KeyType": "HASH" },
           { "AttributeName": "Difficulty", "KeyType": "RANGE" }
+        ],
+        "Projection": { "ProjectionType": "ALL" },
+        "ProvisionedThroughput": {
+          "ReadCapacityUnits": 5,
+          "WriteCapacityUnits": 5
+        }
+      },
+      {
+        "IndexName": "PrimaryCategoryCreated",
+        "KeySchema": [
+          { "AttributeName": "PrimaryCategory", "KeyType": "HASH" },
+          { "AttributeName": "CreatedAt", "KeyType": "RANGE" }
         ],
         "Projection": { "ProjectionType": "ALL" },
         "ProvisionedThroughput": {
