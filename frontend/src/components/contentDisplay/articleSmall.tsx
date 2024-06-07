@@ -1,6 +1,7 @@
 import { Box, Heading, Text } from '@primer/react';
 import React from 'react';
 import { getRelativeDate } from '@helper/time';
+import { AnimatedImage } from '../animation/animatedImage';
 
 interface Props {
   article: Article;
@@ -38,26 +39,24 @@ export const ArticleSmall = (props: Props) => {
         transition: '0.3s all',
         boxShadow: hovering ? '0px 0px 25px rgba(255, 255, 255, 0.1)' : 'none',
       }}
-      onClick={() => (window.location.href = '/')}
+      onClick={() => (window.location.href = `/${article.ID}`)}
       onMouseOver={() => setHovering(true)}
       onMouseLeave={() => setHovering(false)}
     >
-      <Box
+      {/* <Box
         sx={{
           width: '100%',
           backgroundColor: 'white',
           height: '1px',
           mb: 3,
         }}
-      ></Box>
-      <img
-        style={{
-          width: '100%',
-          borderRadius: '10px',
-        }}
-        src={article.Image ? article.Image : defaultImage}
-        alt="Article Image"
-      />
+      ></Box> */}
+      <Box sx={{ borderRadius: '15px', overflow: 'hidden' }}>
+        <AnimatedImage
+          url={article.Image ? article.Image : defaultImage}
+          alt="Article Image"
+        />
+      </Box>
       <Box
         sx={{
           mx: 2,
