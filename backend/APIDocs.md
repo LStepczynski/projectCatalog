@@ -1,6 +1,6 @@
 ## DELETE - articles/
 
-Deleats the article and its image from the Database and S3.
+Deletes the article and its image from the Database and S3.
 
 ### Query Params
 
