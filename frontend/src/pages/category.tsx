@@ -1,6 +1,6 @@
 import { useParams } from 'react-router-dom';
 import React from 'react';
-import { Box } from '@primer/react';
+import { Box, Heading, Text } from '@primer/react';
 import { ArticleMedium } from '../components/contentDisplay/articleMedium';
 import { ArticleSmall } from '../components/contentDisplay/articleSmall';
 
@@ -38,6 +38,35 @@ export const Category: React.FC = () => {
         });
     }
   }, [categoryName, page]);
+
+  if (articles.length == 0) {
+    return (
+      <Box sx={{ mt: '100px' }}>
+        <Box sx={{ mb: 4 }}>
+          <Heading
+            sx={{
+              fontSize: '56px',
+              display: 'grid',
+              justifyContent: 'center',
+            }}
+          >
+            No Articles Found
+          </Heading>
+        </Box>
+        <Box>
+          <Text
+            sx={{
+              fontSize: '26px',
+              display: 'grid',
+              justifyContent: 'center',
+            }}
+          >
+            Sorry, no articles have been published yet. Check again later.
+          </Text>
+        </Box>
+      </Box>
+    );
+  }
 
   return (
     <Box
