@@ -1,6 +1,6 @@
 import { useParams } from 'react-router-dom';
 import React from 'react';
-import { Box, Heading, Text } from '@primer/react';
+import { Box, Heading, Text, Avatar } from '@primer/react';
 import { AnimatedImage } from '../components/animation/animatedImage';
 import { getRelativeDate } from '@helper/helper';
 
@@ -81,11 +81,17 @@ export const Article = () => {
           sx={{
             display: 'flex',
             justifyContent: 'space-between',
+            alignItems: 'center',
             mr: 4,
             ml: 2,
           }}
         >
-          <Text>{article.metadata.Author}</Text>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+            <Avatar size={40} src={article.metadata.AuthorProfilePic} />
+            <Text sx={{ fontWeight: 'bold', fontSize: '20px' }}>
+              {article.metadata.Author}
+            </Text>
+          </Box>
           <Text>
             {article.metadata.Rating} ✰ •{' '}
             {getRelativeDate(article.metadata.PublishedAt)}

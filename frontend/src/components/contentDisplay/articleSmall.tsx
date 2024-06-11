@@ -1,4 +1,4 @@
-import { Box, Heading, Text } from '@primer/react';
+import { Box, Heading, Text, Avatar } from '@primer/react';
 import React from 'react';
 import { getRelativeDate } from '@helper/helper';
 import { AnimatedImage } from '../animation/animatedImage';
@@ -11,6 +11,7 @@ interface Article {
   Title: string;
   Description: string;
   Author: String;
+  AuthorProfilePic: string;
   PrimaryCategory: string;
   SecondaryCategories: string[];
   Rating: number;
@@ -80,7 +81,10 @@ export const ArticleSmall = (props: Props) => {
             ml: 2,
           }}
         >
-          <Text>{article.Author}</Text>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <Avatar size={30} src={article.AuthorProfilePic} />
+            <Text>{article.Author}</Text>
+          </Box>
           <Text>
             {article.Rating} ✰ • {getRelativeDate(article.PublishedAt)}
           </Text>
