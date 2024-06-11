@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { Box, ActionList, Text } from "@primer/react";
+import { useEffect, useState } from 'react';
+import { Box, ActionList, Text } from '@primer/react';
 import {
   CodeIcon,
   PackageIcon,
@@ -11,8 +11,8 @@ import {
   TelescopeIcon,
   UnlockIcon,
   BookIcon,
-} from "@primer/octicons-react";
-import { debounce } from "lodash";
+} from '@primer/octicons-react';
+import { debounce } from 'lodash';
 
 interface Props {
   state: boolean;
@@ -20,62 +20,62 @@ interface Props {
 const iconSize: number = 22;
 const items = [
   {
-    title: "Navigation",
+    title: 'Navigation',
     items: [
       {
-        name: "Home",
+        name: 'Home',
         icon: <HomeIcon size={iconSize} />,
-        action: "/",
+        action: '/',
       },
       {
-        name: "Categories",
+        name: 'Categories',
         icon: <TelescopeIcon size={iconSize} />,
-        action: "/categories",
+        action: '/categories',
       },
       {
-        name: "Account",
+        name: 'Account',
         icon: <PersonIcon size={iconSize} />,
-        action: "/account",
+        action: '/account',
       },
     ],
   },
   {
-    title: "Categories",
+    title: 'Categories',
     items: [
       {
-        name: "Programming",
+        name: 'Programming',
         icon: <CodeIcon size={iconSize} />,
-        action: "/categories/programming/1",
+        action: '/categories/programming/1',
       },
       {
-        name: "3D Modeling",
+        name: '3D Modeling',
         icon: <PackageIcon size={iconSize} />,
-        action: "/categories/3d-modeling/1",
+        action: '/categories/3d-modeling/1',
       },
       {
-        name: "Electronics",
+        name: 'Electronics',
         icon: <PlugIcon size={iconSize} />,
-        action: "/categories/electronics/1",
+        action: '/categories/electronics/1',
       },
       {
-        name: "Woodworking",
+        name: 'Woodworking',
         icon: <ScreenFullIcon size={iconSize} />,
-        action: "/categories/woodworking/1",
+        action: '/categories/woodworking/1',
       },
       {
-        name: "Chemistry",
+        name: 'Chemistry',
         icon: <BeakerIcon size={iconSize} />,
-        action: "/categories/chemistry/1",
+        action: '/categories/chemistry/1',
       },
       {
-        name: "Cybersecurity",
+        name: 'Cybersecurity',
         icon: <UnlockIcon size={iconSize} />,
-        action: "/categories/cybersecurity/1",
+        action: '/categories/cybersecurity/1',
       },
       {
-        name: "Physics",
+        name: 'Physics',
         icon: <BookIcon size={iconSize} />,
-        action: "/categories/physics/1",
+        action: '/categories/physics/1',
       },
     ],
   },
@@ -90,27 +90,27 @@ export const SideBar = (props: Props) => {
   }, 300);
 
   useEffect(() => {
-    window.addEventListener("resize", handleResize);
+    window.addEventListener('resize', handleResize);
     return () => {
-      window.removeEventListener("resize", handleResize);
+      window.removeEventListener('resize', handleResize);
     };
   }, [handleResize]);
 
   return (
     <Box
       sx={{
-        transform: state ? "translateX(0)" : "translateX(-100%)",
-        transition: "transform 0.2s ease",
-        backgroundColor: "canvas.default",
-        borderRight: "2px solid",
-        borderColor: "sidenav.selectedBg",
-        flexDirection: "column",
-        position: "fixed",
-        display: "flex",
-        width: "250px",
-        height: "100%",
-        zIndex: 1000,
-        top: "65px",
+        transform: state ? 'translateX(0)' : 'translateX(-100%)',
+        transition: 'transform 0.2s ease',
+        backgroundColor: 'canvas.default',
+        borderRight: '2px solid',
+        borderColor: 'sidenav.selectedBg',
+        flexDirection: 'column',
+        position: 'fixed',
+        display: 'flex',
+        width: '250px',
+        height: '100%',
+        zIndex: 999,
+        pt: '80px',
       }}
     >
       {items.map((category: any, categoryIndex: number) => {
@@ -124,9 +124,9 @@ export const SideBar = (props: Props) => {
           >
             <Text
               sx={{
-                fontFamily: "Exo 2",
-                fontSize: "20px",
-                fontWeight: "bold",
+                fontFamily: 'Exo 2',
+                fontSize: '20px',
+                fontWeight: 'bold',
                 paddingLeft: 2,
               }}
             >
@@ -134,10 +134,10 @@ export const SideBar = (props: Props) => {
             </Text>
             <Box
               sx={{
-                width: "100%",
+                width: '100%',
                 marginTop: 2,
-                height: "1px",
-                backgroundColor: "ansi.white",
+                height: '1px',
+                backgroundColor: 'ansi.white',
               }}
             ></Box>
             <ActionList>
@@ -150,15 +150,15 @@ export const SideBar = (props: Props) => {
                     }}
                     sx={{
                       my: 2,
-                      display: "flex",
-                      alignItems: "center",
+                      display: 'flex',
+                      alignItems: 'center',
                     }}
                   >
                     {item.icon}
                     <Text
                       sx={{
-                        fontFamily: "Exo 2",
-                        fontSize: "16px",
+                        fontFamily: 'Exo 2',
+                        fontSize: '16px',
                         paddingLeft: 3,
                       }}
                     >
