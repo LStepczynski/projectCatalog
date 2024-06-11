@@ -317,12 +317,30 @@
   {
     "TableName": "Users",
     "AttributeDefinitions": [
-      { "AttributeName": "ID", "AttributeType": "S" },
-      { "AttributeName": "Username", "AttributeType": "S" }
+      { "AttributeName": "Username", "AttributeType": "S" },
+      { "AttributeName": "Email", "AttributeType": "S" },
+      { "AttributeName": "AccountCreated", "AttributeType": "N" }
     ],
-    "KeySchema": [
-      { "AttributeName": "ID", "KeyType": "HASH" },
-      { "AttributeName": "Username", "KeyType": "RANGE" }
+    "KeySchema": [{ "AttributeName": "Username", "KeyType": "HASH" }],
+    "GlobalSecondaryIndexes": [
+      {
+        "IndexName": "EmailIndex",
+        "KeySchema": [{ "AttributeName": "Email", "KeyType": "HASH" }],
+        "Projection": { "ProjectionType": "ALL" },
+        "ProvisionedThroughput": {
+          "ReadCapacityUnits": 5,
+          "WriteCapacityUnits": 5
+        }
+      },
+      {
+        "IndexName": "AccountCreatedIndex",
+        "KeySchema": [{ "AttributeName": "AccountCreated", "KeyType": "HASH" }],
+        "Projection": { "ProjectionType": "ALL" },
+        "ProvisionedThroughput": {
+          "ReadCapacityUnits": 5,
+          "WriteCapacityUnits": 5
+        }
+      }
     ],
     "ProvisionedThroughput": {
       "ReadCapacityUnits": 10,
