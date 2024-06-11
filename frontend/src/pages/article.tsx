@@ -2,7 +2,7 @@ import { useParams } from 'react-router-dom';
 import React from 'react';
 import { Box, Heading, Text } from '@primer/react';
 import { AnimatedImage } from '../components/animation/animatedImage';
-import { getRelativeDate } from '@helper/time';
+import { getRelativeDate } from '@helper/helper';
 
 export const Article = () => {
   const { id } = useParams<{

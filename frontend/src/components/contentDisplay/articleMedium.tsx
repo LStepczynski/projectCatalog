@@ -1,6 +1,6 @@
 import { Box, Heading, Text } from '@primer/react';
 import React from 'react';
-import { getRelativeDate } from '@helper/time';
+import { getRelativeDate } from '@helper/helper';
 import { AnimatedImage } from '../animation/animatedImage';
 
 interface Props {
