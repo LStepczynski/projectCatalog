@@ -59,7 +59,7 @@ router.post(
       });
     }
 
-    if (!UserManagment.checkUserPermissions(Username, req.user)) {
+    if (!UserManagment.checkUsername(Username, req.user)) {
       return res.status(400).send({
         status: 404,
         response: { message: 'permission denied' },

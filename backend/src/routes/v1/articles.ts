@@ -17,6 +17,8 @@ import { Helper } from ':api/services/helper';
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
+import { UserManagment } from ':api/services/userManagment';
+
 dotenv.config();
 
 const router = Router();
@@ -38,53 +40,80 @@ router.get('/', async (req: any, res: any) => {
 });
 
 // Delete
-router.delete('/delete', async (req: any, res: any) => {
-  const articleId = req.query.id;
-  const visibility = req.query.visibility || 'public';
+router.delete(
+  '/delete',
+  UserManagment.authenticateToken,
+  async (req: any, res: any) => {
+    const articleId = req.query.id;
+    const visibility = req.query.visibility || 'public';
+    const user = req.user;
 
-  // Validate the visibility parameter and choose a corresponding table
-  let tableName = Helper.visibilityToTable(visibility);
-  if (tableName == false) {
-    return res.status(400).send({
-      status: 400,
-      response: { message: 'invalid visibility parameter' },
-    });
+    // Validate the visibility parameter and choose a corresponding table
+    let tableName = Helper.visibilityToTable(visibility);
+    if (tableName == false) {
+      return res.status(400).send({
+        status: 400,
+        response: { message: 'invalid visibility parameter' },
+      });
+    }
+
+    // Validate the articleId parameter
+    if (articleId == undefined) {
+      return res
+        .status(400)
+        .send({ status: 400, response: { message: 'missing article id' } });
+    }
+
+    if (typeof articleId != 'string') {
+      return res.status(400).send({
+        status: 400,
+        response: { message: 'invalid or article id data type' },
+      });
+    }
+
+    // Get article Metadata
+    const articleRequest = await Articles.getArticleMetadata(
+      articleId,
+      tableName
+    );
+    const article = articleRequest.response.return;
+    if (!article) {
+      return res.status(articleRequest.status).send(articleRequest);
+    }
+
+    // Check if the user has permission to delete
+    if (!UserManagment.checkUsername(unmarshall(article).Author, user)) {
+      return res.status(403).send({
+        status: 403,
+        response: { message: 'permission denied' },
+      });
+    }
+
+    // Fetch the result and return it
+    const result = await Articles.removeArticle(tableName, articleId);
+    return res.status(result.status).send(result);
   }
-
-  // Validate the articleId parameter
-  if (articleId == undefined) {
-    return res
-      .status(400)
-      .send({ status: 400, response: { message: 'missing article id' } });
-  }
-
-  if (typeof articleId != 'string') {
-    return res.status(400).send({
-      status: 400,
-      response: { message: 'invalid or article id data type' },
-    });
-  }
-
-  // Fetch the result and return it
-  const result = await Articles.removeArticle(tableName, articleId);
-  return res.status(result.status).send(result);
-});
+);
 
 // Publish
-router.post('/publish', async (req: any, res: any) => {
-  const ID = req.query.id;
+router.post(
+  '/publish',
+  UserManagment.authenticateToken,
+  async (req: any, res: any) => {
+    const ID = req.query.id;
 
-  // Validate the ID parameter
-  if (ID == undefined) {
-    return res
-      .status(400)
-      .send({ status: 400, response: { message: 'missing article id' } });
+    // Validate the ID parameter
+    if (ID == undefined) {
+      return res
+        .status(400)
+        .send({ status: 400, response: { message: 'missing article id' } });
+    }
+
+    // Fetch the result and return it
+    const result = await Articles.publishArticle(ID);
+    return res.status(result.status).send(result);
   }
-
-  // Fetch the result and return it
-  const result = await Articles.publishArticle(ID);
-  return res.status(result.status).send(result);
-});
+);
 
 // By id
 router.get('/get', async (req: any, res: any) => {
@@ -292,36 +321,42 @@ router.get('/:category/:difficulty', async (req: any, res: any) => {
   return res.status(result.status).send(result);
 });
 
-router.post('/', async (req: any, res: any) => {
-  const body = req.body.body;
-  const metadata = req.body.metadata;
+// Post
+router.post(
+  '/',
+  UserManagment.authenticateToken,
+  async (req: any, res: any) => {
+    const body = req.body.body;
+    const metadata = req.body.metadata;
 
-  // Check for the body and metadata parameters
-  if (body == undefined || metadata == undefined) {
-    return res.status(400).send({
-      status: 400,
-      response: { message: 'invalid request - missing body or metadata' },
-    });
+    // Check for the body and metadata parameters
+    if (body == undefined || metadata == undefined) {
+      return res.status(400).send({
+        status: 400,
+        response: { message: 'invalid request - missing body or metadata' },
+      });
+    }
+
+    if (metadata.Image != undefined) {
+      return res.status(400).send({
+        status: 400,
+        response: { message: 'invalid metadata format' },
+      });
+    }
+
+    // Fetch the result and return it
+    const result = await Articles.createArticle(
+      'ArticlesUnpublished',
+      metadata,
+      body
+    );
+
+    return res.status(result.status).send(result);
   }
+);
 
-  if (metadata.Image != undefined) {
-    return res.status(400).send({
-      status: 400,
-      response: { message: 'invalid metadata format' },
-    });
-  }
-
-  // Fetch the result and return it
-  const result = await Articles.createArticle(
-    'ArticlesUnpublished',
-    metadata,
-    body
-  );
-
-  return res.status(result.status).send(result);
-});
-
-router.put('/', async (req: any, res: any) => {
+// Edit
+router.put('/', UserManagment.authenticateToken, async (req: any, res: any) => {
   const body = req.body.body;
   const metadata = req.body.metadata;
   const visibility = req.query.visibility || 'public';
@@ -349,57 +384,63 @@ router.put('/', async (req: any, res: any) => {
   return res.status(result.status).send(result);
 });
 
-router.post('/image', upload.single('image'), async (req: any, res: any) => {
-  const ID = req.query.id;
-  const visibility = req.query.visibility || 'public';
+// Image
+router.post(
+  '/image',
+  UserManagment.authenticateToken,
+  upload.single('image'),
+  async (req: any, res: any) => {
+    const ID = req.query.id;
+    const visibility = req.query.visibility || 'public';
 
-  // Validate the visibility parameter and choose a corresponding table
-  let tableName = Helper.visibilityToTable(visibility);
-  if (tableName == false) {
-    return res.status(400).send({
-      status: 400,
-      response: { message: 'invalid visibility parameter' },
-    });
-  }
-
-  if (!req.file) {
-    return res.status(400).send({
-      status: 400,
-      response: { message: 'missing image' },
-    });
-  }
-
-  let article = await Articles.getArticle(ID, tableName);
-
-  if (article.status != 200) {
-    return res.status(article.status).send(article);
-  }
-
-  article = article.response.return;
-
-  const imageId = uuidv4();
-
-  article.metadata.Image = `${process.env.AWS_S3_LINK}/images/${imageId}.png`;
-
-  try {
-    const response = await S3.saveImage(imageId, req.file);
-    if (!response) {
-      throw new Error('S3 error');
+    // Validate the visibility parameter and choose a corresponding table
+    let tableName = Helper.visibilityToTable(visibility);
+    if (tableName == false) {
+      return res.status(400).send({
+        status: 400,
+        response: { message: 'invalid visibility parameter' },
+      });
     }
-  } catch (err) {
-    console.log(err);
-    return res.status(500).send({
-      status: 500,
-      response: { message: 'server error' },
-    });
-  }
 
-  const result = await Articles.updateArticle(
-    tableName,
-    article.metadata,
-    article.body
-  );
-  return res.status(result.status).send(result);
-});
+    if (!req.file) {
+      return res.status(400).send({
+        status: 400,
+        response: { message: 'missing image' },
+      });
+    }
+
+    let article = await Articles.getArticle(ID, tableName);
+
+    if (article.status != 200) {
+      return res.status(article.status).send(article);
+    }
+
+    article = article.response.return;
+
+    const imageId = uuidv4();
+
+    article.metadata.Image = `${process.env.AWS_S3_LINK}/images/${imageId}.png`;
+
+    try {
+      const response = await S3.saveImage(imageId, req.file);
+      if (!response) {
+        throw new Error('S3 error');
+      }
+    } catch (err) {
+      console.log(err);
+      return res.status(500).send({
+        status: 500,
+        response: { message: 'server error' },
+      });
+    }
+
+    const result = await Articles.updateArticle(
+      tableName,
+      article.metadata,
+      article.body
+    );
+    return res.status(result.status).send(result);
+  }
+);
 
 export default router;

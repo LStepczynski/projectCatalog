@@ -22,9 +22,14 @@ export class UserManagment {
     return emailRegex.test(email);
   }
 
-  public static checkUserPermissions(username: string, user: any) {
+  public static checkUsername(username: string, user: any) {
     if (user.Admin === 'true') return true;
     if (user.Username === username) return true;
+    return false;
+  }
+
+  public static checkAdmin(user: any) {
+    if (user.Admin === 'true') return true;
     return false;
   }
 

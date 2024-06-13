@@ -136,6 +136,48 @@ export class Articles {
     }
   }
 
+  public static async getArticleMetadata(
+    articleId: string,
+    tableName: string
+  ): Promise<any | void> {
+    if (this.findTable(tableName) == false) {
+      return { status: 400, response: { message: 'table not found' } };
+    }
+
+    if (articleId == undefined) {
+      return {
+        status: 400,
+        response: { message: 'missing article id' },
+      };
+    }
+
+    if (typeof articleId != 'string') {
+      return {
+        status: 400,
+        response: { message: 'invalid article id data type' },
+      };
+    }
+
+    const params = {
+      TableName: tableName,
+      Key: {
+        ID: { S: articleId },
+      },
+    };
+
+    try {
+      const response = await client.send(new GetItemCommand(params));
+      if (!response.Item) {
+        return { status: 404, response: { message: 'item not found' } };
+      }
+
+      return { status: 200, response: { return: response.Item } };
+    } catch (err) {
+      console.log(err);
+      return { status: 500, response: { message: 'server error' } };
+    }
+  }
+
   public static async createArticle(
     tableName: string,
     metadata: any,
