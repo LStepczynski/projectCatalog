@@ -163,10 +163,15 @@ export class S3 {
   //   }
   // }
 
-  public static async saveImage(id: string, image: any) {
+  public static async saveImage(
+    id: string,
+    image: any,
+    imgWidth: number = 1280,
+    imgHeight: number = 720
+  ) {
     try {
       image = await sharp(image.buffer)
-        .resize({ width: 1280, height: 720, fit: 'cover' })
+        .resize({ width: imgWidth, height: imgHeight, fit: 'cover' })
         .png()
         .toBuffer();
 

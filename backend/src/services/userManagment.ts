@@ -1,6 +1,7 @@
 import {
   GetItemCommand,
   PutItemCommand,
+  UpdateItemCommand,
   DeleteItemCommand,
   ReturnValue,
 } from '@aws-sdk/client-dynamodb';
@@ -19,6 +20,10 @@ export class UserManagment {
   public static isValidEmail(email: string) {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
+  }
+
+  public static getNewJWT(user: any) {
+    return jwt.sign(user, process.env.JWT_KEY || 'default');
   }
 
   public static async genPassHash(password: string) {
@@ -130,6 +135,56 @@ export class UserManagment {
     }
   }
 
+  public static async updateUser(
+    username: string,
+    fieldName: string,
+    fieldValue: string
+  ) {
+    const allowedFields = ['Email', 'Password', 'ProfilePic'];
+
+    if (!allowedFields.includes(fieldName)) {
+      return {
+        status: 400,
+        response: { message: 'dissalowed field' },
+      };
+    }
+
+    const params = {
+      TableName: 'Users',
+      Key: {
+        Username: { S: username },
+      },
+      UpdateExpression: `set ${fieldName} = :newVal`,
+      ExpressionAttributeValues: {
+        ':newVal': { S: fieldValue },
+      },
+      ReturnValues: ReturnValue.ALL_OLD,
+    };
+
+    try {
+      const command = new UpdateItemCommand(params);
+      const result = await client.send(command);
+
+      if (!result.Attributes) {
+        return {
+          status: 404,
+          response: { message: 'user not found' },
+        };
+      }
+
+      return {
+        status: 200,
+        response: { message: 'Item updated successfully' },
+      };
+    } catch (err) {
+      console.error('Error updating item:', err);
+      return {
+        status: 500,
+        response: { message: 'Internal server error' },
+      };
+    }
+  }
+
   public static async verifyUser(username: string, password: string) {
     const user = await this.getUser(username);
     if (user == null) {
@@ -149,7 +204,7 @@ export class UserManagment {
 
     delete user.Password;
 
-    const token = jwt.sign(user, process.env.JWT_KEY || 'default');
+    const token = this.getNewJWT(user);
     return {
       status: 200,
       response: { accessToken: token },
