@@ -15,9 +15,7 @@ export const Category: React.FC = () => {
 
   React.useEffect(() => {
     if (categoryName && page) {
-      fetch(
-        `${backendUrl}/articles/${categoryName}?page=${page}&searchBy=date&sortBy=lowest`
-      )
+      fetch(`${backendUrl}/articles/${categoryName}?page=${page}`)
         .then((response) => {
           if (!response.ok) {
             throw new Error(
