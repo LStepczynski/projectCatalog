@@ -28,8 +28,8 @@ export const FileUploadModal = ({ endpoint, isOpen, closeFunc }: any) => {
       closeFunc(false);
       const result = await sendImage(file);
       if (result.status != 200) {
-        alert(
-          'There was a problem with updating the profile picture. Try again later.'
+        return alert(
+          `There was a problem with updating the profile picture. Try again later. Status code: ${result.status}`
         );
       }
       localStorage.setItem(
@@ -48,12 +48,13 @@ export const FileUploadModal = ({ endpoint, isOpen, closeFunc }: any) => {
     try {
       const response = await fetch(endpoint, {
         method: 'POST',
+        headers: {
+          authorization: `Bearer ${
+            localStorage.getItem('verificationToken') || ''
+          }`,
+        },
         body: formData,
       });
-
-      if (!response.ok) {
-        throw new Error('File upload failed.');
-      }
 
       return await response.json();
     } catch (error) {

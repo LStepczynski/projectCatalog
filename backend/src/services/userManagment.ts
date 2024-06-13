@@ -22,6 +22,12 @@ export class UserManagment {
     return emailRegex.test(email);
   }
 
+  public static checkUserPermissions(username: string, user: any) {
+    if (user.Admin === 'true') return true;
+    if (user.Username === username) return true;
+    return false;
+  }
+
   public static getNewJWT(user: any) {
     return jwt.sign(user, process.env.JWT_KEY || 'default');
   }
@@ -38,7 +44,8 @@ export class UserManagment {
   public static async createUser(
     username: string,
     password: string,
-    email: string
+    email: string,
+    admin: string = 'false'
   ) {
     if (!this.isValidEmail(email)) {
       return {
@@ -66,6 +73,7 @@ export class UserManagment {
       Username: username,
       Password: password,
       Email: email,
+      Admin: admin,
       ProfilePic:
         'https://project-catalog-storage.s3.us-east-2.amazonaws.com/images/pfp.png',
       AccountCreated: Helper.getUNIXTimestamp(),
@@ -140,7 +148,7 @@ export class UserManagment {
     fieldName: string,
     fieldValue: string
   ) {
-    const allowedFields = ['Email', 'Password', 'ProfilePic'];
+    const allowedFields = ['Email', 'Password', 'ProfilePic', 'Admin'];
 
     if (!allowedFields.includes(fieldName)) {
       return {
