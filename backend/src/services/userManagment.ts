@@ -33,6 +33,12 @@ export class UserManagment {
     return false;
   }
 
+  public static checkCanPost(user: any) {
+    if (user.Admin === 'true') return true;
+    if (user.CanPost === 'true') return true;
+    return false;
+  }
+
   public static getNewJWT(user: any) {
     return jwt.sign(user, process.env.JWT_KEY || 'default');
   }
@@ -50,6 +56,7 @@ export class UserManagment {
     username: string,
     password: string,
     email: string,
+    canPost: string = 'false',
     admin: string = 'false'
   ) {
     if (!this.isValidEmail(email)) {
@@ -79,6 +86,7 @@ export class UserManagment {
       Password: password,
       Email: email,
       Admin: admin,
+      CanPost: canPost,
       ProfilePic:
         'https://project-catalog-storage.s3.us-east-2.amazonaws.com/images/pfp.png',
       AccountCreated: Helper.getUNIXTimestamp(),
@@ -153,7 +161,13 @@ export class UserManagment {
     fieldName: string,
     fieldValue: string
   ) {
-    const allowedFields = ['Email', 'Password', 'ProfilePic', 'Admin'];
+    const allowedFields = [
+      'Email',
+      'Password',
+      'ProfilePic',
+      'CanPost',
+      'Admin',
+    ];
 
     if (!allowedFields.includes(fieldName)) {
       return {
@@ -232,6 +246,31 @@ export class UserManagment {
         status: 400,
         response: { message: 'missing authentication token' },
       });
+    }
+
+    jwt.verify(
+      token,
+      process.env.JWT_KEY || 'default',
+      (err: any, user: any) => {
+        if (err) {
+          return res.status(403).send({
+            status: 403,
+            response: { message: 'invalid token' },
+          });
+        }
+        req.user = user;
+        next();
+      }
+    );
+  }
+
+  public static authTokenOptional(req: any, res: any, next: any) {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+    if (token == null) {
+      req.user = {};
+      next();
+      return;
     }
 
     jwt.verify(

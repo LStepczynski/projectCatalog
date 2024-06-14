@@ -23,6 +23,7 @@ dotenv.config();
 
 const router = Router();
 
+// TO BE REMOVED
 router.get('/', async (req: any, res: any) => {
   try {
     const data = await client.send(
@@ -82,7 +83,7 @@ router.delete(
     }
 
     // Check if the user has permission to delete
-    if (!UserManagment.checkUsername(unmarshall(article).Author, user)) {
+    if (!UserManagment.checkUsername(article.Author, user)) {
       return res.status(403).send({
         status: 403,
         response: { message: 'permission denied' },
@@ -101,12 +102,20 @@ router.post(
   UserManagment.authenticateToken,
   async (req: any, res: any) => {
     const ID = req.query.id;
+    const user = req.user;
 
     // Validate the ID parameter
     if (ID == undefined) {
       return res
         .status(400)
         .send({ status: 400, response: { message: 'missing article id' } });
+    }
+
+    if (!UserManagment.checkAdmin(user)) {
+      return res.status(403).send({
+        status: 403,
+        response: { message: 'permission denied' },
+      });
     }
 
     // Fetch the result and return it
@@ -116,210 +125,272 @@ router.post(
 );
 
 // By id
-router.get('/get', async (req: any, res: any) => {
-  const articleId = req.query.id;
-  const visibility = req.query.visibility || 'public';
+router.get(
+  '/get',
+  UserManagment.authTokenOptional,
+  async (req: any, res: any) => {
+    const articleId = req.query.id;
+    const visibility = req.query.visibility || 'public';
+    const user = req.user;
 
-  // Validate the visibility parameter and choose a corresponding table
-  let tableName = Helper.visibilityToTable(visibility);
-  if (tableName == false) {
-    return res.status(400).send({
-      status: 400,
-      response: { message: 'invalid visibility parameter' },
-    });
+    // Validate the visibility parameter and choose a corresponding table
+    let tableName = Helper.visibilityToTable(visibility);
+    if (tableName == false) {
+      return res.status(400).send({
+        status: 400,
+        response: { message: 'invalid visibility parameter' },
+      });
+    }
+
+    // Fetch the result and return it
+    const result = await Articles.getArticle(articleId, tableName);
+    if (
+      visibility == 'private' &&
+      !UserManagment.checkUsername(result.response.return.metadata.Author, user)
+    ) {
+      return res.status(403).send({
+        status: 403,
+        response: { message: 'permission denied' },
+      });
+    }
+    return res.status(result.status).send(result);
   }
-
-  // Fetch the result and return it
-  const result = await Articles.getArticle(articleId, tableName);
-  return res.status(result.status).send(result);
-});
+);
 
 // By author
-router.get('/author', async (req: any, res: any) => {
-  const author = req.query.authorName;
-  const searchBy = req.query.searchBy || 'rating';
-  const sortBy = req.query.sortBy || 'highest';
-  const limit = Number(req.query.limit) || 10;
-  const page = Number(req.query.page) || 1;
-  const visibility = req.query.visibility || 'public';
+router.get(
+  '/author',
+  UserManagment.authTokenOptional,
+  async (req: any, res: any) => {
+    const author = req.query.authorName;
+    const searchBy = req.query.searchBy || 'rating';
+    const sortBy = req.query.sortBy || 'highest';
+    const limit = Number(req.query.limit) || 10;
+    const page = Number(req.query.page) || 1;
+    const visibility = req.query.visibility || 'public';
+    const user = req.user;
 
-  // Validate the visibility parameter and choose a corresponding table
-  let tableName = Helper.visibilityToTable(visibility);
-  if (tableName == false) {
-    return res.status(400).send({
-      status: 400,
-      response: { message: 'invalid visibility parameter' },
-    });
+    if (visibility == 'private' && !UserManagment.checkUsername(author, user)) {
+      return res.status(403).send({
+        status: 403,
+        response: { message: 'permission denied' },
+      });
+    }
+
+    // Validate the visibility parameter and choose a corresponding table
+    let tableName = Helper.visibilityToTable(visibility);
+    if (tableName == false) {
+      return res.status(400).send({
+        status: 400,
+        response: { message: 'invalid visibility parameter' },
+      });
+    }
+
+    // Choose a correct fetch function and the sorting method
+    let getFunc = Articles.getAuthorRating.bind(Articles); // Function
+    let scanIndexForward: boolean = false; // Sort
+
+    // Validate searchBy parameter
+    if (searchBy === 'date') {
+      getFunc = Articles.getAuthorCreated.bind(Articles);
+    } else if (searchBy != 'rating') {
+      return res
+        .status(400)
+        .send({ status: 400, response: { message: 'Invalid searchBy value' } });
+    }
+
+    // Validate sortBy parameter
+    if (sortBy === 'lowest') {
+      scanIndexForward = true;
+    } else if (sortBy != 'highest') {
+      return res
+        .status(400)
+        .send({ status: 400, response: { message: 'Invalid sortBy value' } });
+    }
+
+    const args: [string, string, number, number, boolean] = [
+      tableName,
+      author,
+      page,
+      limit,
+      scanIndexForward,
+    ];
+
+    // Fetch the result and return it
+    const result = await getFunc(...args);
+    return res.status(result.status).send(result);
   }
-
-  // Choose a correct fetch function and the sorting method
-  let getFunc = Articles.getAuthorRating.bind(Articles); // Function
-  let scanIndexForward: boolean = false; // Sort
-
-  // Validate searchBy parameter
-  if (searchBy === 'date') {
-    getFunc = Articles.getAuthorCreated.bind(Articles);
-  } else if (searchBy != 'rating') {
-    return res
-      .status(400)
-      .send({ status: 400, response: { message: 'Invalid searchBy value' } });
-  }
-
-  // Validate sortBy parameter
-  if (sortBy === 'lowest') {
-    scanIndexForward = true;
-  } else if (sortBy != 'highest') {
-    return res
-      .status(400)
-      .send({ status: 400, response: { message: 'Invalid sortBy value' } });
-  }
-
-  const args: [string, string, number, number, boolean] = [
-    tableName,
-    author,
-    page,
-    limit,
-    scanIndexForward,
-  ];
-
-  // Fetch the result and return it
-  const result = await getFunc(...args);
-  return res.status(result.status).send(result);
-});
+);
 
 // By title
-router.get('/title', async (req: any, res: any) => {
-  const title = req.query.title;
-  const searchBy = req.query.searchBy || 'rating';
-  const sortBy = req.query.sortBy || 'highest';
-  const limit = Number(req.query.limit) || 10;
-  const page = Number(req.query.page) || 1;
-  const visibility = req.query.visibility || 'public';
+router.get(
+  '/title',
+  UserManagment.authTokenOptional,
+  async (req: any, res: any) => {
+    const title = req.query.title;
+    const searchBy = req.query.searchBy || 'rating';
+    const sortBy = req.query.sortBy || 'highest';
+    const limit = Number(req.query.limit) || 10;
+    const page = Number(req.query.page) || 1;
+    const visibility = req.query.visibility || 'public';
+    const user = req.user;
 
-  // Validate the visibility parameter and choose a corresponding table
-  let tableName = Helper.visibilityToTable(visibility);
-  if (tableName == false) {
-    return res.status(400).send({
-      status: 400,
-      response: { message: 'invalid visibility parameter' },
-    });
+    if (visibility == 'private' && !UserManagment.checkAdmin(user)) {
+      return res.status(403).send({
+        status: 403,
+        response: { message: 'permission denied' },
+      });
+    }
+
+    // Validate the visibility parameter and choose a corresponding table
+    let tableName = Helper.visibilityToTable(visibility);
+    if (tableName == false) {
+      return res.status(400).send({
+        status: 400,
+        response: { message: 'invalid visibility parameter' },
+      });
+    }
+
+    // Choose a correct fetch function and the sorting method
+    let getFunc = Articles.getTitleRating.bind(Articles); // Function
+    let scanIndexForward: boolean = false; // Sort
+
+    // Validate searchBy parameter
+    if (searchBy === 'date') {
+      getFunc = Articles.getTitleCreated.bind(Articles);
+    } else if (searchBy != 'rating') {
+      return res
+        .status(400)
+        .send({ status: 400, response: { message: 'Invalid searchBy value' } });
+    }
+
+    // Validate searchBy parameter
+    if (sortBy === 'lowest') {
+      scanIndexForward = true;
+    } else if (sortBy != 'highest') {
+      return res
+        .status(400)
+        .send({ status: 400, response: { message: 'Invalid sortBy value' } });
+    }
+
+    const args: [string, string, number, number, boolean] = [
+      tableName,
+      title,
+      page,
+      limit,
+      scanIndexForward,
+    ];
+
+    // Fetch the result and return it
+    const result = await getFunc(...args);
+    return res.status(result.status).send(result);
   }
-
-  // Choose a correct fetch function and the sorting method
-  let getFunc = Articles.getTitleRating.bind(Articles); // Function
-  let scanIndexForward: boolean = false; // Sort
-
-  // Validate searchBy parameter
-  if (searchBy === 'date') {
-    getFunc = Articles.getTitleCreated.bind(Articles);
-  } else if (searchBy != 'rating') {
-    return res
-      .status(400)
-      .send({ status: 400, response: { message: 'Invalid searchBy value' } });
-  }
-
-  // Validate searchBy parameter
-  if (sortBy === 'lowest') {
-    scanIndexForward = true;
-  } else if (sortBy != 'highest') {
-    return res
-      .status(400)
-      .send({ status: 400, response: { message: 'Invalid sortBy value' } });
-  }
-
-  const args: [string, string, number, number, boolean] = [
-    tableName,
-    title,
-    page,
-    limit,
-    scanIndexForward,
-  ];
-
-  // Fetch the result and return it
-  const result = await getFunc(...args);
-  return res.status(result.status).send(result);
-});
+);
 
 // By category
-router.get('/:categoryName', async (req: any, res: any) => {
-  const category = req.params.categoryName;
-  const searchBy = req.query.searchBy || 'rating';
-  const sortBy = req.query.sortBy || 'highest';
-  const limit = Number(req.query.limit) || 10;
-  const page = Number(req.query.page) || 1;
-  const visibility = req.query.visibility || 'public';
+router.get(
+  '/:categoryName',
+  UserManagment.authTokenOptional,
+  async (req: any, res: any) => {
+    const category = req.params.categoryName;
+    const searchBy = req.query.searchBy || 'rating';
+    const sortBy = req.query.sortBy || 'highest';
+    const limit = Number(req.query.limit) || 10;
+    const page = Number(req.query.page) || 1;
+    const visibility = req.query.visibility || 'public';
+    const user = req.user;
 
-  // Validate the visibility parameter and choose a corresponding table
-  let tableName = Helper.visibilityToTable(visibility);
-  if (tableName == false) {
-    return res.status(400).send({
-      status: 400,
-      response: { message: 'invalid visibility parameter' },
-    });
+    if (visibility == 'private' && !UserManagment.checkAdmin(user)) {
+      return res.status(403).send({
+        status: 403,
+        response: { message: 'permission denied' },
+      });
+    }
+
+    // Validate the visibility parameter and choose a corresponding table
+    let tableName = Helper.visibilityToTable(visibility);
+    if (tableName == false) {
+      return res.status(400).send({
+        status: 400,
+        response: { message: 'invalid visibility parameter' },
+      });
+    }
+
+    // Choose a correct fetch function and the sorting method
+    let getFunc = Articles.getCategoryRating.bind(Articles); // Function
+    let scanIndexForward: boolean = false; // Sort
+
+    // Validate searchBy parameter
+    if (searchBy === 'date') {
+      getFunc = Articles.getCategoryCreated.bind(Articles);
+    } else if (searchBy != 'rating') {
+      return res
+        .status(400)
+        .send({ status: 400, response: { message: 'Invalid searchBy value' } });
+    }
+
+    // Validate sortBy parameter
+    if (sortBy === 'lowest') {
+      scanIndexForward = true;
+    } else if (sortBy != 'highest') {
+      return res
+        .status(400)
+        .send({ status: 400, response: { message: 'Invalid sortBy value' } });
+    }
+
+    const args: [string, string, number, number, boolean] = [
+      tableName,
+      category,
+      page,
+      limit,
+      scanIndexForward,
+    ];
+
+    // Fetch the result and return it
+    const result = await getFunc(...args);
+    return res.status(result.status).send(result);
   }
-
-  // Choose a correct fetch function and the sorting method
-  let getFunc = Articles.getCategoryRating.bind(Articles); // Function
-  let scanIndexForward: boolean = false; // Sort
-
-  // Validate searchBy parameter
-  if (searchBy === 'date') {
-    getFunc = Articles.getCategoryCreated.bind(Articles);
-  } else if (searchBy != 'rating') {
-    return res
-      .status(400)
-      .send({ status: 400, response: { message: 'Invalid searchBy value' } });
-  }
-
-  // Validate sortBy parameter
-  if (sortBy === 'lowest') {
-    scanIndexForward = true;
-  } else if (sortBy != 'highest') {
-    return res
-      .status(400)
-      .send({ status: 400, response: { message: 'Invalid sortBy value' } });
-  }
-
-  const args: [string, string, number, number, boolean] = [
-    tableName,
-    category,
-    page,
-    limit,
-    scanIndexForward,
-  ];
-
-  // Fetch the result and return it
-  const result = await getFunc(...args);
-  return res.status(result.status).send(result);
-});
+);
 
 // By category/difficulty
-router.get('/:category/:difficulty', async (req: any, res: any) => {
-  const category = req.params.category;
-  const difficulty = req.params.difficulty;
-  const limit = Number(req.query.limit) || 10;
-  const page = Number(req.query.page) || 1;
-  const visibility = req.query.visibility || 'public';
+router.get(
+  '/:category/:difficulty',
+  UserManagment.authTokenOptional,
+  async (req: any, res: any) => {
+    const category = req.params.category;
+    const difficulty = req.params.difficulty;
+    const limit = Number(req.query.limit) || 10;
+    const page = Number(req.query.page) || 1;
+    const visibility = req.query.visibility || 'public';
+    const user = req.user;
 
-  // Validate the visibility parameter and choose a corresponding table
-  let tableName = Helper.visibilityToTable(visibility);
-  if (tableName == false) {
-    return res.status(400).send({
-      status: 400,
-      response: { message: 'invalid visibility parameter' },
-    });
+    if (visibility == 'private' && !UserManagment.checkAdmin(user)) {
+      return res.status(403).send({
+        status: 403,
+        response: { message: 'permission denied' },
+      });
+    }
+
+    // Validate the visibility parameter and choose a corresponding table
+    let tableName = Helper.visibilityToTable(visibility);
+    if (tableName == false) {
+      return res.status(400).send({
+        status: 400,
+        response: { message: 'invalid visibility parameter' },
+      });
+    }
+
+    // Fetch the result and return it
+    const result = await Articles.getCategoryDifficulty(
+      tableName,
+      category,
+      difficulty,
+      page,
+      limit
+    );
+    return res.status(result.status).send(result);
   }
-
-  // Fetch the result and return it
-  const result = await Articles.getCategoryDifficulty(
-    tableName,
-    category,
-    difficulty,
-    page,
-    limit
-  );
-  return res.status(result.status).send(result);
-});
+);
 
 // Post
 router.post(
@@ -328,6 +399,7 @@ router.post(
   async (req: any, res: any) => {
     const body = req.body.body;
     const metadata = req.body.metadata;
+    const user = req.user;
 
     // Check for the body and metadata parameters
     if (body == undefined || metadata == undefined) {
@@ -341,6 +413,13 @@ router.post(
       return res.status(400).send({
         status: 400,
         response: { message: 'invalid metadata format' },
+      });
+    }
+
+    if (!UserManagment.checkCanPost(user)) {
+      return res.status(403).send({
+        status: 403,
+        response: { message: 'permission denied' },
       });
     }
 
@@ -360,6 +439,7 @@ router.put('/', UserManagment.authenticateToken, async (req: any, res: any) => {
   const body = req.body.body;
   const metadata = req.body.metadata;
   const visibility = req.query.visibility || 'public';
+  const user = req.user;
 
   // Validate the visibility parameter and choose a corresponding table
   let tableName = Helper.visibilityToTable(visibility);
@@ -379,6 +459,23 @@ router.put('/', UserManagment.authenticateToken, async (req: any, res: any) => {
     return;
   }
 
+  const articleRequest = await Articles.getArticleMetadata(
+    metadata.ID,
+    tableName
+  );
+  const article = articleRequest.response.return;
+  if (!article) {
+    return res.status(articleRequest.status).send(articleRequest);
+  }
+
+  // Check if the user has permission to delete
+  if (!UserManagment.checkUsername(article.Author, user)) {
+    return res.status(403).send({
+      status: 403,
+      response: { message: 'permission denied' },
+    });
+  }
+
   // Fetch the result and return it
   const result = await Articles.updateArticle(tableName, metadata, body);
   return res.status(result.status).send(result);
@@ -392,6 +489,7 @@ router.post(
   async (req: any, res: any) => {
     const ID = req.query.id;
     const visibility = req.query.visibility || 'public';
+    const user = req.user;
 
     // Validate the visibility parameter and choose a corresponding table
     let tableName = Helper.visibilityToTable(visibility);
@@ -409,13 +507,20 @@ router.post(
       });
     }
 
-    let article = await Articles.getArticle(ID, tableName);
+    let articleRequest = await Articles.getArticle(ID, tableName);
 
-    if (article.status != 200) {
-      return res.status(article.status).send(article);
+    if (articleRequest.status != 200) {
+      return res.status(articleRequest.status).send(articleRequest);
     }
 
-    article = article.response.return;
+    const article = articleRequest.response.return;
+    // Check if the user has permission to delete
+    if (!UserManagment.checkUsername(article.metadata.Author, user)) {
+      return res.status(403).send({
+        status: 403,
+        response: { message: 'permission denied' },
+      });
+    }
 
     const imageId = uuidv4();
 

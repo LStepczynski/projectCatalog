@@ -171,7 +171,7 @@ export class Articles {
         return { status: 404, response: { message: 'item not found' } };
       }
 
-      return { status: 200, response: { return: response.Item } };
+      return { status: 200, response: { return: unmarshall(response.Item) } };
     } catch (err) {
       console.log(err);
       return { status: 500, response: { message: 'server error' } };
