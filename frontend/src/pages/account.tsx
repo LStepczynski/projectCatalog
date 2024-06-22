@@ -4,7 +4,7 @@ import { Box, Heading, Text, Button } from '@primer/react';
 
 import { getUserFromJWT } from '@helper/helper';
 import { ProfilePicture } from '../components/contentDisplay/profilePicture';
-import { FileUploadModal } from '../components/contentDisplay/fileUploadModal';
+import { ProfileUploadModal } from '../components/contentDisplay/profileUploadModal';
 
 export const Account = () => {
   const [uploadModal, setUploadModal] = React.useState<any>(false);
@@ -62,7 +62,7 @@ export const Account = () => {
             alt="Add New Icon"
           />
           <ProfilePicture src={user.ProfilePic} />
-          <FileUploadModal
+          <ProfileUploadModal
             endpoint={`${backendUrl}/user/image?username=${user.Username}`}
             isOpen={uploadModal}
             closeFunc={setUploadModal}

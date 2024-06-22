@@ -14,6 +14,6 @@
       }
     },
     "include": [
-      "src/**/*", "test.ts",
+      "src/**/*", "src/test.ts",
     ],
   }

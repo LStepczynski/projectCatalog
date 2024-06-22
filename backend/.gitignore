@@ -5,3 +5,4 @@ node_modules
 /.esbuild
 /docker
 .env
+src/test.ts

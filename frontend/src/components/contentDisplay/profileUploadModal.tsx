@@ -3,7 +3,7 @@ import { Box, TextInput, Button } from '@primer/react';
 import React from 'react';
 import { MoveToBottomIcon } from '@primer/octicons-react';
 
-export const FileUploadModal = ({ endpoint, isOpen, closeFunc }: any) => {
+export const ProfileUploadModal = ({ endpoint, isOpen, closeFunc }: any) => {
   const fileInputRef = React.useRef<any>(null);
 
   const handleClick = () => {

@@ -6,6 +6,7 @@ import { Category } from './pages/category';
 import { Login } from './pages/login';
 import { Register } from './pages/register';
 import { Article } from './pages/article';
+import { Create } from './pages/create';
 
 export const Routes = () => {
   const router = createBrowserRouter([
@@ -28,6 +29,10 @@ export const Routes = () => {
     {
       path: '/sign-up',
       element: <Register />,
+    },
+    {
+      path: '/create',
+      element: <Create />,
     },
     {
       path: '/categories/:categoryName/:page',
