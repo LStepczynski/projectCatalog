@@ -89,12 +89,12 @@ export class S3 {
 
       await s3Client.send(new DeleteObjectCommand(params));
 
-      fs.unlink(`src/images/${id}.png`, (err) => {
-        if (err) {
-          console.log('Error while removing file from local directory');
-          return false;
-        }
-      });
+      // fs.unlink(`src/images/${id}.png`, (err) => {
+      //   if (err) {
+      //     console.log('Error while removing file from local directory');
+      //     return false;
+      //   }
+      // });
 
       return true;
     } catch (err) {
@@ -178,8 +178,8 @@ export class S3 {
       const bucketName = process.env.AWS_S3_BUCKET_NAME;
       const objectKey = `images/${id}.png`;
 
-      // Temporary for local import purposes
-      fs.writeFileSync(`src/images/${id}.png`, image);
+      // // Temporary for local import purposes
+      // fs.writeFileSync(`src/images/${id}.png`, image);
 
       const params = {
         Bucket: bucketName,

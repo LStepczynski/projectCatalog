@@ -1,7 +1,10 @@
 import { Box, Heading, Text, Avatar } from '@primer/react';
 import React from 'react';
 import { getRelativeDate } from '@helper/helper';
-import { AnimatedImage } from '../animation/animatedImage';
+import { AnimatedImage } from '../../animation/animatedImage';
+import { KebabHorizontalIcon } from '@primer/octicons-react';
+
+import { ArticleDropdown } from './articleDropdown';
 
 interface Props {
   article: Article;
@@ -23,7 +26,7 @@ interface Article {
   ID: string;
 }
 
-export const ArticleMedium = (props: Props) => {
+export const ArticleSmall = (props: Props) => {
   const [hovering, setHovering] = React.useState(false);
   const { article } = props;
 
@@ -33,17 +36,30 @@ export const ArticleMedium = (props: Props) => {
   return (
     <Box
       sx={{
-        width: '620px',
-        borderRadius: '15px',
-        transition: '0.3s all',
         boxShadow: hovering ? '0px 0px 25px rgba(255, 255, 255, 0.1)' : 'none',
-        p: 4,
+        transition: '0.3s all',
+        borderRadius: '15px',
+        position: 'relative',
+        width: '330px',
+        mt: 4,
+        p: 3,
       }}
-      onClick={() => (window.location.href = `/${article.ID}`)}
       onMouseOver={() => setHovering(true)}
       onMouseLeave={() => setHovering(false)}
     >
-      <Box sx={{ borderRadius: '15px', overflow: 'hidden' }}>
+      <Box sx={{ position: 'absolute', right: 3, bottom: 0 }}>
+        <ArticleDropdown
+          setHovering={setHovering}
+          article={article}
+          visibility="public"
+        />
+      </Box>
+      <Box
+        sx={{ borderRadius: '15px', overflow: 'hidden' }}
+        onClick={() =>
+          (window.location.href = `/${article.ID}?visibility=public`)
+        }
+      >
         <AnimatedImage
           url={article.Image ? article.Image : defaultImage}
           alt="Article Image"
@@ -56,10 +72,13 @@ export const ArticleMedium = (props: Props) => {
           flexDirection: 'column',
           gap: 2,
         }}
+        onClick={() =>
+          (window.location.href = `/${article.ID}?visibility=public`)
+        }
       >
         <Heading
           sx={{
-            fontSize: '28px',
+            fontSize: '18px',
           }}
         >
           {article.Title}
@@ -73,10 +92,10 @@ export const ArticleMedium = (props: Props) => {
           }}
         >
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <Avatar size={35} src={article.AuthorProfilePic} />
-            <Text>{article.Author}</Text>
+            <Avatar size={24} src={article.AuthorProfilePic} />
+            <Text sx={{ fontSize: '12px' }}>{article.Author}</Text>
           </Box>
-          <Text>
+          <Text sx={{ fontSize: '12px' }}>
             {article.Rating} ✰ • {getRelativeDate(article.PublishedAt)}
           </Text>
         </Box>

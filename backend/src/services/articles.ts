@@ -3,7 +3,8 @@ import {
   PutItemCommand,
   PutItemCommandInput,
   DeleteItemCommand,
-  BatchGetItemCommand,
+  UpdateItemCommand,
+  UpdateItemCommandInput,
   QueryCommandInput,
   QueryCommand,
   ReturnValue,
@@ -60,6 +61,7 @@ export class Articles {
         UpdatedAt: { value: 0, required: false },
         Difficulty: { value: '', required: true },
         Image: { value: '', required: false },
+        Status: {value: '', required: false },
       },
     },
   ];
@@ -212,6 +214,7 @@ export class Articles {
     }
     if (tableName == 'ArticlesUnpublished' && metadata.CreatedAt == undefined) {
       metadata.CreatedAt = currentTime;
+      metadata.Status = 'private'
     }
     if (metadata.UpdatedAt == undefined) {
       metadata.UpdatedAt = null;
@@ -234,7 +237,7 @@ export class Articles {
 
     try {
       await client.send(new PutItemCommand(params));
-      return { status: 200, response: { message: 'item added succesfully' } };
+      return { status: 200, response: { message: 'item added succesfully', id: metadata.ID } };
     } catch (err: any) {
       return { status: 500, response: { message: 'server error' } };
     }
@@ -255,6 +258,7 @@ export class Articles {
     }
     const getRespItems = getResponse.response.return;
     delete getRespItems.metadata.ID;
+    delete getRespItems.metadata.Status
 
     const addResponse = await this.createArticle(
       'ArticlesPublished',
@@ -265,8 +269,8 @@ export class Articles {
     if (addResponse.status != 200) {
       return addResponse;
     }
-
-    const removeResponse = await this.removeArticle('ArticlesUnpublished', id);
+    
+    const removeResponse = await this.removeArticle('ArticlesUnpublished', id, false);
     if (removeResponse.status != 200) {
       return removeResponse;
     }
@@ -274,7 +278,43 @@ export class Articles {
     return { status: 200, response: { message: 'item published succesfully' } };
   }
 
-  public static async removeArticle(tableName: string, id: string) {
+  public static async hideArticle(id: string) {
+    if (typeof id !== 'string') {
+      return { status: 400, response: { message: 'invalid id data type' } };
+    }
+
+    if (!Helper.isValidUUID(id)) {
+      return { status: 400, response: { message: 'invalid id format' } };
+    }
+
+    const getResponse = await this.getArticle(id, 'ArticlesPublished');
+    if (getResponse.status != 200) {
+      return getResponse;
+    }
+    const getRespItems = getResponse.response.return;
+    delete getRespItems.metadata.ID;
+    delete getRespItems.metadata.PublishedAt;
+    getRespItems.metadata.Status = 'private'
+
+    const addResponse = await this.createArticle(
+      'ArticlesUnpublished',
+      getRespItems.metadata,
+      getRespItems.body,
+      id
+    );
+    if (addResponse.status != 200) {
+      return addResponse;
+    }
+    
+    const removeResponse = await this.removeArticle('ArticlesPublished', id, false);
+    if (removeResponse.status != 200) {
+      return removeResponse;
+    }
+
+    return { status: 200, response: { message: 'item hid succesfully' } };
+  }
+
+  public static async removeArticle(tableName: string, id: string, removeImage: boolean = true) {
     const tableInfo: TableReturn = this.findTable(tableName);
 
     // Validations
@@ -310,7 +350,7 @@ export class Articles {
       }
 
       const returnItem = unmarshall(response.Attributes);
-      if (returnItem.Image != null) {
+      if (removeImage && returnItem.Image != null) {
         const regex =
           /[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/i;
         const match = returnItem.Image.match(regex);
@@ -367,6 +407,65 @@ export class Articles {
     }
 
     return { status: 200, response: { message: 'item eddited succesfully' } };
+  }
+
+  public static async patchArticle(tableName: string, id: string, itemKey: string, itemValue: any) {
+    const tableInfo: TableReturn = this.findTable(tableName);
+
+    // Validations
+    if (tableInfo == false) {
+      return { status: 400, response: { message: 'table not found' } };
+    }
+    if (!id || !itemKey || itemValue == undefined) {
+      return { status: 400, response: { message: "id, key, or value not provided"} }
+    }
+
+    let article = S3.readFromS3(tableName, id);
+    if (!article) {
+      return { status: 404, response: { message: "item not found"} }
+    }
+    if (itemKey == 'body') {
+      article.body = itemValue
+    } else {
+      article.metadata[itemKey] = itemValue
+    }
+    if (!(await S3.addToS3(tableName, article.metadata, article.body))) {
+      return { status: 500, response: { message: "server error"} }
+    }
+
+    const params: UpdateItemCommandInput = {
+      TableName: tableName,
+      Key: {
+        ID: { S: id },
+      },
+      UpdateExpression: `set #prop = :value`,
+      ExpressionAttributeNames: {
+        '#prop': itemKey,
+      },
+      ExpressionAttributeValues: {
+        ':value': { S: itemValue },
+      },
+      ReturnValues: 'UPDATED_NEW',
+      ConditionExpression: 'attribute_exists(ID)'
+    }
+
+    try {
+      const data = await client.send(new UpdateItemCommand(params));
+
+      if (!data.Attributes) {
+        return { status: 404, response: { message: "item not found"} }
+      }
+
+      return { status: 200, response: { message: "item updated successfully", return: data.Attributes} }
+    } catch (err: any) {
+      if (err.name === 'ConditionalCheckFailedException') {
+        return { status: 404, response: { message: "item not found"} }
+      }
+
+      console.error('Unable to update item. Error:', err);
+      return { status: 500, response: { message: "server error"} }
+    }
+
   }
 
   public static async getPaginationItems(

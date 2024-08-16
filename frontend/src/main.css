@@ -1,0 +1,24 @@
+/* Global scroll bar styling for WebKit browsers */
+::-webkit-scrollbar {
+    width: 8px; /* Width of the entire scrollbar */
+  }
+  
+  ::-webkit-scrollbar-track {
+    background: #13141c; /* Color of the scrollbar track */
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    background-color: #888; /* Color of the scrollbar thumb */
+    border-radius: 10px; /* Roundness of the scroll thumb */
+    border: 3px solid #13141c; /* Padding around the thumb */
+  }
+  
+  ::-webkit-scrollbar-thumb:hover {
+    background: #555; /* Color of the thumb when hovered */
+  }
+  
+  /* Global scroll bar styling for Firefox */
+  body {
+    scrollbar-width: thin; /* Set the width of the scrollbar */
+    scrollbar-color: #888 #f1f1f1; /* thumb color track color */
+  }

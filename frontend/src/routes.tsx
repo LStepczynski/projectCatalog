@@ -7,6 +7,7 @@ import { Login } from './pages/login';
 import { Register } from './pages/register';
 import { Article } from './pages/article';
 import { Create } from './pages/create';
+import { MyArticles } from './pages/myArticles';
 
 export const Routes = () => {
   const router = createBrowserRouter([
@@ -29,6 +30,10 @@ export const Routes = () => {
     {
       path: '/sign-up',
       element: <Register />,
+    },
+    {
+      path: '/myArticles',
+      element: <MyArticles />,
     },
     {
       path: '/create',

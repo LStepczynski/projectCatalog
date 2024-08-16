@@ -8,7 +8,6 @@ import { ProfileDropdown } from '../contentDisplay/profileDropdown';
 
 export const NavBar = () => {
   const [prevScrollPos, setPrevScrollPos] = useState(window.pageYOffset);
-  const [screenWidth, setScreenWidth] = useState(window.innerWidth);
   const [navbarVis, setNavbarVis] = useState(true);
   const [sidevarVis, setSidebarVis] = useState(
     localStorage.getItem('sidebarVis') || 'false'
@@ -24,19 +23,13 @@ export const NavBar = () => {
       changeSidebarVis('false');
   }, 30);
 
-  const handleResize = debounce(() => {
-    setScreenWidth(window.innerWidth);
-  }, 300);
-
   useEffect(() => {
     window.addEventListener('scroll', handleScroll);
-    window.addEventListener('resize', handleResize);
 
     return () => {
       window.removeEventListener('scroll', handleScroll);
-      window.removeEventListener('resize', handleResize);
     };
-  }, [handleScroll, handleResize]);
+  }, [handleScroll]);
 
   const changeSidebarVis = (value: any = undefined) => {
     const newValue =

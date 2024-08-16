@@ -4,7 +4,6 @@ import { Box, TextInput, Button, Text, Heading, Link } from '@primer/react';
 import {
   PersonIcon,
   LockIcon,
-  MailIcon,
   EyeIcon,
   EyeClosedIcon,
 } from '@primer/octicons-react';
@@ -49,8 +48,6 @@ export const Login = () => {
       setErrorMessage('Invalid login credentials.');
       return;
     }
-
-    console.log(formData);
 
     const backendUrl = import.meta.env.VITE_BACKEND_URL;
     fetch(`${backendUrl}/user/sign-in`, {

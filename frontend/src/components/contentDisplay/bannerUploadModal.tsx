@@ -25,14 +25,12 @@ export const BannerUploadModal = ({ isOpen, closeFunc, bannerFunc }: any) => {
         return;
       }
 
-      let reader = new FileReader();
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        bannerFunc([file, reader.result]);
+      };
       reader.readAsDataURL(file);
 
-      reader.onload = (event: any) => {
-        let image_url = event.target.result;
-      };
-
-      bannerFunc(file);
       closeFunc(false);
     }
   };

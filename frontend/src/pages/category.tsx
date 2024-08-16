@@ -1,8 +1,11 @@
 import { useParams } from 'react-router-dom';
 import React from 'react';
 import { Box, Heading, Text } from '@primer/react';
-import { ArticleMedium } from '../components/contentDisplay/articleMedium';
-import { ArticleSmall } from '../components/contentDisplay/articleSmall';
+import { ArticleLarge } from '../components/contentDisplay/articles/articleLarge';
+import { ArticleMedium } from '../components/contentDisplay/articles/articleMedium';
+import { ArticleSmall } from '../components/contentDisplay/articles/articleSmall';
+import * as styles from '../componentStyles';
+import { useScreenWidth } from '../components/other/useScreenWidth';
 
 export const Category: React.FC = () => {
   const { categoryName, page } = useParams<{
@@ -10,6 +13,7 @@ export const Category: React.FC = () => {
     page: string;
   }>();
   const [articles, setArticles] = React.useState([]);
+  const screenWidth = useScreenWidth();
 
   const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
@@ -37,13 +41,38 @@ export const Category: React.FC = () => {
     }
   }, [categoryName, page]);
 
+  const getArticlesToRender = () => {
+    if (screenWidth < 430) {
+      return articles.map((item, index) => (
+        <ArticleSmall key={index} article={item} />
+      ));
+    }
+
+    if (screenWidth < 1280) {
+      return articles.map((item, index) => (
+        <ArticleMedium key={index} article={item} />
+      ));
+    }
+
+    return (
+      <>
+        {articles.slice(0, 2).map((item, index) => (
+          <ArticleLarge key={index} article={item} />
+        ))}
+        {articles.slice(2).map((item, index) => (
+          <ArticleMedium key={index} article={item} />
+        ))}
+      </>
+    );
+  };
+
   if (articles.length == 0) {
     return (
       <Box sx={{ mt: '100px' }}>
         <Box sx={{ mb: 4 }}>
           <Heading
             sx={{
-              fontSize: '56px',
+              ...styles.H1,
               display: 'grid',
               justifyContent: 'center',
             }}
@@ -53,10 +82,13 @@ export const Category: React.FC = () => {
         </Box>
         <Box>
           <Text
+            as="p"
             sx={{
-              fontSize: '26px',
+              ...styles.P1,
               display: 'grid',
               justifyContent: 'center',
+              textAlign: 'center',
+              mx: 2,
             }}
           >
             Sorry, no articles have been published yet. Check again later.
@@ -71,15 +103,10 @@ export const Category: React.FC = () => {
       sx={{
         display: 'flex',
         flexWrap: 'wrap',
-        justifyContent: 'space-between',
+        justifyContent: 'center',
       }}
     >
-      {articles?.slice(0, 2).map((item: any, index: any) => {
-        return <ArticleMedium key={index} article={item} />;
-      })}
-      {articles?.slice(2).map((item: any, index: any) => {
-        return <ArticleSmall key={index} article={item} />;
-      })}
+      {getArticlesToRender()}
     </Box>
   );
 };

@@ -124,6 +124,43 @@ router.post(
   }
 );
 
+// Hide
+router.post(
+  '/hide',
+  UserManagment.authenticateToken,
+  async (req: any, res: any) => {
+    const ID = req.query.id;
+    const user = req.user;
+
+    // Validate the ID parameter
+    if (ID == undefined) {
+      return res
+        .status(400)
+        .send({ status: 400, response: { message: 'missing article id' } });
+    }
+
+    const articleRequest = await Articles.getArticleMetadata(
+      ID, 'ArticlesPublished'
+    );
+    const article = articleRequest.response.return;
+    if (!article) {
+      return res.status(articleRequest.status).send(articleRequest);
+    }
+  
+    // Check if the user has permission to delete
+    if (!UserManagment.checkUsername(article.Author, user)) {
+      return res.status(403).send({
+        status: 403,
+        response: { message: 'permission denied' },
+      });
+    }
+
+    // Fetch the result and return it
+    const result = await Articles.hideArticle(ID);
+    return res.status(result.status).send(result);
+  }
+);
+
 // By id
 router.get(
   '/get',
@@ -399,8 +436,9 @@ router.post(
   async (req: any, res: any) => {
     const body = req.body.body;
     const metadata = req.body.metadata;
+    const ID = req.query.id || ''
     const user = req.user;
-
+    
     // Check for the body and metadata parameters
     if (body == undefined || metadata == undefined) {
       return res.status(400).send({
@@ -409,12 +447,12 @@ router.post(
       });
     }
 
-    if (metadata.Image != undefined) {
-      return res.status(400).send({
-        status: 400,
-        response: { message: 'invalid metadata format' },
-      });
-    }
+    // if (metadata.Image != undefined) {
+    //   return res.status(400).send({
+    //     status: 400,
+    //     response: { message: 'invalid metadata format' },
+    //   });
+    // }
 
     if (!UserManagment.checkCanPost(user)) {
       return res.status(403).send({
@@ -427,7 +465,8 @@ router.post(
     const result = await Articles.createArticle(
       'ArticlesUnpublished',
       metadata,
-      body
+      body,
+      ID
     );
 
     return res.status(result.status).send(result);
@@ -481,6 +520,53 @@ router.put('/', UserManagment.authenticateToken, async (req: any, res: any) => {
   return res.status(result.status).send(result);
 });
 
+router.patch('/', UserManagment.authenticateToken, async (req: any, res: any) => {
+  const key = req.body.key;
+  const value = req.body.value;
+  const ID = req.query.id
+  const visibility = req.query.visibility || 'public';
+  const user = req.user;
+
+  // Validate the visibility parameter and choose a corresponding table
+  let tableName = Helper.visibilityToTable(visibility);
+  if (tableName == false) {
+    return res.status(400).send({
+      status: 400,
+      response: { message: 'invalid visibility parameter' },
+    });
+  }
+
+  // Check for the body and metadata parameters
+  if (key == undefined || value == undefined || ID == undefined) {
+    res.status(400).send({
+      status: 400,
+      response: { message: 'invalid request - missing id, key or value' },
+    });
+    return;
+  }
+
+  const articleRequest = await Articles.getArticleMetadata(
+    ID,
+    tableName
+  );
+  const article = articleRequest.response.return;
+  if (!article) {
+    return res.status(articleRequest.status).send(articleRequest);
+  }
+
+  // Check if the user has permission to delete
+  if (!UserManagment.checkUsername(article.Author, user)) {
+    return res.status(403).send({
+      status: 403,
+      response: { message: 'permission denied' },
+    });
+  }
+
+  // Fetch the result and return it
+  const result = await Articles.patchArticle(tableName, ID, key, value);
+  return res.status(result.status).send(result);
+})
+
 // Image
 router.post(
   '/image',
@@ -523,9 +609,23 @@ router.post(
     }
 
     const imageId = uuidv4();
-
+    
+    if (article.metadata.Image) {
+      console.log(article)
+      try {
+        const regex =
+        /[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/i;
+        const match = article.metadata.Image.match(regex);
+        const imageId = match ? match[0] : null;
+        
+        await S3.removeImageFromS3(imageId);
+      } catch (err) {
+        console.log(err)
+      }
+    }
+    
     article.metadata.Image = `${process.env.AWS_S3_LINK}/images/${imageId}.png`;
-
+    
     try {
       const response = await S3.saveImage(imageId, req.file);
       if (!response) {

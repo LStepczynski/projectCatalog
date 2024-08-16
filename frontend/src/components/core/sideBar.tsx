@@ -42,7 +42,7 @@ const items = [
     ],
   },
   {
-    title: 'Categories',
+    title: 'Popular',
     items: [
       {
         name: 'Programming',
@@ -86,9 +86,9 @@ const items = [
 const user = getUserFromJWT();
 if (user && (user.CanPost == 'true' || user.Admin == 'true')) {
   items[0].items.push({
-    name: 'Create Post',
+    name: 'My Articles',
     icon: <PencilIcon size={iconSize} />,
-    action: '/create',
+    action: '/myArticles',
   });
 }
 
@@ -119,6 +119,7 @@ export const SideBar = (props: Props) => {
         position: 'fixed',
         display: 'flex',
         width: '250px',
+        overflowY: "auto",
         height: '100%',
         zIndex: 999,
         pt: '80px',
