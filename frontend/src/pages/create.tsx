@@ -300,6 +300,7 @@ const ArticleCreationForm = (props: FormProps) => {
 const CategorySelection = (props: FormProps) => {
   const { formData, setFormData, tags, setTags } = props;
   const [open, setOpen] = React.useState<boolean>(false);
+  const screenWidth = useScreenWidth();
   const items = [
     'innovation',
     'creativity',
@@ -318,38 +319,34 @@ const CategorySelection = (props: FormProps) => {
   ];
 
   return (
-    <>
-      <Select
-        value={formData.Difficulty}
-        onChange={(event) => {
-          setFormData((prevData: any) => ({
-            ...prevData,
-            Difficulty: event.target.value,
-          }));
-        }}
-      >
-        <Select.Option value="EASY">Easy</Select.Option>
-        <Select.Option value="MEDIUM">Medium</Select.Option>
-        <Select.Option value="HARD">Hard</Select.Option>
-      </Select>
-
-      <Select
-        value={formData.PrimaryCategory}
-        onChange={(event) => {
-          setFormData((prevData: any) => ({
-            ...prevData,
-            PrimaryCategory: event.target.value,
-          }));
-        }}
-      >
-        <Select.Option value="programming">Programming</Select.Option>
-        <Select.Option value="3d-modeling">3D Modeling</Select.Option>
-        <Select.Option value="electronics">Electronics</Select.Option>
-        <Select.Option value="woodworking">Woodworking</Select.Option>
-        <Select.Option value="chemistry">Chemistry</Select.Option>
-        <Select.Option value="cybersecurity">Cybersecurity</Select.Option>
-        <Select.Option value="physics">Physics</Select.Option>
-      </Select>
+    <Box
+      sx={{
+        display: 'flex',
+        justifyContent: 'space-around',
+        alignItems: 'center',
+        width: screenWidth < 768 ? '85%' : '75%',
+      }}
+    >
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+        <Text sx={{ opacity: 0.6, fontSize: '14px' }}>Category:</Text>
+        <Select
+          value={formData.PrimaryCategory}
+          onChange={(event) => {
+            setFormData((prevData: any) => ({
+              ...prevData,
+              PrimaryCategory: event.target.value,
+            }));
+          }}
+        >
+          <Select.Option value="programming">Programming</Select.Option>
+          <Select.Option value="3d-modeling">3D Modeling</Select.Option>
+          <Select.Option value="electronics">Electronics</Select.Option>
+          <Select.Option value="woodworking">Woodworking</Select.Option>
+          <Select.Option value="chemistry">Chemistry</Select.Option>
+          <Select.Option value="cybersecurity">Cybersecurity</Select.Option>
+          <Select.Option value="physics">Physics</Select.Option>
+        </Select>
+      </Box>
 
       <MultipleChoice
         text="Secondary Categories"
@@ -361,7 +358,23 @@ const CategorySelection = (props: FormProps) => {
         open={open}
         label=""
       />
-    </>
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+        <Text sx={{ opacity: 0.6, fontSize: '14px' }}>Difficulty:</Text>
+        <Select
+          value={formData.Difficulty}
+          onChange={(event) => {
+            setFormData((prevData: any) => ({
+              ...prevData,
+              Difficulty: event.target.value,
+            }));
+          }}
+        >
+          <Select.Option value="EASY">Easy</Select.Option>
+          <Select.Option value="MEDIUM">Medium</Select.Option>
+          <Select.Option value="HARD">Hard</Select.Option>
+        </Select>
+      </Box>
+    </Box>
   );
 };
 
