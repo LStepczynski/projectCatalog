@@ -29,6 +29,7 @@ export const Create = () => {
     Body: '',
     PrimaryCategory: 'programming',
     Difficulty: 'Easy',
+    S3Link: '',
   });
 
   // Check user privliges
@@ -63,6 +64,7 @@ export const Create = () => {
         Body: article.body,
         PrimaryCategory: article.metadata.PrimaryCategory,
         Difficulty: article.metadata.Difficulty,
+        S3Link: article.metadata.Image,
       });
       setTags(article.metadata.SecondaryCategories);
       setBannerFile((prev: any) => [prev[0], article.metadata.Image]);
@@ -180,6 +182,7 @@ interface FormData {
   Body: string;
   PrimaryCategory: string;
   Difficulty: string;
+  S3Link: string;
 }
 
 interface FormProps {
@@ -432,7 +435,7 @@ const ArticleSubmit = (props: SubmitProps) => {
               SecondaryCategories: tags,
               Rating: 0,
               Difficulty: formData.Difficulty,
-              Image: bannerFile[0] ? '' : bannerFile[1],
+              Image: formData.S3Link,
             },
           }),
         }
@@ -463,6 +466,7 @@ const ArticleSubmit = (props: SubmitProps) => {
       console.error('Error:', error);
       alert('An error occurred. Please try again later.');
     }
+    window.location.href = '/myArticles';
   };
 
   return (
