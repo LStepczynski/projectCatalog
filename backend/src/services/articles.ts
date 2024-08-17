@@ -61,7 +61,7 @@ export class Articles {
         UpdatedAt: { value: 0, required: false },
         Difficulty: { value: '', required: true },
         Image: { value: '', required: false },
-        Status: {value: '', required: false },
+        Status: { value: '', required: false },
       },
     },
   ];
@@ -212,9 +212,13 @@ export class Articles {
     if (tableName == 'ArticlesPublished' && metadata.PublishedAt == undefined) {
       metadata.PublishedAt = currentTime;
     }
-    if (tableName == 'ArticlesUnpublished' && metadata.CreatedAt == undefined) {
-      metadata.CreatedAt = currentTime;
-      metadata.Status = 'private'
+    if (tableName == 'ArticlesUnpublished') {
+      if (metadata.CreatedAt == undefined) {
+        metadata.CreatedAt = currentTime;
+      }
+      if (!metadata.Status || metadata.Status == '') {
+        metadata.Status = 'private';
+      }
     }
     if (metadata.UpdatedAt == undefined) {
       metadata.UpdatedAt = null;
@@ -237,7 +241,10 @@ export class Articles {
 
     try {
       await client.send(new PutItemCommand(params));
-      return { status: 200, response: { message: 'item added succesfully', id: metadata.ID } };
+      return {
+        status: 200,
+        response: { message: 'item added succesfully', id: metadata.ID },
+      };
     } catch (err: any) {
       return { status: 500, response: { message: 'server error' } };
     }
@@ -258,7 +265,7 @@ export class Articles {
     }
     const getRespItems = getResponse.response.return;
     delete getRespItems.metadata.ID;
-    delete getRespItems.metadata.Status
+    delete getRespItems.metadata.Status;
 
     const addResponse = await this.createArticle(
       'ArticlesPublished',
@@ -269,8 +276,12 @@ export class Articles {
     if (addResponse.status != 200) {
       return addResponse;
     }
-    
-    const removeResponse = await this.removeArticle('ArticlesUnpublished', id, false);
+
+    const removeResponse = await this.removeArticle(
+      'ArticlesUnpublished',
+      id,
+      false
+    );
     if (removeResponse.status != 200) {
       return removeResponse;
     }
@@ -294,7 +305,7 @@ export class Articles {
     const getRespItems = getResponse.response.return;
     delete getRespItems.metadata.ID;
     delete getRespItems.metadata.PublishedAt;
-    getRespItems.metadata.Status = 'private'
+    getRespItems.metadata.Status = 'private';
 
     const addResponse = await this.createArticle(
       'ArticlesUnpublished',
@@ -305,8 +316,12 @@ export class Articles {
     if (addResponse.status != 200) {
       return addResponse;
     }
-    
-    const removeResponse = await this.removeArticle('ArticlesPublished', id, false);
+
+    const removeResponse = await this.removeArticle(
+      'ArticlesPublished',
+      id,
+      false
+    );
     if (removeResponse.status != 200) {
       return removeResponse;
     }
@@ -314,7 +329,11 @@ export class Articles {
     return { status: 200, response: { message: 'item hid succesfully' } };
   }
 
-  public static async removeArticle(tableName: string, id: string, removeImage: boolean = true) {
+  public static async removeArticle(
+    tableName: string,
+    id: string,
+    removeImage: boolean = true
+  ) {
     const tableInfo: TableReturn = this.findTable(tableName);
 
     // Validations
@@ -409,7 +428,12 @@ export class Articles {
     return { status: 200, response: { message: 'item eddited succesfully' } };
   }
 
-  public static async patchArticle(tableName: string, id: string, itemKey: string, itemValue: any) {
+  public static async patchArticle(
+    tableName: string,
+    id: string,
+    itemKey: string,
+    itemValue: any
+  ) {
     const tableInfo: TableReturn = this.findTable(tableName);
 
     // Validations
@@ -417,20 +441,23 @@ export class Articles {
       return { status: 400, response: { message: 'table not found' } };
     }
     if (!id || !itemKey || itemValue == undefined) {
-      return { status: 400, response: { message: "id, key, or value not provided"} }
+      return {
+        status: 400,
+        response: { message: 'id, key, or value not provided' },
+      };
     }
 
     let article = S3.readFromS3(tableName, id);
     if (!article) {
-      return { status: 404, response: { message: "item not found"} }
+      return { status: 404, response: { message: 'item not found' } };
     }
     if (itemKey == 'body') {
-      article.body = itemValue
+      article.body = itemValue;
     } else {
-      article.metadata[itemKey] = itemValue
+      article.metadata[itemKey] = itemValue;
     }
     if (!(await S3.addToS3(tableName, article.metadata, article.body))) {
-      return { status: 500, response: { message: "server error"} }
+      return { status: 500, response: { message: 'server error' } };
     }
 
     const params: UpdateItemCommandInput = {
@@ -446,26 +473,31 @@ export class Articles {
         ':value': { S: itemValue },
       },
       ReturnValues: 'UPDATED_NEW',
-      ConditionExpression: 'attribute_exists(ID)'
-    }
+      ConditionExpression: 'attribute_exists(ID)',
+    };
 
     try {
       const data = await client.send(new UpdateItemCommand(params));
 
       if (!data.Attributes) {
-        return { status: 404, response: { message: "item not found"} }
+        return { status: 404, response: { message: 'item not found' } };
       }
 
-      return { status: 200, response: { message: "item updated successfully", return: data.Attributes} }
+      return {
+        status: 200,
+        response: {
+          message: 'item updated successfully',
+          return: data.Attributes,
+        },
+      };
     } catch (err: any) {
       if (err.name === 'ConditionalCheckFailedException') {
-        return { status: 404, response: { message: "item not found"} }
+        return { status: 404, response: { message: 'item not found' } };
       }
 
       console.error('Unable to update item. Error:', err);
-      return { status: 500, response: { message: "server error"} }
+      return { status: 500, response: { message: 'server error' } };
     }
-
   }
 
   public static async getPaginationItems(

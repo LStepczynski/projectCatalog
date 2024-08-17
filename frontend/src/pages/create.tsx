@@ -400,9 +400,9 @@ const ArticleSubmit = (props: SubmitProps) => {
   const [searchParams, setSearchParams] = useSearchParams();
   const existingId = searchParams.get('id') || '';
 
-  const handleSubmit = async () => {
-    for (const field of Object.values(formData)) {
-      if (field.trim() == '') {
+  const handleSubmit = async (status: string) => {
+    for (const field of Object.keys(formData)) {
+      if (field != 'S3Link' && formData[field].trim() == '') {
         alert('Please fill out all of the fields in order to save');
         return;
       }
@@ -436,6 +436,7 @@ const ArticleSubmit = (props: SubmitProps) => {
               Rating: 0,
               Difficulty: formData.Difficulty,
               Image: formData.S3Link,
+              Status: status,
             },
           }),
         }
@@ -444,6 +445,7 @@ const ArticleSubmit = (props: SubmitProps) => {
       const articleData = await articleResponse.json();
 
       if (bannerFile[0] == null) {
+        window.location.href = '/myArticles';
         return;
       }
       // Submit image data
@@ -463,7 +465,6 @@ const ArticleSubmit = (props: SubmitProps) => {
         }
       );
     } catch (error) {
-      console.error('Error:', error);
       alert('An error occurred. Please try again later.');
     }
     window.location.href = '/myArticles';
@@ -478,13 +479,22 @@ const ArticleSubmit = (props: SubmitProps) => {
         }}
       >
         <Button
-          onClick={handleSubmit}
+          onClick={() => {
+            handleSubmit('private');
+          }}
           variant="primary"
           sx={{ fontSize: '18px', p: 3, width: '100px' }}
         >
           Save
         </Button>
-        <Button sx={{ fontSize: '18px', p: 3, width: '100px' }}>Publish</Button>
+        <Button
+          onClick={() => {
+            handleSubmit('review');
+          }}
+          sx={{ fontSize: '18px', p: 3, width: '100px' }}
+        >
+          Publish
+        </Button>
       </Box>
     </>
   );
