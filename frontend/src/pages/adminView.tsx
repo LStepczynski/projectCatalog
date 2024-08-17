@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { Box, Text, Heading } from '@primer/react';
+import { Box, Select, Text, Heading } from '@primer/react';
 
 import { ArticlePrivate } from '../components/contentDisplay/articles/articlePrivate';
 import { getUserFromJWT } from '@helper/helper';
@@ -8,6 +8,7 @@ import { useScreenWidth } from '../components/other/useScreenWidth';
 
 export const AdminView = () => {
   const [articles, setArticles] = React.useState([]);
+  const [status, setStatus] = React.useState('review');
   const screenWidth = useScreenWidth();
 
   const backendUrl = import.meta.env.VITE_BACKEND_URL;
@@ -17,7 +18,7 @@ export const AdminView = () => {
   }
 
   React.useEffect(() => {
-    fetch(`${backendUrl}/articles/private?status=review`, {
+    fetch(`${backendUrl}/articles/private?status=${status}`, {
       headers: {
         Authorization: `Bearer ${
           localStorage.getItem('verificationToken') || ''
@@ -31,7 +32,7 @@ export const AdminView = () => {
       .catch((error) => {
         console.error('Error:', error);
       });
-  }, []);
+  }, [status]);
 
   return (
     <Box
@@ -54,6 +55,38 @@ export const AdminView = () => {
           backgroundColor: 'ansi.black',
         }}
       ></Box>
+      <Box
+        sx={{
+          width: '100%',
+          display: 'grid',
+          justifyItems: 'right',
+        }}
+      >
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 2,
+          }}
+        >
+          <Text
+            sx={{
+              opacity: 0.7,
+              fontSize: '14px',
+            }}
+          >
+            Display:
+          </Text>
+          <Select
+            onChange={(event) => {
+              setStatus(event?.target.value);
+            }}
+          >
+            <Select.Option value="review">Review</Select.Option>
+            <Select.Option value="private">Private</Select.Option>
+          </Select>
+        </Box>
+      </Box>
 
       <Box
         sx={{
