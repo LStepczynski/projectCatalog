@@ -8,6 +8,7 @@ import { Register } from './pages/register';
 import { Article } from './pages/article';
 import { Create } from './pages/create';
 import { MyArticles } from './pages/myArticles';
+import { AdminView } from './pages/adminView';
 
 export const Routes = () => {
   const router = createBrowserRouter([
@@ -38,6 +39,10 @@ export const Routes = () => {
     {
       path: '/create',
       element: <Create />,
+    },
+    {
+      path: '/adminView',
+      element: <AdminView />,
     },
     {
       path: '/categories/:categoryName/:page',
