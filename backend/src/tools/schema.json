@@ -172,7 +172,8 @@
       { "AttributeName": "Rating", "AttributeType": "N" },
       { "AttributeName": "CreatedAt", "AttributeType": "N" },
       { "AttributeName": "Author", "AttributeType": "S" },
-      { "AttributeName": "Difficulty", "AttributeType": "S" }
+      { "AttributeName": "Difficulty", "AttributeType": "S" },
+      { "AttributeName": "Status", "AttributeType": "S" }
     ],
     "KeySchema": [{ "AttributeName": "ID", "KeyType": "HASH" }],
     "GlobalSecondaryIndexes": [
@@ -300,6 +301,18 @@
         "IndexName": "AuthorCreated",
         "KeySchema": [
           { "AttributeName": "Author", "KeyType": "HASH" },
+          { "AttributeName": "CreatedAt", "KeyType": "RANGE" }
+        ],
+        "Projection": { "ProjectionType": "ALL" },
+        "ProvisionedThroughput": {
+          "ReadCapacityUnits": 5,
+          "WriteCapacityUnits": 5
+        }
+      },
+      {
+        "IndexName": "StatusCreated",
+        "KeySchema": [
+          { "AttributeName": "Status", "KeyType": "HASH" },
           { "AttributeName": "CreatedAt", "KeyType": "RANGE" }
         ],
         "Projection": { "ProjectionType": "ALL" },

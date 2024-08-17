@@ -544,6 +544,33 @@ export class Articles {
     }
   }
 
+  public static async getStatusCreated(
+    status: string,
+    page: number,
+    limit: number,
+    forward: boolean
+  ): Promise<any | void> {
+    const params: QueryCommandInput = {
+      TableName: 'ArticlesUnpublished',
+      IndexName: 'StatusCreated',
+      KeyConditionExpression: '#status = :c',
+      ExpressionAttributeNames: {
+        '#status': 'Status',
+      },
+      ExpressionAttributeValues: {
+        ':c': { S: status },
+      },
+      Limit: limit,
+      ScanIndexForward: forward,
+    };
+    return await this.getPaginationItems(
+      'ArticlesUnpublished',
+      page,
+      limit,
+      params
+    );
+  }
+
   public static async getCategoryCreated(
     tableName: string,
     category: string,

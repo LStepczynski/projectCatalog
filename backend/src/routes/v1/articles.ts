@@ -23,22 +23,43 @@ dotenv.config();
 
 const router = Router();
 
-// TO BE REMOVED
-router.get('/', async (req: any, res: any) => {
-  try {
-    const data = await client.send(
-      new ScanCommand({ TableName: 'ArticlesUnpublished' })
+// All private
+router.get(
+  '/private',
+  UserManagment.authTokenOptional,
+  async (req: any, res: any) => {
+    const sortBy = req.query.sortBy || 'highest';
+    const limit = Number(req.query.limit) || 10;
+    const page = Number(req.query.page) || 1;
+    const status = req.query.status || 'review';
+    const user = req.user;
+
+    if (!UserManagment.checkAdmin(user)) {
+      return res
+        .status(403)
+        .send({ status: 403, message: 'permission denied' });
+    }
+
+    // Validate sortBy parameter
+    let scanIndexForward = false;
+    if (sortBy === 'lowest') {
+      scanIndexForward = true;
+    } else if (sortBy != 'highest') {
+      return res
+        .status(400)
+        .send({ status: 400, response: { message: 'Invalid sortBy value' } });
+    }
+
+    // Fetch the result and return it
+    const result = await Articles.getStatusCreated(
+      status,
+      page,
+      limit,
+      scanIndexForward
     );
-    // Extract the 'Items' property from the data object
-    const items = data.Items || [];
-    // Map each item to its unmarshalled form
-    const unmarshalledItems = items.map((item) => unmarshall(item));
-    res.status(200).send(unmarshalledItems);
-  } catch (error) {
-    console.error('Error scanning table:', error);
-    res.status(500).send('Internal Server Error');
+    return res.status(result.status).send(result);
   }
-});
+);
 
 // Delete
 router.delete(
