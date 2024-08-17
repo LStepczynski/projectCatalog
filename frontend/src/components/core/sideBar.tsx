@@ -89,14 +89,14 @@ if (user && (user.CanPost == 'true' || user.Admin == 'true')) {
   items[0].items.push({
     name: 'My Articles',
     icon: <PencilIcon size={iconSize} />,
-    action: '/myArticles',
+    action: '/myArticles/1',
   });
 }
 if (user && user.Admin == 'true') {
   items[0].items.push({
     name: 'Admin View',
     icon: <ChecklistIcon size={iconSize} />,
-    action: '/adminView',
+    action: '/adminView/1',
   });
 }
 
