@@ -2,7 +2,7 @@ import { Box, Heading, Text, Avatar } from '@primer/react';
 import React from 'react';
 import { getRelativeDate } from '@helper/helper';
 import { AnimatedImage } from '../../animation/animatedImage';
-import { KebabHorizontalIcon } from '@primer/octicons-react';
+import { ArticleDifficultyLabel } from './articleDifficultyLabel';
 
 import { ArticleDropdown } from './articleDropdown';
 
@@ -95,7 +95,21 @@ export const ArticleSmall = (props: Props) => {
             <Avatar size={24} src={article.AuthorProfilePic} />
             <Text sx={{ fontSize: '12px' }}>{article.Author}</Text>
           </Box>
-          <Text sx={{ fontSize: '12px' }}>
+          <ArticleDifficultyLabel size="small" value={article.Difficulty} />
+        </Box>
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'right',
+            mr: 4,
+            ml: 2,
+          }}
+        >
+          <Text
+            sx={{
+              fontSize: '12px',
+            }}
+          >
             {article.Rating} ✰ • {getRelativeDate(article.PublishedAt)}
           </Text>
         </Box>

@@ -6,6 +6,7 @@ import { Box, Heading, Text, Avatar, Label, LabelGroup } from '@primer/react';
 import { useScreenWidth } from '../components/other/useScreenWidth';
 import { getRelativeDate, capitalize } from '@helper/helper';
 import { AnimatedImage } from '../components/animation/animatedImage';
+import { ArticleDifficultyLabel } from '../components/contentDisplay/articles/articleDifficultyLabel';
 
 export const Article = () => {
   const [article, setArticle] = React.useState<any>(null);
@@ -154,19 +155,26 @@ const ArticleDetails = (props: DetailsProps) => {
               {article.metadata.Author}
             </Text>
           </Box>
-          {visibility == 'public' && (
-            <Text sx={{ textAlign: 'center' }}>
-              {article.metadata.Rating} ✰ {screenWidth < 768 ? <br></br> : '• '}
-              {getRelativeDate(article.metadata.PublishedAt)}
-            </Text>
-          )}
-          {visibility == 'private' && (
-            <Text sx={{ textAlign: 'center' }}>
-              {capitalize(article.metadata.Status)}
-              {screenWidth < 768 ? <br></br> : ' • '}
-              {getRelativeDate(article.metadata.CreatedAt)}
-            </Text>
-          )}
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            {visibility == 'public' && (
+              <Text sx={{ textAlign: 'center' }}>
+                {article.metadata.Rating} ✰ {' • '}
+                {getRelativeDate(article.metadata.PublishedAt)}
+              </Text>
+            )}
+            {visibility == 'private' && (
+              <Text sx={{ textAlign: 'center' }}>
+                {capitalize(article.metadata.Status)}
+                {' • '}
+                {getRelativeDate(article.metadata.CreatedAt)}
+              </Text>
+            )}
+            <Box
+              sx={{ width: '100%', display: 'grid', justifyContent: 'center' }}
+            >
+              <ArticleDifficultyLabel value={article.metadata.Difficulty} />
+            </Box>
+          </Box>
         </Box>
 
         <Box
@@ -205,6 +213,15 @@ const ArticleDetails = (props: DetailsProps) => {
             </LabelGroup>
           </Box>
         </Box>
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'right',
+            alignItems: 'center',
+            mr: 6,
+            mt: 2,
+          }}
+        ></Box>
       </Box>
     </>
   );

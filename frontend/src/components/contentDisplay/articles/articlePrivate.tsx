@@ -3,6 +3,7 @@ import React from 'react';
 import { getRelativeDate, capitalize } from '@helper/helper';
 import { AnimatedImage } from '../../animation/animatedImage';
 import { ArticleDropdown } from './articleDropdown';
+import { ArticleDifficultyLabel } from './articleDifficultyLabel';
 
 interface Props {
   article: Article;
@@ -94,7 +95,21 @@ export const ArticlePrivate = (props: Props) => {
             <Avatar size={24} src={article.AuthorProfilePic} />
             <Text sx={{ fontSize: '12px' }}>{article.Author}</Text>
           </Box>
-          <Text sx={{ fontSize: '12px' }}>
+          <ArticleDifficultyLabel size="small" value={article.Difficulty} />
+        </Box>
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'right',
+            mr: 4,
+            ml: 2,
+          }}
+        >
+          <Text
+            sx={{
+              fontSize: '12px',
+            }}
+          >
             {capitalize(article.Status)} • {getRelativeDate(article.CreatedAt)}
           </Text>
         </Box>
