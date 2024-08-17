@@ -33,16 +33,16 @@ export const Routes = () => {
       element: <Register />,
     },
     {
-      path: '/myArticles',
-      element: <MyArticles />,
-    },
-    {
       path: '/create',
       element: <Create />,
     },
     {
-      path: '/adminView',
+      path: '/adminView/:page',
       element: <AdminView />,
+    },
+    {
+      path: '/myArticles/:page',
+      element: <MyArticles />,
     },
     {
       path: '/categories/:categoryName/:page',

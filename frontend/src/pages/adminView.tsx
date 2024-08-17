@@ -1,6 +1,7 @@
 import React from 'react';
+import { useParams } from 'react-router-dom';
 
-import { Box, Select, Text, Heading } from '@primer/react';
+import { Box, Select, Text, Heading, Pagination } from '@primer/react';
 
 import { ArticlePrivate } from '../components/contentDisplay/articles/articlePrivate';
 import { getUserFromJWT } from '@helper/helper';
@@ -10,6 +11,7 @@ export const AdminView = () => {
   const [articles, setArticles] = React.useState([]);
   const [status, setStatus] = React.useState('review');
   const screenWidth = useScreenWidth();
+  const { page } = useParams();
 
   const backendUrl = import.meta.env.VITE_BACKEND_URL;
   const user = getUserFromJWT();
@@ -18,7 +20,7 @@ export const AdminView = () => {
   }
 
   React.useEffect(() => {
-    fetch(`${backendUrl}/articles/private?status=${status}`, {
+    fetch(`${backendUrl}/articles/private?status=${status}&page=${page}`, {
       headers: {
         Authorization: `Bearer ${
           localStorage.getItem('verificationToken') || ''
@@ -102,6 +104,13 @@ export const AdminView = () => {
           <ArticlePrivate key={index} article={item} />
         ))}
       </Box>
+      <Pagination
+        currentPage={Number(page) || 1}
+        pageCount={99}
+        hrefBuilder={(page) => {
+          return `/adminView/${page}`;
+        }}
+      />
     </Box>
   );
 };
