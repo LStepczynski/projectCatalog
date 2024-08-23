@@ -731,4 +731,103 @@ export class Articles {
     };
     return await this.getPaginationItems(tableName, page, limit, params);
   }
+
+  public static async incrementRating(id: string) {
+    const params: UpdateItemCommandInput = {
+      TableName: 'ArticlesPublished',
+      Key: {
+        ID: { S: id },
+      },
+      UpdateExpression: 'ADD #r :inc',
+      ExpressionAttributeNames: {
+        '#r': 'Rating',
+      },
+      ExpressionAttributeValues: {
+        ':inc': { N: '1' },
+      },
+      ReturnValues: 'UPDATED_NEW',
+    };
+
+    try {
+      const article = await S3.readFromS3('ArticlesPublished', id);
+      if (!article) {
+        return {
+          status: 500,
+          response: { message: 'server error' },
+        };
+      }
+
+      article.metadata.Rating += 1;
+      if (
+        !(await S3.addToS3('ArticlesPublished', article.metadata, article.body))
+      ) {
+        return {
+          status: 500,
+          response: { message: 'server error' },
+        };
+      }
+
+      const data = await client.send(new UpdateItemCommand(params));
+      return {
+        status: 200,
+        response: { message: 'rating incremented succesfully' },
+      };
+    } catch (err) {
+      console.error('Error updating rating:', err);
+      return {
+        status: 500,
+        response: { message: 'server error' },
+      };
+    }
+  }
+
+  public static async decrementRating(id: string) {
+    const params: UpdateItemCommandInput = {
+      TableName: 'ArticlesPublished',
+      Key: {
+        ID: { S: id },
+      },
+      UpdateExpression: 'ADD #r :dec',
+      ExpressionAttributeNames: {
+        '#r': 'Rating',
+      },
+      ExpressionAttributeValues: {
+        ':dec': { N: '-1' },
+      },
+      ReturnValues: 'UPDATED_NEW',
+      ConditionExpression: 'attribute_exists(#r) OR attribute_not_exists(#r)',
+    };
+
+    try {
+      const article = await S3.readFromS3('ArticlesPublished', id);
+      if (!article) {
+        return {
+          status: 500,
+          response: { message: 'server error' },
+        };
+      }
+
+      article.metadata.Rating -= 1;
+      if (
+        !(await S3.addToS3('ArticlesPublished', article.metadata, article.body))
+      ) {
+        return {
+          status: 500,
+          response: { message: 'server error' },
+        };
+      }
+
+      const data = await client.send(new UpdateItemCommand(params));
+      return {
+        status: 200,
+        response: { message: 'rating decremented succesfully' },
+      };
+    } catch (err) {
+      console.error('Error updating rating:', err);
+      return {
+        status: 500,
+        response: { message: 'server error' },
+      };
+    }
+  }
 }
