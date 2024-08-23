@@ -118,8 +118,35 @@ router.post(
   }
 );
 
-router.get('/test', UserManagment.authenticateToken, (req: any, res: any) => {
-  return res.send(req.user);
-});
+router.post(
+  '/like',
+  UserManagment.authenticateToken,
+  async (req: any, res: any) => {
+    const articleId = req.body.articleId;
+    const user = req.user;
+
+    if (!articleId) {
+      return res
+        .status(400)
+        .send({ status: 400, response: { message: 'articleId not provided' } });
+    }
+
+    const fullUserObject = (await UserManagment.getUser(user.Username)) || {};
+    if (fullUserObject.Liked.includes(articleId)) {
+      fullUserObject.Liked = fullUserObject.Liked.filter(
+        (id: string) => id !== articleId
+      );
+    } else {
+      fullUserObject.Liked.push(articleId);
+    }
+
+    const response = await UserManagment.updateUser(
+      user.Username,
+      'Liked',
+      fullUserObject.Liked
+    );
+    return res.status(response.status).send(response);
+  }
+);
 
 export default router;

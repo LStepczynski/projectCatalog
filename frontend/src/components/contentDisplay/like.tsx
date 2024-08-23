@@ -1,16 +1,47 @@
 import { Box, Text } from '@primer/react';
 import { HeartFillIcon, HeartIcon } from '@primer/octicons-react';
 
+import { getUserFromJWT } from '@helper/helper';
+
 interface Props {
   count: number;
   isLiked: boolean;
   setIsLiked: any;
+  id: string;
 }
 
 export const Like = (props: Props) => {
-  const { count, isLiked, setIsLiked } = props;
+  let { count, isLiked, setIsLiked, id } = props;
 
+  const backendUrl = import.meta.env.VITE_BACKEND_URL;
+
+  const user = getUserFromJWT();
   const iconSize = 24;
+
+  const handleLike = async () => {
+    const likeReq = await fetch(`${backendUrl}/user/like`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${
+          localStorage.getItem('verificationToken') || ''
+        }`,
+      },
+      body: JSON.stringify({ articleId: id }),
+    });
+
+    const likeRes = await likeReq.json();
+    if (!likeRes.ok) {
+      return alert('There was an error while rating the article');
+    }
+
+    if (isLiked) {
+      count -= 1;
+    } else {
+      count += 1;
+    }
+    setIsLiked(!isLiked);
+  };
 
   return (
     <Box
@@ -32,9 +63,7 @@ export const Like = (props: Props) => {
           backgroundColor: 'rgba(72, 79, 88, 0.3)',
         },
       }}
-      onClick={() => {
-        setIsLiked(!isLiked);
-      }}
+      onClick={handleLike}
     >
       {isLiked ? (
         <HeartFillIcon size={iconSize} />
