@@ -447,7 +447,7 @@ export class Articles {
       };
     }
 
-    let article = S3.readFromS3(tableName, id);
+    let article = await S3.readFromS3(tableName, id);
     if (!article) {
       return { status: 404, response: { message: 'item not found' } };
     }

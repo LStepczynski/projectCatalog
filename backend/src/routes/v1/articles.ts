@@ -495,51 +495,6 @@ router.post(
   }
 );
 
-// Decrement/Increment rating of an article
-router.patch(
-  '/rating',
-  UserManagment.authenticateToken,
-  async (req: any, res: any) => {
-    const like = req.body.like; // if like than like, if not dislike | boolean
-    const id = req.body.id;
-
-    if (!id) {
-      return res.status(400).send({
-        status: 400,
-        response: { message: 'id parameter not provided' },
-      });
-    }
-
-    if (!like) {
-      return res.status(400).send({
-        status: 400,
-        response: { message: 'like parameter not provided' },
-      });
-    }
-
-    try {
-      if (like == 'true') {
-        const likeResponse = await Articles.incrementRating(id);
-        return res.status(likeResponse.status).send(likeResponse);
-      } else if (like == 'false') {
-        const dislikeResponse = await Articles.decrementRating(id);
-        return res.status(dislikeResponse.status).send(dislikeResponse);
-      } else {
-        return res.status(400).send({
-          status: 400,
-          response: { message: 'invalid like parameter value' },
-        });
-      }
-    } catch (err) {
-      console.log(err);
-      return res.status(500).send({
-        status: 500,
-        response: { message: 'server error' },
-      });
-    }
-  }
-);
-
 // Edit
 router.put('/', UserManagment.authenticateToken, async (req: any, res: any) => {
   const body = req.body.body;

@@ -103,42 +103,11 @@ export class S3 {
     }
   }
 
-  public static readFromS3(tableName: string, id: string) {
-    const filePath = `src/assets/${tableName}/${id}.md`;
+  // public static readFromS3(tableName: string, id: string) {
+  //   const filePath = `src/assets/${tableName}/${id}.md`;
 
-    try {
-      const fileContents = fs.readFileSync(filePath, 'utf8');
-
-      const parsed = matter(fileContents);
-
-      return {
-        body: parsed.content,
-        metadata: parsed.data,
-      };
-    } catch (error) {
-      console.error('Error reading file:', error);
-      return undefined;
-    }
-  }
-
-  // public static async readFromS3(tableName: string, id: string) {
   //   try {
-  //     const objectKey = `${tableName}/${id}.md`;
-  //     const bucketName = process.env.AWS_S3_BUCKET_NAME;
-
-  //     const params = {
-  //       Bucket: bucketName,
-  //       Key: objectKey,
-  //     };
-
-  //     const command = new GetObjectCommand(params);
-  //     const response = await s3Client.send(command);
-
-  //     const fileContents = await response.Body?.transformToString();
-
-  //     if (fileContents == undefined) {
-  //       throw new Error('file undefined');
-  //     }
+  //     const fileContents = fs.readFileSync(filePath, 'utf8');
 
   //     const parsed = matter(fileContents);
 
@@ -146,11 +115,42 @@ export class S3 {
   //       body: parsed.content,
   //       metadata: parsed.data,
   //     };
-  //   } catch (error: any) {
-  //     console.error('Error reading file from S3:', error);
+  //   } catch (error) {
+  //     console.error('Error reading file:', error);
   //     return undefined;
   //   }
   // }
+
+  public static async readFromS3(tableName: string, id: string) {
+    try {
+      const objectKey = `${tableName}/${id}.md`;
+      const bucketName = process.env.AWS_S3_BUCKET_NAME;
+
+      const params = {
+        Bucket: bucketName,
+        Key: objectKey,
+      };
+
+      const command = new GetObjectCommand(params);
+      const response = await s3Client.send(command);
+
+      const fileContents = await response.Body?.transformToString();
+
+      if (fileContents == undefined) {
+        throw new Error('file undefined');
+      }
+
+      const parsed = matter(fileContents);
+
+      return {
+        body: parsed.content,
+        metadata: parsed.data,
+      };
+    } catch (error: any) {
+      console.error('Error reading file from S3:', error);
+      return undefined;
+    }
+  }
 
   // public static readImage(id: string) {
   //   try {

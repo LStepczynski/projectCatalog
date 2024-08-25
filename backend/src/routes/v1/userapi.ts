@@ -9,6 +9,7 @@ import multer from 'multer';
 import { Helper } from ':api/services/helper';
 import { v4 as uuidv4 } from 'uuid';
 import { S3 } from ':api/services/s3';
+import { Articles } from ':api/services/articles';
 
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
@@ -132,12 +133,21 @@ router.post(
     }
 
     const fullUserObject = (await UserManagment.getUser(user.Username)) || {};
-    if (fullUserObject.Liked.includes(articleId)) {
-      fullUserObject.Liked = fullUserObject.Liked.filter(
-        (id: string) => id !== articleId
-      );
-    } else {
-      fullUserObject.Liked.push(articleId);
+    try {
+      if (fullUserObject.Liked.includes(articleId)) {
+        fullUserObject.Liked = fullUserObject.Liked.filter(
+          (id: string) => id !== articleId
+        );
+        await Articles.decrementRating(articleId);
+      } else {
+        fullUserObject.Liked.push(articleId);
+        await Articles.incrementRating(articleId);
+      }
+    } catch (err) {
+      console.log(err);
+      return res
+        .status(500)
+        .send({ status: 500, response: { message: 'server error' } });
     }
 
     const response = await UserManagment.updateUser(
