@@ -7,6 +7,7 @@ import { useScreenWidth } from '../components/other/useScreenWidth';
 import { getRelativeDate, capitalize } from '@helper/helper';
 import { AnimatedImage } from '../components/animation/animatedImage';
 import { ArticleDifficultyLabel } from '../components/contentDisplay/articles/articleDifficultyLabel';
+import { Like } from '../components/contentDisplay/like';
 
 export const Article = () => {
   const [article, setArticle] = React.useState<any>(null);
@@ -110,8 +111,10 @@ interface DetailsProps {
 }
 
 const ArticleDetails = (props: DetailsProps) => {
+  const [isLiked, setIsLiked] = React.useState(false);
   const screenWidth = useScreenWidth();
   const { article, visibility } = props;
+
   return (
     <>
       <Box
@@ -174,6 +177,12 @@ const ArticleDetails = (props: DetailsProps) => {
             >
               <ArticleDifficultyLabel value={article.metadata.Difficulty} />
             </Box>
+            <Like
+              count={article.metadata.Rating}
+              id={article.metadata.ID}
+              setIsLiked={setIsLiked}
+              isLiked={isLiked}
+            />
           </Box>
         </Box>
 
