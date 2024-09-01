@@ -1,6 +1,8 @@
 import { Box, Text } from '@primer/react';
 import { HeartFillIcon, HeartIcon } from '@primer/octicons-react';
 
+import React from 'react';
+
 interface Props {
   count: number;
   isLiked: boolean;
@@ -10,31 +12,36 @@ interface Props {
 
 export const Like = (props: Props) => {
   let { count, isLiked, setIsLiked, id } = props;
+  const [likeCount, setLikeCount] = React.useState(count);
 
   const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
   const iconSize = 24;
 
   const handleLike = async () => {
+    const token = localStorage.getItem('verificationToken') || '';
+    if (token === '') {
+      window.location.href = 'sign-up';
+    }
+
     const likeReq = await fetch(`${backendUrl}/user/like`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${
-          localStorage.getItem('verificationToken') || ''
-        }`,
+        Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify({ articleId: id }),
     });
 
     const likeRes = await likeReq.json();
+
     if (likeRes.status != 200) {
       return alert('There was an error while rating the article');
     }
     if (isLiked) {
-      count -= 1;
+      setLikeCount(likeCount - 1);
     } else {
-      count += 1;
+      setLikeCount(likeCount + 1);
     }
     setIsLiked(!isLiked);
   };
@@ -66,7 +73,7 @@ export const Like = (props: Props) => {
       ) : (
         <HeartIcon size={iconSize} />
       )}
-      <Text>{count}</Text>
+      <Text>{likeCount}</Text>
     </Box>
   );
 };
