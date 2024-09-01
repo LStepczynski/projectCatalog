@@ -159,4 +159,22 @@ router.post(
   }
 );
 
+router.post(
+  '/isLiked',
+  UserManagment.authenticateToken,
+  async (req: any, res: any) => {
+    const articleId = req.body.articleId;
+    const user = req.user;
+
+    if (!articleId) {
+      return res
+        .status(400)
+        .send({ status: 400, response: { message: 'articleId not provided' } });
+    }
+
+    const isLiked = await UserManagment.isLikedByUser(user.Username, articleId);
+    return res.status(200).send({ status: 200, response: { result: isLiked } });
+  }
+);
+
 export default router;

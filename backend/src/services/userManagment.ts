@@ -158,6 +158,17 @@ export class UserManagment {
     }
   }
 
+  public static async isLikedByUser(username: string, articleId: string) {
+    const user = await this.getUser(username);
+    if (!user) {
+      return false;
+    }
+    if (user.Liked.includes(articleId)) {
+      return true;
+    }
+    return false;
+  }
+
   public static async updateUser(
     username: string,
     fieldName: string,
