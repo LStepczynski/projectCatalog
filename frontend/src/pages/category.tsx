@@ -1,6 +1,6 @@
 import { useParams } from 'react-router-dom';
 import React from 'react';
-import { Box, Heading, Text } from '@primer/react';
+import { Box, Heading, Text, Pagination } from '@primer/react';
 import { ArticleLarge } from '../components/contentDisplay/articles/articleLarge';
 import { ArticleMedium } from '../components/contentDisplay/articles/articleMedium';
 import { ArticleSmall } from '../components/contentDisplay/articles/articleSmall';
@@ -30,7 +30,6 @@ export const Category: React.FC = () => {
         })
         .then((data) => {
           setArticles(data.response.return);
-          console.log(data);
         })
         .catch((error) => {
           console.error(
@@ -101,12 +100,27 @@ export const Category: React.FC = () => {
   return (
     <Box
       sx={{
-        display: 'flex',
-        flexWrap: 'wrap',
+        display: 'grid',
         justifyContent: 'center',
+        gap: 4,
       }}
     >
-      {getArticlesToRender()}
+      <Box
+        sx={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          justifyContent: 'center',
+        }}
+      >
+        {getArticlesToRender()}
+      </Box>
+      <Pagination
+        currentPage={Number(page) || 1}
+        pageCount={99}
+        hrefBuilder={(page) => {
+          return `/categories/${categoryName}/${page}`;
+        }}
+      />
     </Box>
   );
 };

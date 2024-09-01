@@ -6,6 +6,8 @@ import { Box, Heading, Text, Avatar, Label, LabelGroup } from '@primer/react';
 import { useScreenWidth } from '../components/other/useScreenWidth';
 import { getRelativeDate, capitalize } from '@helper/helper';
 import { AnimatedImage } from '../components/animation/animatedImage';
+import { ArticleDifficultyLabel } from '../components/contentDisplay/articles/articleDifficultyLabel';
+import { Like } from '../components/contentDisplay/like';
 
 export const Article = () => {
   const [article, setArticle] = React.useState<any>(null);
@@ -82,6 +84,7 @@ export const Article = () => {
           display: 'flex',
           flexDirection: 'column',
           width: screenWidth < 768 ? '85%' : '70%',
+          mt: 4,
         }}
       >
         <Text as="p" sx={{ textAlign: 'justify' }}>
@@ -109,8 +112,30 @@ interface DetailsProps {
 }
 
 const ArticleDetails = (props: DetailsProps) => {
+  const [isLiked, setIsLiked] = React.useState(false);
   const screenWidth = useScreenWidth();
   const { article, visibility } = props;
+
+  const backendUrl = import.meta.env.VITE_BACKEND_URL;
+
+  React.useEffect(() => {
+    const fetchIsLiked = async () => {
+      const isLikedReq = await fetch(`${backendUrl}/user/isLiked`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${
+            localStorage.getItem('verificationToken') || ''
+          }`,
+        },
+        body: JSON.stringify({ articleId: article.metadata.ID }),
+      });
+      const isLikedRes = await isLikedReq.json();
+      setIsLiked(isLikedRes.response.result || false);
+    };
+    fetchIsLiked();
+  }, []);
+
   return (
     <>
       <Box
@@ -154,19 +179,12 @@ const ArticleDetails = (props: DetailsProps) => {
               {article.metadata.Author}
             </Text>
           </Box>
-          {visibility == 'public' && (
-            <Text sx={{ textAlign: 'center' }}>
-              {article.metadata.Rating} ✰ {screenWidth < 768 ? <br></br> : '• '}
-              {getRelativeDate(article.metadata.PublishedAt)}
-            </Text>
-          )}
-          {visibility == 'private' && (
-            <Text sx={{ textAlign: 'center' }}>
-              {capitalize(article.metadata.Status)}
-              {screenWidth < 768 ? <br></br> : ' • '}
-              {getRelativeDate(article.metadata.CreatedAt)}
-            </Text>
-          )}
+          <Like
+            count={article.metadata.Rating}
+            id={article.metadata.ID}
+            setIsLiked={setIsLiked}
+            isLiked={isLiked}
+          />
         </Box>
 
         <Box
@@ -204,6 +222,32 @@ const ArticleDetails = (props: DetailsProps) => {
               )}
             </LabelGroup>
           </Box>
+        </Box>
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'right',
+            alignItems: 'center',
+            gap: 4,
+            mr: 4,
+            ml: 2,
+            mt: 4,
+          }}
+        >
+          <ArticleDifficultyLabel value={article.metadata.Difficulty} />
+          {visibility == 'public' && (
+            <Text sx={{ textAlign: 'center' }}>
+              {article.metadata.Rating} ✰ {' • '}
+              {getRelativeDate(article.metadata.PublishedAt)}
+            </Text>
+          )}
+          {visibility == 'private' && (
+            <Text sx={{ textAlign: 'center' }}>
+              {capitalize(article.metadata.Status)}
+              {' • '}
+              {getRelativeDate(article.metadata.CreatedAt)}
+            </Text>
+          )}
         </Box>
       </Box>
     </>

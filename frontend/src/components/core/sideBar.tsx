@@ -12,6 +12,7 @@ import {
   UnlockIcon,
   BookIcon,
   PencilIcon,
+  ChecklistIcon,
 } from '@primer/octicons-react';
 import { debounce } from 'lodash';
 import { getUserFromJWT } from '@helper/helper';
@@ -88,7 +89,14 @@ if (user && (user.CanPost == 'true' || user.Admin == 'true')) {
   items[0].items.push({
     name: 'My Articles',
     icon: <PencilIcon size={iconSize} />,
-    action: '/myArticles',
+    action: '/myArticles/1',
+  });
+}
+if (user && user.Admin == 'true') {
+  items[0].items.push({
+    name: 'Admin View',
+    icon: <ChecklistIcon size={iconSize} />,
+    action: '/adminView/1',
   });
 }
 
@@ -119,7 +127,7 @@ export const SideBar = (props: Props) => {
         position: 'fixed',
         display: 'flex',
         width: '250px',
-        overflowY: "auto",
+        overflowY: 'auto',
         height: '100%',
         zIndex: 999,
         pt: '80px',

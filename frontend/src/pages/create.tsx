@@ -445,7 +445,7 @@ const ArticleSubmit = (props: SubmitProps) => {
       const articleData = await articleResponse.json();
 
       if (bannerFile[0] == null) {
-        window.location.href = '/myArticles';
+        window.location.href = '/myArticles/1';
         return;
       }
       // Submit image data

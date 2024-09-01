@@ -2,8 +2,10 @@ import {
   GetItemCommand,
   PutItemCommand,
   UpdateItemCommand,
+  UpdateItemCommandInput,
   DeleteItemCommand,
   ReturnValue,
+  QueryCommand,
 } from '@aws-sdk/client-dynamodb';
 import { unmarshall, marshall } from '@aws-sdk/util-dynamodb';
 
@@ -11,6 +13,8 @@ import bcrypt from 'bcryptjs';
 import { Helper } from './helper';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
+import { S3 } from './s3';
+import { v4 as uuidv4 } from 'uuid';
 
 import { client } from './dynamodb';
 
@@ -86,6 +90,7 @@ export class UserManagment {
       Password: password,
       Email: email,
       Admin: admin,
+      Liked: [],
       CanPost: canPost,
       ProfilePic:
         'https://project-catalog-storage.s3.us-east-2.amazonaws.com/images/pfp.png',
@@ -156,10 +161,21 @@ export class UserManagment {
     }
   }
 
+  public static async isLikedByUser(username: string, articleId: string) {
+    const user = await this.getUser(username);
+    if (!user) {
+      return false;
+    }
+    if (user.Liked.includes(articleId)) {
+      return true;
+    }
+    return false;
+  }
+
   public static async updateUser(
     username: string,
     fieldName: string,
-    fieldValue: string
+    fieldValue: any // Accept any data type
   ) {
     const allowedFields = [
       'Email',
@@ -167,25 +183,48 @@ export class UserManagment {
       'ProfilePic',
       'CanPost',
       'Admin',
+      'Liked',
     ];
 
     if (!allowedFields.includes(fieldName)) {
       return {
         status: 400,
-        response: { message: 'dissalowed field' },
+        response: { message: 'Disallowed field' },
       };
     }
 
-    const params = {
+    // Dynamically determine the DynamoDB attribute type
+    let dynamoValue;
+    if (typeof fieldValue === 'string') {
+      dynamoValue = { S: fieldValue };
+    } else if (typeof fieldValue === 'number') {
+      dynamoValue = { N: fieldValue.toString() };
+    } else if (typeof fieldValue === 'boolean') {
+      dynamoValue = { BOOL: fieldValue };
+    } else if (Array.isArray(fieldValue)) {
+      dynamoValue = { L: fieldValue.map((item) => ({ S: item.toString() })) }; // Adjust for your use case
+    } else if (fieldValue === null) {
+      dynamoValue = { NULL: true };
+    } else {
+      return {
+        status: 400,
+        response: { message: 'Unsupported data type' },
+      };
+    }
+
+    const params: UpdateItemCommandInput = {
       TableName: 'Users',
       Key: {
         Username: { S: username },
       },
-      UpdateExpression: `set ${fieldName} = :newVal`,
-      ExpressionAttributeValues: {
-        ':newVal': { S: fieldValue },
+      UpdateExpression: 'SET #field = :newVal',
+      ExpressionAttributeNames: {
+        '#field': fieldName,
       },
-      ReturnValues: ReturnValue.ALL_OLD,
+      ExpressionAttributeValues: {
+        ':newVal': dynamoValue,
+      },
+      ReturnValues: 'ALL_OLD',
     };
 
     try {
@@ -195,7 +234,7 @@ export class UserManagment {
       if (!result.Attributes) {
         return {
           status: 404,
-          response: { message: 'user not found' },
+          response: { message: 'User not found' },
         };
       }
 
@@ -230,12 +269,98 @@ export class UserManagment {
     }
 
     delete user.Password;
+    delete user.Liked
 
     const token = this.getNewJWT(user);
     return {
       status: 200,
       response: { accessToken: token },
     };
+  }
+
+  public static async changeProfilePic(username: string, file: any) {
+    let user = await UserManagment.getUser(username);
+
+    if (!user) {
+      return { status: 404, response: { message: 'user not found' } }
+    }
+
+    const oldImageId = user.ProfilePic.match(
+      /images\/([a-f0-9-]+)\.(?:png|jpg|jpeg|gif)$/
+    );
+    if (oldImageId) {
+      S3.removeImageFromS3(oldImageId[1]);
+    }
+
+    const imageId = uuidv4();
+
+    user.ProfilePic = `${process.env.AWS_S3_LINK}/images/${imageId}.png`;
+
+    try {
+      const response = await S3.saveImage(imageId, file, 350, 350);
+      if (!response) {
+        throw new Error('S3 error');
+      }
+    } catch (err) {
+      console.log('Error: ', err);
+      return {
+        status: 500,
+        response: { message: 'server error' },
+      };
+    }
+
+    if (user.Admin || user.CanPost) {
+      const queryArticles = async (tableName: string) => {
+        const articleReq = await client.send(new QueryCommand({
+          TableName: tableName,
+          IndexName: 'AuthorDifficulty',
+          KeyConditionExpression: 'Author = :username',
+          ExpressionAttributeValues: {
+            ':username': { S: user.Username }
+          },
+          ProjectionExpression: 'ID'
+        }));
+        return articleReq.Items || [];
+      };
+    
+      const updateArticles = async (tableName: string, articles: any) => {
+        return Promise.all(articles.map(async (item: any) => {
+          const id = item.ID?.S;
+          if (id) {
+            await client.send(new UpdateItemCommand({
+              TableName: tableName,
+              Key: { ID: { S: id } },
+              UpdateExpression: 'SET AuthorProfilePic = :newLink',
+              ExpressionAttributeValues: {
+                ':newLink': { S: user.ProfilePic }
+              }
+            }));
+          }
+        }));
+      };
+    
+      const [privateArticles, publicArticles] = await Promise.all([
+        queryArticles('ArticlesUnpublished'),
+        queryArticles('ArticlesPublished')
+      ]);
+    
+      await Promise.all([
+        updateArticles('ArticlesUnpublished', privateArticles),
+        updateArticles('ArticlesPublished', publicArticles)
+      ]);
+    }
+    
+
+    const result = await UserManagment.updateUser(
+      username,
+      'ProfilePic',
+      user.ProfilePic
+    );
+
+    const resultWithToken: any = result;
+    delete user.Password;
+    resultWithToken.response.verificationToken = UserManagment.getNewJWT(user);
+    return resultWithToken
   }
 
   public static authenticateToken(req: any, res: any, next: any) {

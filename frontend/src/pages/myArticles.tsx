@@ -1,5 +1,7 @@
-import { Box, Heading, Text, Button } from '@primer/react';
 import React from 'react';
+import { useParams } from 'react-router-dom';
+
+import { Box, Heading, Pagination } from '@primer/react';
 
 import { ArticleSmall } from '../components/contentDisplay/articles/articleSmall';
 import { ArticlePrivate } from '../components/contentDisplay/articles/articlePrivate';
@@ -11,6 +13,7 @@ export const MyArticles = () => {
   const [publicArticles, setPublicArticles] = React.useState<any>([]);
   const [privateArticles, setPrivateArticles] = React.useState<any>([]);
   const screenWidth = useScreenWidth();
+  const { page } = useParams();
 
   const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
@@ -20,7 +23,9 @@ export const MyArticles = () => {
   }
 
   React.useEffect(() => {
-    fetch(`${backendUrl}/articles/author?authorName=${user.Username}`)
+    fetch(
+      `${backendUrl}/articles/author?authorName=${user.Username}&page=${page}`
+    )
       .then((response) => response.json())
       .then((data) => {
         setPublicArticles(data.response.return);
@@ -121,6 +126,13 @@ export const MyArticles = () => {
           </Box>
         </Box>
       </Box>
+      <Pagination
+        currentPage={Number(page) || 1}
+        pageCount={99}
+        hrefBuilder={(page) => {
+          return `/myArticles/${page}`;
+        }}
+      />
     </Box>
   );
 };

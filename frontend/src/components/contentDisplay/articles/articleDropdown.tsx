@@ -167,7 +167,7 @@ export const ArticleDropdown = ({ setHovering, article, visibility }: any) => {
                   </ActionList.LeadingVisual>
                 </ActionList.Item>
               )}
-              {articleOwner && visibility == 'private' && (
+              {article.Author == user.Username && visibility == 'private' && (
                 <ActionList.Item onSelect={handleEdit} sx={actionListStyle}>
                   Edit
                   <ActionList.LeadingVisual>

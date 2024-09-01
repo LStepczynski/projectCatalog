@@ -3,6 +3,7 @@ import React from 'react';
 import { getRelativeDate } from '@helper/helper';
 import { AnimatedImage } from '../../animation/animatedImage';
 import { ArticleDropdown } from './articleDropdown';
+import { ArticleDifficultyLabel } from './articleDifficultyLabel';
 
 interface Props {
   article: Article;
@@ -84,6 +85,7 @@ export const ArticleLarge = (props: Props) => {
           sx={{
             display: 'flex',
             justifyContent: 'space-between',
+            alignItems: 'center',
             mr: 4,
             ml: 2,
           }}
@@ -92,6 +94,16 @@ export const ArticleLarge = (props: Props) => {
             <Avatar size={35} src={article.AuthorProfilePic} />
             <Text>{article.Author}</Text>
           </Box>
+          <ArticleDifficultyLabel value={article.Difficulty} />
+        </Box>
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'right',
+            mr: 4,
+            ml: 2,
+          }}
+        >
           <Text>
             {article.Rating} ✰ • {getRelativeDate(article.PublishedAt)}
           </Text>

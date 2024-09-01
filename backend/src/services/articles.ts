@@ -56,7 +56,7 @@ export class Articles {
         AuthorProfilePic: { value: '', required: true },
         PrimaryCategory: { value: '', required: true },
         SecondaryCategories: { value: [], required: true },
-        Rating: { value: 0, required: true },
+        Rating: { value: 0, required: false },
         CreatedAt: { value: 0, required: false },
         UpdatedAt: { value: 0, required: false },
         Difficulty: { value: '', required: true },
@@ -209,9 +209,13 @@ export class Articles {
     }
     const currentTime = Helper.getUNIXTimestamp();
 
-    if (tableName == 'ArticlesPublished' && metadata.PublishedAt == undefined) {
-      metadata.PublishedAt = currentTime;
+    if (tableName == 'ArticlesPublished') {
+      if (metadata.PublishedAt == undefined) {
+        metadata.PublishedAt = currentTime;
+      }
+      metadata.Rating = 0;
     }
+
     if (tableName == 'ArticlesUnpublished') {
       if (metadata.CreatedAt == undefined) {
         metadata.CreatedAt = currentTime;
@@ -220,17 +224,12 @@ export class Articles {
         metadata.Status = 'private';
       }
     }
+
     if (metadata.UpdatedAt == undefined) {
       metadata.UpdatedAt = null;
     }
-
     if (metadata.Image == '' || metadata.Image == undefined) {
       metadata.Image = null;
-    }
-
-    // Adding the body to S3
-    if (!(await S3.addToS3(tableName, metadata, body))) {
-      return { status: 500, response: { message: 'server error' } };
     }
 
     // Adding the articles to the database
@@ -241,6 +240,12 @@ export class Articles {
 
     try {
       await client.send(new PutItemCommand(params));
+      // Adding the body to S3
+      delete metadata.rating;
+      delete metadata.AuthorProfilePic
+      if (!(await S3.addToS3(tableName, metadata, body))) {
+        return { status: 500, response: { message: 'server error' } };
+      }
       return {
         status: 200,
         response: { message: 'item added succesfully', id: metadata.ID },
@@ -447,7 +452,7 @@ export class Articles {
       };
     }
 
-    let article = S3.readFromS3(tableName, id);
+    let article = await S3.readFromS3(tableName, id);
     if (!article) {
       return { status: 404, response: { message: 'item not found' } };
     }
@@ -542,6 +547,33 @@ export class Articles {
         return { status: 200, response: { return: items } };
       }
     }
+  }
+
+  public static async getStatusCreated(
+    status: string,
+    page: number,
+    limit: number,
+    forward: boolean
+  ): Promise<any | void> {
+    const params: QueryCommandInput = {
+      TableName: 'ArticlesUnpublished',
+      IndexName: 'StatusCreated',
+      KeyConditionExpression: '#status = :c',
+      ExpressionAttributeNames: {
+        '#status': 'Status',
+      },
+      ExpressionAttributeValues: {
+        ':c': { S: status },
+      },
+      Limit: limit,
+      ScanIndexForward: forward,
+    };
+    return await this.getPaginationItems(
+      'ArticlesUnpublished',
+      page,
+      limit,
+      params
+    );
   }
 
   public static async getCategoryCreated(
@@ -703,5 +735,69 @@ export class Articles {
       ScanIndexForward: forward,
     };
     return await this.getPaginationItems(tableName, page, limit, params);
+  }
+
+  public static async incrementRating(id: string) {
+    const params: UpdateItemCommandInput = {
+      TableName: 'ArticlesPublished',
+      Key: {
+        ID: { S: id },
+      },
+      UpdateExpression: 'SET #r = if_not_exists(#r, :start) + :inc',
+      ExpressionAttributeNames: {
+        '#r': 'Rating',
+      },
+      ExpressionAttributeValues: {
+        ':inc': { N: '1' },
+        ':start': { N: '0' }, // Start value if 'Rating' doesn't exist
+      },
+      ReturnValues: 'UPDATED_NEW',
+    };
+
+    try {
+      const data = await client.send(new UpdateItemCommand(params));
+      return {
+        status: 200,
+        response: { message: 'rating incremented succesfully' },
+      };
+    } catch (err) {
+      console.error('Error updating rating:', err);
+      return {
+        status: 500,
+        response: { message: 'server error' },
+      };
+    }
+  }
+
+  public static async decrementRating(id: string) {
+    const params: UpdateItemCommandInput = {
+      TableName: 'ArticlesPublished',
+      Key: {
+        ID: { S: id },
+      },
+      UpdateExpression: 'SET #r = if_not_exists(#r, :start) + :dec',
+      ExpressionAttributeNames: {
+        '#r': 'Rating',
+      },
+      ExpressionAttributeValues: {
+        ':dec': { N: '-1' },
+        ':start': { N: '0' }, // Start value if 'Rating' doesn't exist
+      },
+      ReturnValues: 'UPDATED_NEW',
+    };
+
+    try {
+      const data = await client.send(new UpdateItemCommand(params));
+      return {
+        status: 200,
+        response: { message: 'rating decremented succesfully' },
+      };
+    } catch (err) {
+      console.error('Error updating rating:', err);
+      return {
+        status: 500,
+        response: { message: 'server error' },
+      };
+    }
   }
 }

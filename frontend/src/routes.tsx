@@ -8,6 +8,7 @@ import { Register } from './pages/register';
 import { Article } from './pages/article';
 import { Create } from './pages/create';
 import { MyArticles } from './pages/myArticles';
+import { AdminView } from './pages/adminView';
 
 export const Routes = () => {
   const router = createBrowserRouter([
@@ -32,12 +33,16 @@ export const Routes = () => {
       element: <Register />,
     },
     {
-      path: '/myArticles',
-      element: <MyArticles />,
-    },
-    {
       path: '/create',
       element: <Create />,
+    },
+    {
+      path: '/adminView/:page',
+      element: <AdminView />,
+    },
+    {
+      path: '/myArticles/:page',
+      element: <MyArticles />,
     },
     {
       path: '/categories/:categoryName/:page',
