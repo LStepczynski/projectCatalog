@@ -9,11 +9,18 @@ import {
   PencilIcon,
 } from '@primer/octicons-react';
 import { PortalWrapper } from '../../core/portalWrapper';
+import { ConfirmationPopup } from '../confirmationPopup';
 
 import { getUserFromJWT } from '@helper/helper';
 
 export const ArticleDropdown = ({ setHovering, article, visibility }: any) => {
   const [dropdownState, setDropdownState] = React.useState(false);
+  const [popupState, setPopupState] = React.useState(false);
+  const [popupDetails, setPopupDetails] = React.useState<any>({
+    title: '',
+    description: '',
+    onAccept: null,
+  });
 
   const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
@@ -28,30 +35,39 @@ export const ArticleDropdown = ({ setHovering, article, visibility }: any) => {
     fontSize: '14px',
   };
 
-  const handleDelete = async () => {
-    try {
-      const deleteResponse = await fetch(
-        `${backendUrl}/articles/delete?id=${article.ID}&visibility=${visibility}`,
-        {
-          method: 'DELETE',
-          headers: {
-            Authorization: `Bearer ${
-              localStorage.getItem('verificationToken') || ''
-            }`,
-          },
+  const handleDelete = () => {
+    const deleteArticle = async () => {
+      try {
+        const deleteResponse = await fetch(
+          `${backendUrl}/articles/delete?id=${article.ID}&visibility=${visibility}`,
+          {
+            method: 'DELETE',
+            headers: {
+              Authorization: `Bearer ${
+                localStorage.getItem('verificationToken') || ''
+              }`,
+            },
+          }
+        );
+
+        const deleteData = await deleteResponse.json();
+
+        if (deleteData.status == 200) {
+          location.reload();
+        } else {
+          alert('There was a problem while trying to delete the article');
         }
-      );
-
-      const deleteData = await deleteResponse.json();
-
-      if (deleteData.status == 200) {
-        location.reload();
-      } else {
+      } catch {
         alert('There was a problem while trying to delete the article');
       }
-    } catch {
-      alert('There was a problem while trying to delete the article');
-    }
+    };
+    setPopupDetails({
+      title: 'Delete Article',
+      description:
+        'Are you sure you want to delete this article? This action cannot be reversed.',
+      onAccept: deleteArticle,
+    });
+    setPopupState(true);
   };
 
   const handlePublish = async () => {
@@ -187,6 +203,15 @@ export const ArticleDropdown = ({ setHovering, article, visibility }: any) => {
                 </ActionList.Item>
               )}
             </ActionList>
+            <ConfirmationPopup
+              title={popupDetails.title}
+              description={popupDetails.description}
+              onAccept={popupDetails.onAccept}
+              onDecline={() => {
+                setPopupState(false);
+              }}
+              isOpen={popupState}
+            />
           </Box>
         </>
       )}
