@@ -9,6 +9,7 @@ import multer from 'multer';
 import { Helper } from ':api/services/helper';
 import { v4 as uuidv4 } from 'uuid';
 import { S3 } from ':api/services/s3';
+import { Articles } from ':api/services/articles';
 
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
@@ -118,8 +119,62 @@ router.post(
   }
 );
 
-router.get('/test', UserManagment.authenticateToken, (req: any, res: any) => {
-  return res.send(req.user);
-});
+router.post(
+  '/like',
+  UserManagment.authenticateToken,
+  async (req: any, res: any) => {
+    const articleId = req.body.articleId;
+    const user = req.user;
+
+    if (!articleId) {
+      return res
+        .status(400)
+        .send({ status: 400, response: { message: 'articleId not provided' } });
+    }
+
+    const fullUserObject = (await UserManagment.getUser(user.Username)) || {};
+    try {
+      if (fullUserObject.Liked.includes(articleId)) {
+        fullUserObject.Liked = fullUserObject.Liked.filter(
+          (id: string) => id !== articleId
+        );
+        await Articles.decrementRating(articleId);
+      } else {
+        fullUserObject.Liked.push(articleId);
+        await Articles.incrementRating(articleId);
+      }
+    } catch (err) {
+      console.log(err);
+      return res
+        .status(500)
+        .send({ status: 500, response: { message: 'server error' } });
+    }
+
+    const response = await UserManagment.updateUser(
+      user.Username,
+      'Liked',
+      fullUserObject.Liked
+    );
+    return res.status(response.status).send(response);
+  }
+);
+
+router.post(
+  '/isLiked',
+  UserManagment.authenticateToken,
+  async (req: any, res: any) => {
+    const articleId = req.body.articleId;
+    const user = req.user;
+
+    if (!articleId) {
+      return res
+        .status(400)
+        .send({ status: 400, response: { message: 'articleId not provided' } });
+    }
+
+    const isLiked = await UserManagment.isLikedByUser(user.Username, articleId);
+    return res.status(200).send({ status: 200, response: { result: isLiked } });
+  }
+);
 
 export default router;
