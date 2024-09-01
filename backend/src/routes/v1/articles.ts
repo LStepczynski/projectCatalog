@@ -202,17 +202,28 @@ router.get(
     }
 
     // Fetch the result and return it
-    const result = await Articles.getArticle(articleId, tableName);
-    if (
-      visibility == 'private' &&
-      !UserManagment.checkUsername(result.response.return.metadata.Author, user)
-    ) {
-      return res.status(403).send({
-        status: 403,
-        response: { message: 'permission denied' },
-      });
+    try {
+      const metadataResult = await Articles.getArticleMetadata(
+        articleId,
+        tableName
+      );
+      const metadata = metadataResult.response.return;
+      if (
+        visibility == 'private' &&
+        !UserManagment.checkUsername(metadata.Author, user)
+      ) {
+        return res.status(403).send({
+          status: 403,
+          response: { message: 'permission denied' },
+        });
+      }
+      const bodyResult = await Articles.getArticle(articleId, tableName);
+      bodyResult.response.return.metadata = metadata;
+      return res.status(bodyResult.status).send(bodyResult);
+    } catch (err) {
+      console.log(err);
+      return res.status(500).send('server error');
     }
-    return res.status(result.status).send(result);
   }
 );
 

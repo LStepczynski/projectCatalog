@@ -56,7 +56,7 @@ export class Articles {
         AuthorProfilePic: { value: '', required: true },
         PrimaryCategory: { value: '', required: true },
         SecondaryCategories: { value: [], required: true },
-        Rating: { value: 0, required: true },
+        Rating: { value: 0, required: false },
         CreatedAt: { value: 0, required: false },
         UpdatedAt: { value: 0, required: false },
         Difficulty: { value: '', required: true },
@@ -209,9 +209,13 @@ export class Articles {
     }
     const currentTime = Helper.getUNIXTimestamp();
 
-    if (tableName == 'ArticlesPublished' && metadata.PublishedAt == undefined) {
-      metadata.PublishedAt = currentTime;
+    if (tableName == 'ArticlesPublished') {
+      if (metadata.PublishedAt == undefined) {
+        metadata.PublishedAt = currentTime;
+      }
+      metadata.Rating = 0;
     }
+
     if (tableName == 'ArticlesUnpublished') {
       if (metadata.CreatedAt == undefined) {
         metadata.CreatedAt = currentTime;
@@ -220,17 +224,12 @@ export class Articles {
         metadata.Status = 'private';
       }
     }
+
     if (metadata.UpdatedAt == undefined) {
       metadata.UpdatedAt = null;
     }
-
     if (metadata.Image == '' || metadata.Image == undefined) {
       metadata.Image = null;
-    }
-
-    // Adding the body to S3
-    if (!(await S3.addToS3(tableName, metadata, body))) {
-      return { status: 500, response: { message: 'server error' } };
     }
 
     // Adding the articles to the database
@@ -241,6 +240,11 @@ export class Articles {
 
     try {
       await client.send(new PutItemCommand(params));
+      // Adding the body to S3
+      delete metadata.rating;
+      if (!(await S3.addToS3(tableName, metadata, body))) {
+        return { status: 500, response: { message: 'server error' } };
+      }
       return {
         status: 200,
         response: { message: 'item added succesfully', id: metadata.ID },
@@ -738,35 +742,18 @@ export class Articles {
       Key: {
         ID: { S: id },
       },
-      UpdateExpression: 'ADD #r :inc',
+      UpdateExpression: 'SET #r = if_not_exists(#r, :start) + :inc',
       ExpressionAttributeNames: {
         '#r': 'Rating',
       },
       ExpressionAttributeValues: {
         ':inc': { N: '1' },
+        ':start': { N: '0' }, // Start value if 'Rating' doesn't exist
       },
       ReturnValues: 'UPDATED_NEW',
     };
 
     try {
-      const article = await S3.readFromS3('ArticlesPublished', id);
-      if (!article) {
-        return {
-          status: 500,
-          response: { message: 'server error' },
-        };
-      }
-
-      article.metadata.Rating += 1;
-      if (
-        !(await S3.addToS3('ArticlesPublished', article.metadata, article.body))
-      ) {
-        return {
-          status: 500,
-          response: { message: 'server error' },
-        };
-      }
-
       const data = await client.send(new UpdateItemCommand(params));
       return {
         status: 200,
@@ -787,36 +774,18 @@ export class Articles {
       Key: {
         ID: { S: id },
       },
-      UpdateExpression: 'ADD #r :dec',
+      UpdateExpression: 'SET #r = if_not_exists(#r, :start) + :dec',
       ExpressionAttributeNames: {
         '#r': 'Rating',
       },
       ExpressionAttributeValues: {
         ':dec': { N: '-1' },
+        ':start': { N: '0' }, // Start value if 'Rating' doesn't exist
       },
       ReturnValues: 'UPDATED_NEW',
-      ConditionExpression: 'attribute_exists(#r) OR attribute_not_exists(#r)',
     };
 
     try {
-      const article = await S3.readFromS3('ArticlesPublished', id);
-      if (!article) {
-        return {
-          status: 500,
-          response: { message: 'server error' },
-        };
-      }
-
-      article.metadata.Rating -= 1;
-      if (
-        !(await S3.addToS3('ArticlesPublished', article.metadata, article.body))
-      ) {
-        return {
-          status: 500,
-          response: { message: 'server error' },
-        };
-      }
-
       const data = await client.send(new UpdateItemCommand(params));
       return {
         status: 200,
