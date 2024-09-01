@@ -242,6 +242,7 @@ export class Articles {
       await client.send(new PutItemCommand(params));
       // Adding the body to S3
       delete metadata.rating;
+      delete metadata.AuthorProfilePic
       if (!(await S3.addToS3(tableName, metadata, body))) {
         return { status: 500, response: { message: 'server error' } };
       }

@@ -5,6 +5,7 @@ import {
   UpdateItemCommandInput,
   DeleteItemCommand,
   ReturnValue,
+  QueryCommand,
 } from '@aws-sdk/client-dynamodb';
 import { unmarshall, marshall } from '@aws-sdk/util-dynamodb';
 
@@ -12,6 +13,8 @@ import bcrypt from 'bcryptjs';
 import { Helper } from './helper';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
+import { S3 } from './s3';
+import { v4 as uuidv4 } from 'uuid';
 
 import { client } from './dynamodb';
 
@@ -266,12 +269,98 @@ export class UserManagment {
     }
 
     delete user.Password;
+    delete user.Liked
 
     const token = this.getNewJWT(user);
     return {
       status: 200,
       response: { accessToken: token },
     };
+  }
+
+  public static async changeProfilePic(username: string, file: any) {
+    let user = await UserManagment.getUser(username);
+
+    if (!user) {
+      return { status: 404, response: { message: 'user not found' } }
+    }
+
+    const oldImageId = user.ProfilePic.match(
+      /images\/([a-f0-9-]+)\.(?:png|jpg|jpeg|gif)$/
+    );
+    if (oldImageId) {
+      S3.removeImageFromS3(oldImageId[1]);
+    }
+
+    const imageId = uuidv4();
+
+    user.ProfilePic = `${process.env.AWS_S3_LINK}/images/${imageId}.png`;
+
+    try {
+      const response = await S3.saveImage(imageId, file, 350, 350);
+      if (!response) {
+        throw new Error('S3 error');
+      }
+    } catch (err) {
+      console.log('Error: ', err);
+      return {
+        status: 500,
+        response: { message: 'server error' },
+      };
+    }
+
+    if (user.Admin || user.CanPost) {
+      const queryArticles = async (tableName: string) => {
+        const articleReq = await client.send(new QueryCommand({
+          TableName: tableName,
+          IndexName: 'AuthorDifficulty',
+          KeyConditionExpression: 'Author = :username',
+          ExpressionAttributeValues: {
+            ':username': { S: user.Username }
+          },
+          ProjectionExpression: 'ID'
+        }));
+        return articleReq.Items || [];
+      };
+    
+      const updateArticles = async (tableName: string, articles: any) => {
+        return Promise.all(articles.map(async (item: any) => {
+          const id = item.ID?.S;
+          if (id) {
+            await client.send(new UpdateItemCommand({
+              TableName: tableName,
+              Key: { ID: { S: id } },
+              UpdateExpression: 'SET AuthorProfilePic = :newLink',
+              ExpressionAttributeValues: {
+                ':newLink': { S: user.ProfilePic }
+              }
+            }));
+          }
+        }));
+      };
+    
+      const [privateArticles, publicArticles] = await Promise.all([
+        queryArticles('ArticlesUnpublished'),
+        queryArticles('ArticlesPublished')
+      ]);
+    
+      await Promise.all([
+        updateArticles('ArticlesUnpublished', privateArticles),
+        updateArticles('ArticlesPublished', publicArticles)
+      ]);
+    }
+    
+
+    const result = await UserManagment.updateUser(
+      username,
+      'ProfilePic',
+      user.ProfilePic
+    );
+
+    const resultWithToken: any = result;
+    delete user.Password;
+    resultWithToken.response.verificationToken = UserManagment.getNewJWT(user);
+    return resultWithToken
   }
 
   public static authenticateToken(req: any, res: any, next: any) {
