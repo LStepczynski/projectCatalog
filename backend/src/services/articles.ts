@@ -264,11 +264,12 @@ export class Articles {
       return { status: 400, response: { message: 'invalid id format' } };
     }
 
-    const getResponse = await this.getArticle(id, 'ArticlesUnpublished');
-    if (getResponse.status != 200) {
-      return getResponse;
+    const metadataResp = await this.getArticleMetadata(id, 'ArticlesUnpublished');
+    const bodyResp = await this.getArticle(id, 'ArticlesUnpublished');
+    if (bodyResp.status != 200) {
+      return bodyResp;
     }
-    const getRespItems = getResponse.response.return;
+    const getRespItems = {body: bodyResp.response.return.body, metadata: metadataResp.response.return};
     delete getRespItems.metadata.ID;
     delete getRespItems.metadata.Status;
 
