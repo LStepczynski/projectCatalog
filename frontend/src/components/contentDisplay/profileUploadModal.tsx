@@ -39,7 +39,7 @@ export const ProfileUploadModal = ({ endpoint, isOpen, closeFunc }: any) => {
         result.response.verificationToken
       );
 
-      alert('New profile picture uploaded. Refresh the page to see changes.');
+      location.reload();
     }
   };
 
