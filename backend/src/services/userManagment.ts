@@ -94,6 +94,7 @@ export class UserManagment {
       CanPost: canPost,
       ProfilePic:
         'https://project-catalog-storage.s3.us-east-2.amazonaws.com/images/pfp.png',
+      ProfilePicChange: 'null',
       AccountCreated: Helper.getUNIXTimestamp(),
     };
 
@@ -181,6 +182,7 @@ export class UserManagment {
       'Email',
       'Password',
       'ProfilePic',
+      'ProfilePicChange',
       'CanPost',
       'Admin',
       'Liked',
@@ -284,6 +286,13 @@ export class UserManagment {
     if (!user) {
       return { status: 404, response: { message: 'user not found' } }
     }
+
+    const timestamp = Helper.getUNIXTimestamp()
+    const userEditRes = await this.updateUser(user.Username, 'ProfilePicChange', timestamp)
+    if (userEditRes.status != 200) {
+      return userEditRes
+    }
+    user.ProfilePicChange = timestamp
 
     const oldImageId = user.ProfilePic.match(
       /images\/([a-f0-9-]+)\.(?:png|jpg|jpeg|gif)$/
