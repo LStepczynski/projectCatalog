@@ -9,11 +9,18 @@ import {
   PencilIcon,
 } from '@primer/octicons-react';
 import { PortalWrapper } from '../../core/portalWrapper';
+import { ConfirmationPopup } from '../confirmationPopup';
 
 import { getUserFromJWT } from '@helper/helper';
 
 export const ArticleDropdown = ({ setHovering, article, visibility }: any) => {
   const [dropdownState, setDropdownState] = React.useState(false);
+  const [popupState, setPopupState] = React.useState(false);
+  const [popupDetails, setPopupDetails] = React.useState<any>({
+    title: '',
+    description: '',
+    onAccept: null,
+  });
 
   const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
@@ -28,82 +35,108 @@ export const ArticleDropdown = ({ setHovering, article, visibility }: any) => {
     fontSize: '14px',
   };
 
-  const handleDelete = async () => {
-    try {
-      const deleteResponse = await fetch(
-        `${backendUrl}/articles/delete?id=${article.ID}&visibility=${visibility}`,
-        {
-          method: 'DELETE',
-          headers: {
-            Authorization: `Bearer ${
-              localStorage.getItem('verificationToken') || ''
-            }`,
-          },
+  const handleDelete = () => {
+    const deleteArticle = async () => {
+      try {
+        const deleteResponse = await fetch(
+          `${backendUrl}/articles/delete?id=${article.ID}&visibility=${visibility}`,
+          {
+            method: 'DELETE',
+            headers: {
+              Authorization: `Bearer ${
+                localStorage.getItem('verificationToken') || ''
+              }`,
+            },
+          }
+        );
+
+        const deleteData = await deleteResponse.json();
+
+        if (deleteData.status == 200) {
+          location.reload();
+        } else {
+          alert('There was a problem while trying to delete the article');
         }
-      );
-
-      const deleteData = await deleteResponse.json();
-
-      if (deleteData.status == 200) {
-        location.reload();
-      } else {
+      } catch {
         alert('There was a problem while trying to delete the article');
       }
-    } catch {
-      alert('There was a problem while trying to delete the article');
-    }
+    };
+    setPopupDetails({
+      title: 'Delete Article',
+      description:
+        'Are you sure you want to delete this article? This action cannot be reversed.',
+      onAccept: deleteArticle,
+    });
+    setPopupState(true);
   };
 
-  const handlePublish = async () => {
-    try {
-      const publishResponse = await fetch(
-        `${backendUrl}/articles/publish?id=${article.ID}`,
-        {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${
-              localStorage.getItem('verificationToken') || ''
-            }`,
-          },
+  const handlePublish = () => {
+    const publishArticle = async () => {
+      try {
+        const publishResponse = await fetch(
+          `${backendUrl}/articles/publish?id=${article.ID}`,
+          {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${
+                localStorage.getItem('verificationToken') || ''
+              }`,
+            },
+          }
+        );
+
+        const publishData = await publishResponse.json();
+
+        if (publishData.status == 200) {
+          location.reload();
+        } else {
+          alert('There was a problem while trying to publish the article');
         }
-      );
-
-      const publishData = await publishResponse.json();
-
-      if (publishData.status == 200) {
-        location.reload();
-      } else {
+      } catch {
         alert('There was a problem while trying to publish the article');
       }
-    } catch {
-      alert('There was a problem while trying to publish the article');
-    }
+    };
+    setPopupDetails({
+      title: 'Publish Article',
+      description: 'Are you sure you want to publish this article?',
+      onAccept: publishArticle,
+    });
+    setPopupState(true);
   };
 
-  const handleUnpublish = async () => {
-    try {
-      const hideResponse = await fetch(
-        `${backendUrl}/articles/hide?id=${article.ID}`,
-        {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${
-              localStorage.getItem('verificationToken') || ''
-            }`,
-          },
+  const handleUnpublish = () => {
+    const unpublishArticle = async () => {
+      try {
+        const hideResponse = await fetch(
+          `${backendUrl}/articles/hide?id=${article.ID}`,
+          {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${
+                localStorage.getItem('verificationToken') || ''
+              }`,
+            },
+          }
+        );
+
+        const hideData = await hideResponse.json();
+
+        if (hideData.status == 200) {
+          location.reload();
+        } else {
+          alert('There was a problem while trying to unpublish the article');
         }
-      );
-
-      const hideData = await hideResponse.json();
-
-      if (hideData.status == 200) {
-        location.reload();
-      } else {
+      } catch {
         alert('There was a problem while trying to unpublish the article');
       }
-    } catch {
-      alert('There was a problem while trying to unpublish the article');
-    }
+    };
+    setPopupDetails({
+      title: 'Unpublish Article',
+      description:
+        'Are you sure you want to unpublish this article? You will loose all of your likes.',
+      onAccept: unpublishArticle,
+    });
+    setPopupState(true);
   };
 
   const handleEdit = () => {
@@ -187,6 +220,15 @@ export const ArticleDropdown = ({ setHovering, article, visibility }: any) => {
                 </ActionList.Item>
               )}
             </ActionList>
+            <ConfirmationPopup
+              title={popupDetails.title}
+              description={popupDetails.description}
+              onAccept={popupDetails.onAccept}
+              onDecline={() => {
+                setPopupState(false);
+              }}
+              isOpen={popupState}
+            />
           </Box>
         </>
       )}

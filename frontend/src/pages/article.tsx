@@ -133,7 +133,9 @@ const ArticleDetails = (props: DetailsProps) => {
       const isLikedRes = await isLikedReq.json();
       setIsLiked(isLikedRes.response.result || false);
     };
-    fetchIsLiked();
+    if (visibility == 'public') {
+      fetchIsLiked();
+    }
   }, []);
 
   return (
@@ -179,12 +181,14 @@ const ArticleDetails = (props: DetailsProps) => {
               {article.metadata.Author}
             </Text>
           </Box>
-          <Like
-            count={article.metadata.Rating}
-            id={article.metadata.ID}
-            setIsLiked={setIsLiked}
-            isLiked={isLiked}
-          />
+          {visibility == 'public' && (
+            <Like
+              count={article.metadata.Rating}
+              id={article.metadata.ID}
+              setIsLiked={setIsLiked}
+              isLiked={isLiked}
+            />
+          )}
         </Box>
 
         <Box
