@@ -70,56 +70,73 @@ export const ArticleDropdown = ({ setHovering, article, visibility }: any) => {
     setPopupState(true);
   };
 
-  const handlePublish = async () => {
-    try {
-      const publishResponse = await fetch(
-        `${backendUrl}/articles/publish?id=${article.ID}`,
-        {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${
-              localStorage.getItem('verificationToken') || ''
-            }`,
-          },
+  const handlePublish = () => {
+    const publishArticle = async () => {
+      try {
+        const publishResponse = await fetch(
+          `${backendUrl}/articles/publish?id=${article.ID}`,
+          {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${
+                localStorage.getItem('verificationToken') || ''
+              }`,
+            },
+          }
+        );
+
+        const publishData = await publishResponse.json();
+
+        if (publishData.status == 200) {
+          location.reload();
+        } else {
+          alert('There was a problem while trying to publish the article');
         }
-      );
-
-      const publishData = await publishResponse.json();
-
-      if (publishData.status == 200) {
-        location.reload();
-      } else {
+      } catch {
         alert('There was a problem while trying to publish the article');
       }
-    } catch {
-      alert('There was a problem while trying to publish the article');
-    }
+    };
+    setPopupDetails({
+      title: 'Publish Article',
+      description: 'Are you sure you want to publish this article?',
+      onAccept: publishArticle,
+    });
+    setPopupState(true);
   };
 
-  const handleUnpublish = async () => {
-    try {
-      const hideResponse = await fetch(
-        `${backendUrl}/articles/hide?id=${article.ID}`,
-        {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${
-              localStorage.getItem('verificationToken') || ''
-            }`,
-          },
+  const handleUnpublish = () => {
+    const unpublishArticle = async () => {
+      try {
+        const hideResponse = await fetch(
+          `${backendUrl}/articles/hide?id=${article.ID}`,
+          {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${
+                localStorage.getItem('verificationToken') || ''
+              }`,
+            },
+          }
+        );
+
+        const hideData = await hideResponse.json();
+
+        if (hideData.status == 200) {
+          location.reload();
+        } else {
+          alert('There was a problem while trying to unpublish the article');
         }
-      );
-
-      const hideData = await hideResponse.json();
-
-      if (hideData.status == 200) {
-        location.reload();
-      } else {
+      } catch {
         alert('There was a problem while trying to unpublish the article');
       }
-    } catch {
-      alert('There was a problem while trying to unpublish the article');
-    }
+    };
+    setPopupDetails({
+      title: 'Unpublish Article',
+      description:
+        'Are you sure you want to unpublish this article? You will loose all of your likes.',
+      onAccept: unpublishArticle,
+    });
+    setPopupState(true);
   };
 
   const handleEdit = () => {
