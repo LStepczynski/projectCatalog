@@ -3,14 +3,28 @@ import { Box, TextInput, Button } from '@primer/react';
 import { Modal } from '../core/Modal';
 import { MoveToBottomIcon } from '@primer/octicons-react';
 import { ConfirmationPopup } from './confirmationPopup';
+import { InformationPopup } from './informationPopup';
+import { getUserFromJWT } from '@helper/helper';
 
 export const ProfileUploadModal = ({ endpoint, isOpen, closeFunc }: any) => {
-  const [isPopupOpen, setIsPopupOpen] = React.useState(false);
+  const [confirmationPopupState, setConfirmationPopupState] =
+    React.useState(false);
+  const [informationPopupState, setInformationPopupState] =
+    React.useState(false);
   const fileInputRef = React.useRef<any>(null);
+
+  const user = getUserFromJWT();
 
   const handleClick = () => {
     if (!fileInputRef.current) return;
-    setIsPopupOpen(true);
+    const currentTime = Math.floor(Date.now() / 1000);
+    const cooldown = 7 * 24 * 60 * 60;
+
+    if (currentTime - user.ProfilePicChange > cooldown) {
+      setConfirmationPopupState(true);
+    } else {
+      setInformationPopupState(true);
+    }
   };
 
   const handleFileChange = async (event: any) => {
@@ -96,9 +110,15 @@ export const ProfileUploadModal = ({ endpoint, isOpen, closeFunc }: any) => {
       <ConfirmationPopup
         title="Change profile picture"
         description="Are you sure you want to change your profile picture? You can do that only once a week."
-        onDecline={() => setIsPopupOpen(false)}
+        onDecline={() => setConfirmationPopupState(false)}
         onAccept={() => fileInputRef.current.click()}
-        isOpen={isPopupOpen}
+        isOpen={confirmationPopupState}
+      />
+      <InformationPopup
+        title="Profile picture timeout"
+        description="You have already changed your profile picture in the last week."
+        closeFunc={() => setInformationPopupState(false)}
+        isOpen={informationPopupState}
       />
     </Modal>
   );
