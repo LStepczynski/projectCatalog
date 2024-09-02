@@ -1,14 +1,16 @@
-import { Modal } from '../core/Modal';
-import { Box, TextInput, Button } from '@primer/react';
 import React from 'react';
+import { Box, TextInput, Button } from '@primer/react';
+import { Modal } from '../core/Modal';
 import { MoveToBottomIcon } from '@primer/octicons-react';
+import { ConfirmationPopup } from './confirmationPopup';
 
 export const ProfileUploadModal = ({ endpoint, isOpen, closeFunc }: any) => {
+  const [isPopupOpen, setIsPopupOpen] = React.useState(false);
   const fileInputRef = React.useRef<any>(null);
 
   const handleClick = () => {
     if (!fileInputRef.current) return;
-    fileInputRef.current.click();
+    setIsPopupOpen(true);
   };
 
   const handleFileChange = async (event: any) => {
@@ -25,7 +27,7 @@ export const ProfileUploadModal = ({ endpoint, isOpen, closeFunc }: any) => {
         return;
       }
 
-      closeFunc(false);
+      closeFunc();
       const result = await sendImage(file);
       if (result.status != 200) {
         return alert(
@@ -91,6 +93,13 @@ export const ProfileUploadModal = ({ endpoint, isOpen, closeFunc }: any) => {
           Upload Picture
         </Box>
       </Button>
+      <ConfirmationPopup
+        title="Change profile picture"
+        description="Are you sure you want to change your profile picture? You can do that only once a week."
+        onDecline={() => setIsPopupOpen(false)}
+        onAccept={() => fileInputRef.current.click()}
+        isOpen={isPopupOpen}
+      />
     </Modal>
   );
 };

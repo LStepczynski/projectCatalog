@@ -20,16 +20,16 @@ export const Account = () => {
 
   const getContainerWidth = () => {
     if (screenWidth < 430) {
-      return "270px"
+      return '270px';
     }
     if (screenWidth < 500) {
-      return "300px"
+      return '300px';
     }
     if (screenWidth < 700) {
-      return "450px"
+      return '450px';
     }
-    return "600px"
-  }
+    return '600px';
+  };
 
   if (user == undefined) {
     window.location.href = '/sign-in';
@@ -45,39 +45,41 @@ export const Account = () => {
         mt: '60px',
       }}
     >
-      <Box 
+      <Box
         sx={{
           width: getContainerWidth(),
         }}
       >
         <Box>
-          <Heading sx={{fontSize: screenWidth > 699 ? "32px" : "24px"}}>Your Account:</Heading>
+          <Heading sx={{ fontSize: screenWidth > 699 ? '32px' : '24px' }}>
+            Your Account:
+          </Heading>
         </Box>
         <Box
           sx={{ width: '100%', height: '1px', backgroundColor: 'ansi.black' }}
         ></Box>
-        <Box 
-          sx={{ 
-            display: screenWidth > 499 ? "flex" : 'grid', 
-            alignItems: 'center', 
+        <Box
+          sx={{
+            display: screenWidth > 499 ? 'flex' : 'grid',
+            alignItems: 'center',
             // justifyContent: "center",
-            gap: 5, 
-            m: 5 
+            gap: 5,
+            m: 5,
           }}
         >
           <Box
             sx={{
-              display: "grid",
-              width: screenWidth > 499 ? "" : "100%",
-              justifyContent: "center"
+              display: 'grid',
+              width: screenWidth > 499 ? '' : '100%',
+              justifyContent: 'center',
             }}
           >
             <Box
               onMouseEnter={() => setpfpHover(true)}
               onMouseLeave={() => setpfpHover(false)}
               sx={{
-                height: screenWidth > 699 ? '170px' : "120px",
-                width: screenWidth > 699 ? '170px' : "120px",
+                height: screenWidth > 699 ? '170px' : '120px',
+                width: screenWidth > 699 ? '170px' : '120px',
                 position: 'relative',
                 cursor: 'pointer',
               }}
@@ -101,25 +103,25 @@ export const Account = () => {
               <ProfileUploadModal
                 endpoint={`${backendUrl}/user/image?username=${user.Username}`}
                 isOpen={uploadModal}
-                closeFunc={setUploadModal}
+                closeFunc={() => setUploadModal(false)}
               />
             </Box>
           </Box>
 
           <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-            <Text 
-              sx={{ 
-                fontSize: '22px', 
+            <Text
+              sx={{
+                fontSize: '22px',
                 fontWeight: 'bold',
-                textAlign: screenWidth > 499 ? "" : "center"
+                textAlign: screenWidth > 499 ? '' : 'center',
               }}
             >
               {user.Username}
             </Text>
-            <Text 
+            <Text
               sx={{
-                fontSize: "12px", 
-                textAlign: screenWidth > 499 ? "" : "center"
+                fontSize: '12px',
+                textAlign: screenWidth > 499 ? '' : 'center',
               }}
             >
               {user.Email}
@@ -128,7 +130,9 @@ export const Account = () => {
         </Box>
 
         <Box sx={{ mt: 4 }}>
-          <Heading sx={{fontSize: screenWidth > 699 ? "32px" : "24px"}}>Security:</Heading>
+          <Heading sx={{ fontSize: screenWidth > 699 ? '32px' : '24px' }}>
+            Security:
+          </Heading>
         </Box>
         <Box
           sx={{ width: '100%', height: '1px', backgroundColor: 'ansi.black' }}
@@ -140,7 +144,7 @@ export const Account = () => {
             <Box
               sx={{
                 display: 'flex',
-                flexDirection: screenWidth > 499 ? "row" : "column",
+                flexDirection: screenWidth > 499 ? 'row' : 'column',
                 gap: 3,
                 justifyContent: 'space-around',
                 p: 3,
