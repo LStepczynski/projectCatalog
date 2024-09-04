@@ -31,7 +31,7 @@ export const BannerUploadModal = ({ isOpen, closeFunc, bannerFunc }: any) => {
       };
       reader.readAsDataURL(file);
 
-      closeFunc(false);
+      closeFunc();
     }
   };
 
