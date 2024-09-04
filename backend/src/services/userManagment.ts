@@ -288,6 +288,10 @@ export class UserManagment {
     }
 
     const timestamp = Helper.getUNIXTimestamp()
+    const cooldown = 7 * 24 * 60 * 60;
+    if (timestamp - user.ProfilePicChange < cooldown) {
+      return {status: 403, response: { message: 'the user profile picture was changed in the last week'}}
+    }
     const userEditRes = await this.updateUser(user.Username, 'ProfilePicChange', timestamp)
     if (userEditRes.status != 200) {
       return userEditRes
