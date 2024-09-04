@@ -20,7 +20,10 @@ export const ProfileUploadModal = ({ endpoint, isOpen, closeFunc }: any) => {
     const currentTime = Math.floor(Date.now() / 1000);
     const cooldown = 7 * 24 * 60 * 60;
 
-    if (currentTime - user.ProfilePicChange > cooldown) {
+    if (
+      user.ProfilePicChange == 'null' ||
+      currentTime - user.ProfilePicChange > cooldown
+    ) {
       setConfirmationPopupState(true);
     } else {
       setInformationPopupState(true);
