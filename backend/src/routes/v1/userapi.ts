@@ -1,16 +1,13 @@
 import { Router } from 'express';
 
 import { UserManagment } from '../../services/userManagment';
+import { Articles } from ':api/services/articles';
+import { Helper } from ':api/services/helper';
 
 import dotenv from 'dotenv';
 dotenv.config();
 
 import multer from 'multer';
-import { Helper } from ':api/services/helper';
-import { v4 as uuidv4 } from 'uuid';
-import { S3 } from ':api/services/s3';
-import { Articles } from ':api/services/articles';
-
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
@@ -27,6 +24,7 @@ router.post('/sign-up', async (req, res) => {
       response: { message: 'username, password, or email is missing' },
     });
   }
+
   const response = await UserManagment.createUser(username, password, email);
   return res.status(response.status).send(response);
 });
@@ -94,12 +92,15 @@ router.post(
 
     const fullUserObject = (await UserManagment.getUser(user.Username)) || {};
     try {
+      // Checks if fullUserObject.Liked includes the article id 
       if (fullUserObject.Liked.includes(articleId)) {
+        // Remove the id and decrement rating
         fullUserObject.Liked = fullUserObject.Liked.filter(
           (id: string) => id !== articleId
         );
         await Articles.decrementRating(articleId);
       } else {
+        // Add id and increment like count
         fullUserObject.Liked.push(articleId);
         await Articles.incrementRating(articleId);
       }
