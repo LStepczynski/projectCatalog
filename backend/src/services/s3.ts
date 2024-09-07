@@ -22,6 +22,17 @@ const s3Client = new S3Client({
 });
 
 export class S3 {
+  /**
+   * Adds an article to the S3
+   *
+   * @public
+   * @static
+   * @async
+   * @param {string} tableName
+   * @param {*} metadata - The metadata of an article as a dictionary
+   * @param {string} body - The body of the article
+   * @returns {Promise<boolean>} - Returns if the operation succeeded
+   */
   public static async addToS3(
     tableName: string,
     metadata: any,
@@ -29,6 +40,8 @@ export class S3 {
   ): Promise<boolean> {
     try {
       const markdownString = matter.stringify(body, metadata);
+
+      // Get the bucket name and generate the object id
       const bucketName = process.env.AWS_S3_BUCKET_NAME;
       const objectKey = `${tableName}/${metadata.ID}.md`;
 
@@ -39,6 +52,7 @@ export class S3 {
         'utf8'
       );
 
+      // Add the object to the S3 
       const params = {
         Bucket: bucketName,
         Key: objectKey,
@@ -57,6 +71,16 @@ export class S3 {
     }
   }
 
+  /**
+   * Removes an article from the S3
+   *
+   * @public
+   * @static
+   * @async
+   * @param {string} tableName - table name the article is in
+   * @param {string} id - article id
+   * @returns {boolean} - Returns if the operation succeeded
+   */
   public static async removeArticleFromS3(tableName: string, id: string) {
     try {
       const params = {
@@ -66,6 +90,7 @@ export class S3 {
 
       await s3Client.send(new DeleteObjectCommand(params));
 
+      // Temporary for local import purposes
       fs.unlink(`src/assets/${tableName}/${id}.md`, (err) => {
         if (err) {
           console.log('Error while removing file from local directory');
@@ -80,6 +105,15 @@ export class S3 {
     }
   }
 
+  /**
+   * Removes an image from S3
+   *
+   * @public
+   * @static
+   * @async
+   * @param {string} id - image id
+   * @returns {boolean} - Returns if the operation succeeded
+   */
   public static async removeImageFromS3(id: string) {
     try {
       const params = {
@@ -103,6 +137,17 @@ export class S3 {
     }
   }
 
+  /**
+   * Reads an article from S3 and returns it
+   * TEMPORARY - for development purposes this 
+   * function reads from the hard drive
+   *
+   * @public
+   * @static
+   * @param {string} tableName - table name the article is in
+   * @param {string} id - article id
+   * @returns {{ body: any; metadata: any; }} - Fetched article
+   */
   public static readFromS3(tableName: string, id: string) {
     const filePath = `src/assets/${tableName}/${id}.md`;
 
@@ -121,6 +166,16 @@ export class S3 {
     }
   }
 
+  // /**
+  //  * Reads an article from S3
+  //  *
+  //  * @public
+  //  * @static
+  //  * @async
+  //  * @param {string} tableName - table name the article is in
+  //  * @param {string} id - article id
+  //  * @returns {{ body: any; metadata: any; }} - Fetched article
+  //  */
   // public static async readFromS3(tableName: string, id: string) {
   //   try {
   //     const objectKey = `${tableName}/${id}.md`;
@@ -163,6 +218,18 @@ export class S3 {
   //   }
   // }
 
+  /**
+   * Resizes an image, changes it to png and saves it to S3
+   *
+   * @public
+   * @static
+   * @async
+   * @param {string} id - the id for the image
+   * @param {*} image - image
+   * @param {number} [imgWidth=1280] - Width to which the image is going to be resized to
+   * @param {number} [imgHeight=720] - Height to which the image is going to be resized to
+   * @returns {boolean} - Returns if the operation succeeded
+   */
   public static async saveImage(
     id: string,
     image: any,
@@ -170,11 +237,13 @@ export class S3 {
     imgHeight: number = 720
   ) {
     try {
+      // Resizes an image
       image = await sharp(image.buffer)
         .resize({ width: imgWidth, height: imgHeight, fit: 'cover' })
         .png()
         .toBuffer();
 
+      // Get the bucket name and generate image key
       const bucketName = process.env.AWS_S3_BUCKET_NAME;
       const objectKey = `images/${id}.png`;
 
