@@ -4,15 +4,9 @@ import { PersonIcon, BookIcon } from '@primer/octicons-react';
 import React from 'react';
 
 import anime from 'animejs';
+import { RainbowText } from '../components/animation/rainbowText';
 
-const gradientAnimationStyles = {
-  background: 'linear-gradient(90deg, #ff7b00, #ff007b, #00c1ff)',
-  backgroundSize: '300%',
-  backgroundClip: 'text',
-  WebkitBackgroundClip: 'text',
-  color: 'transparent',
-  animation: 'gradient-animation 5s infinite linear alternate',
-};
+import { useScreenWidth } from '../components/other/useScreenWidth';
 
 const keyframeStyles = {
   '@keyframes gradient-animation': {
@@ -56,6 +50,8 @@ const gradientStyles = (colors: [string, string]) => ({
 });
 
 export const Index = () => {
+  const screenWidth = useScreenWidth();
+
   return (
     <Box
       sx={{
@@ -64,264 +60,21 @@ export const Index = () => {
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'center',
-        gap: '250px',
-        mb: '150px',
+        gap: '170px',
+        mb: '70px',
+        px: '5vw',
+        '@media screen and (min-width: 768px)': {
+          gap: '250px',
+          px: '2vw',
+          mb: '120px',
+        },
       }}
     >
-      <Box
-        sx={{
-          display: 'flex',
-          justifyContent: 'flex-end',
-          position: 'relative',
-          width: '100%',
-          mt: '120px',
-        }}
-      >
-        <Box
-          sx={{
-            position: 'absolute',
-            left: 0,
-            top: '20%',
-            width: '50%',
-          }}
-        >
-          <Heading
-            sx={{
-              fontFamily: 'inter tight',
-              fontWeight: '700',
-            }}
-          >
-            Project Catalog
-          </Heading>
-          <Box sx={keyframeStyles}>
-            <Heading
-              sx={{
-                fontSize: '52px',
-                fontFamily: 'inter tight',
-                fontWeight: '800',
-                mt: 3,
-                mb: 5,
-              }}
-            >
-              New <span style={gradientAnimationStyles}>ideas</span> within{' '}
-              <br /> the palm of your hand
-            </Heading>
-          </Box>
-          <Text
-            sx={{
-              fontSize: '22px',
-              fontFamily: 'inter tight',
-              fontWeight: '800',
-            }}
-          >
-            Welcome to Course Catalog, where you can explore and share articles
-            about hands-on projects. Dive into tutorials, or create your own and
-            inspire others to build and tinker.
-          </Text>
-        </Box>
-        <img
-          src="images/home-hero.webp"
-          alt="home-hero"
-          style={{
-            borderRadius: '25px',
-            zIndex: -1,
-            width: '70%',
-          }}
-        />
-      </Box>
-      <Box
-        sx={{
-          display: 'flex',
-          gap: '5%',
-          alignItems: 'center',
-        }}
-      >
-        <Box
-          sx={{
-            display: 'flex',
-            flexDirection: 'column',
-            width: '50%',
-            gap: '140px',
-          }}
-        >
-          <Box>
-            <Text
-              sx={{
-                fontSize: '20px',
-                color: '#f5004e',
-                fontFamily: 'inter tight',
-                fontWeight: '800',
-              }}
-            >
-              Discover
-            </Text>
-            <Heading
-              sx={{
-                fontFamily: 'inter tight',
-                fontWeight: '800',
-              }}
-            >
-              Explore new ideas to stay inspired
-            </Heading>
-            <Text
-              sx={{
-                fontFamily: 'inter tight',
-                fontWeight: '500',
-              }}
-            >
-              Course Catalog offers users a wide variety of project ideas
-              designed to spark creativity, provide inspiration, and help cure
-              boredom. Whether you're looking to explore a new hobby or sharpen
-              existing skills, the platform is a great resource for discovering
-              hands-on activities that promote learning and personal growth.
-            </Text>
-          </Box>
+      <Head screenWidth={screenWidth} keyframeStyles={keyframeStyles} />
 
-          <Box>
-            <Text
-              sx={{
-                fontSize: '20px',
-                color: '#f5004e',
-                fontFamily: 'inter tight',
-                fontWeight: '800',
-              }}
-            >
-              Create
-            </Text>
-            <Heading
-              sx={{
-                fontFamily: 'inter tight',
-                fontWeight: '800',
-              }}
-            >
-              Produce content and inspire others
-            </Heading>
-            <Text
-              sx={{
-                fontFamily: 'inter tight',
-                fontWeight: '500',
-              }}
-            >
-              Our platform empowers users to create and share their own
-              tutorials and articles on a wide range of topics. Whether it's
-              hands-on, or on paper, users can contribute valuable content that
-              helps others learn new skills and tackle exciting projects. By
-              sharing your knowledge, you inspire and support a growing
-              community of creators and learners.
-            </Text>
-          </Box>
+      <About screenWidth={screenWidth} />
 
-          <Box>
-            <Text
-              sx={{
-                fontSize: '20px',
-                color: '#f5004e',
-                fontFamily: 'inter tight',
-                fontWeight: '800',
-              }}
-            >
-              Learn
-            </Text>
-            <Heading
-              sx={{
-                fontFamily: 'inter tight',
-                fontWeight: '800',
-              }}
-            >
-              Study the experiences of other people
-            </Heading>
-            <Text
-              sx={{
-                fontFamily: 'inter tight',
-                fontWeight: '500',
-              }}
-            >
-              Course Catalog empowers individuals to learn from the shared
-              knowledge and expertise of others by providing a platform where
-              users can browse tutorials, articles, and project ideas across a
-              wide variety of topics. The diverse content contributed by
-              community members enables you to explore new skills and deepen
-              your understanding, all while benefiting from the real-world
-              experiences of fellow creators.
-            </Text>
-          </Box>
-        </Box>
-
-        <img
-          src="images/home-side.webp"
-          alt="home side"
-          style={{
-            width: '50%',
-            borderRadius: '25px',
-          }}
-        />
-      </Box>
-      <Box
-        sx={{
-          display: 'flex',
-          gap: '5%',
-        }}
-      >
-        <Box sx={{ width: '60%' }}>
-          <Heading
-            sx={{
-              fontFamily: 'inter tight',
-              fontWeight: '800',
-              fontSize: '42px',
-              background: 'linear-gradient(90deg, #ff5121, #ff7b00)',
-              WebkitBackgroundClip: 'text',
-              backgroundClip: 'text',
-              color: 'transparent',
-            }}
-          >
-            Create an account and start today
-          </Heading>
-          <Text
-            sx={{
-              fontFamily: 'inter tight',
-              fontWeight: '500',
-            }}
-          >
-            Join Course Catalog today and unlock the full potential of your
-            creativity! By creating an account, you can not only access
-            inspiring projects and tutorials, but also share your own expertise
-            with others. Start today and be part of a thriving community where
-            every idea has the power to inspire and educate. Don't wait—create
-            your account now and dive into a world of possibilities!
-          </Text>
-        </Box>
-        <Box
-          sx={{
-            width: '35%',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 5,
-          }}
-        >
-          <Box
-            onClick={() => (window.location.href = 'sign-up')}
-            sx={{
-              ...commonStyles,
-              ...gradientStyles(['#ff5121', '#ff7b00']),
-            }}
-          >
-            Create an account
-            <PersonIcon size={32} />
-          </Box>
-          <Box
-            onClick={() => (window.location.href = 'categories')}
-            sx={{
-              ...commonStyles,
-              ...gradientStyles(['#ff1f48', '#ff1f2e']),
-            }}
-          >
-            Start browsing
-            <BookIcon size={32} />
-          </Box>
-        </Box>
-      </Box>
+      <StartNow commonStyles={commonStyles} gradientStyles={gradientStyles} />
       <Box
         sx={{
           position: 'fixed',
@@ -337,6 +90,315 @@ export const Index = () => {
   );
 };
 
+function Head({ screenWidth, keyframeStyles }: any) {
+  return (
+    <Box
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'flex-end',
+        position: 'relative',
+        width: '100%',
+        mt: '80px',
+        '@media screen and (min-width: 768px)': {
+          mt: '120px',
+          flexDirection: 'row',
+        },
+      }}
+    >
+      <Box
+        sx={{
+          position: 'absolute',
+          left: '25px',
+          width: '80%',
+          justifyContent: 'center',
+          flexDirection: 'column',
+          display: 'flex',
+          height: '100%',
+          top: 0,
+          '@media screen and (min-width: 768px)': {
+            position: 'absolute',
+            left: 0,
+            width: '50%',
+          },
+        }}
+      >
+        <Heading
+          sx={{
+            fontFamily: 'inter tight',
+            fontWeight: '700',
+            fontSize: '18px',
+            '@media screen and (min-width: 768px)': {
+              fontSize: '',
+            },
+          }}
+        >
+          Project Catalog
+        </Heading>
+        <Box sx={keyframeStyles}>
+          <Heading
+            sx={{
+              fontFamily: 'inter tight',
+              fontWeight: '800',
+              fontSize: '30px',
+              mt: 2,
+              mb: 3,
+              '@media screen and (min-width: 768px)': {
+                fontSize: '36px',
+                mt: 3,
+                mb: 5,
+              },
+              '@media screen and (min-width: 1012px)': {
+                fontSize: '50px',
+              },
+            }}
+          >
+            New{' '}
+            <RainbowText gradientSettings="90deg, #ff7b00, #ff007b, #00c1ff">
+              ideas
+            </RainbowText>{' '}
+            within <br /> the palm of your hand
+          </Heading>
+        </Box>
+        <Text
+          sx={{
+            fontSize: '16px',
+            fontFamily: 'inter tight',
+            fontWeight: '800',
+            '@media screen and (min-width: 768px)': {
+              fontSize: '20px',
+            },
+            '@media screen and (min-width: 1012px)': {
+              fontSize: '22px',
+            },
+          }}
+        >
+          Welcome to Course Catalog, where you can explore and share articles
+          about hands-on projects. Dive into tutorials, or create your own and
+          inspire others to build and tinker.
+        </Text>
+      </Box>
+      <img
+        src="images/home-hero.webp"
+        alt="home-hero"
+        style={{
+          borderRadius: '25px',
+          zIndex: -1,
+          opacity: screenWidth > 767 ? 1 : 0.6,
+          width: screenWidth > 767 ? '70%' : '100%',
+        }}
+      />
+    </Box>
+  );
+}
+
+function About({ screenWidth }: any) {
+  function AboutComponent({ category, title, children }: any) {
+    return (
+      <Box>
+        <Text
+          sx={{
+            fontSize: '20px',
+            color: '#f5004e',
+            fontFamily: 'inter tight',
+            fontWeight: '800',
+          }}
+        >
+          {category}
+        </Text>
+        <Heading
+          sx={{
+            fontFamily: 'inter tight',
+            fontWeight: '800',
+            fontSize: '24px',
+            '@media screen and (min-width: 768px)': {
+              fontSize: '',
+            },
+          }}
+        >
+          {title}
+        </Heading>
+        <Text
+          sx={{
+            fontFamily: 'inter tight',
+            fontWeight: '500',
+            fontSize: '14px',
+            '@media screen and (min-width: 768px)': {
+              fontSize: '',
+            },
+          }}
+        >
+          {children}
+        </Text>
+      </Box>
+    );
+  }
+
+  return (
+    <Box
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '5%',
+        alignItems: 'center',
+        '@media screen and (min-width: 768px)': {
+          flexDirection: 'row',
+        },
+      }}
+    >
+      <Box
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          width: '100%',
+          gap: '140px',
+          '@media screen and (min-width: 768px)': {
+            width: '50%',
+          },
+        }}
+      >
+        <AboutComponent
+          category="Discover"
+          title="Explore new ideas to stay inspired"
+        >
+          Course Catalog offers users a wide variety of project ideas designed
+          to spark creativity, provide inspiration, and help cure boredom.
+          Whether you're looking to explore a new hobby or sharpen existing
+          skills, the platform is a great resource for discovering hands-on
+          activities that promote learning and personal growth.
+        </AboutComponent>
+
+        <AboutComponent
+          category="Create"
+          title="Produce content and inspire others"
+        >
+          Our platform empowers users to create and share their own tutorials
+          and articles on a wide range of topics. Whether it's hands-on, or on
+          paper, users can contribute valuable content that helps others learn
+          new skills and tackle exciting projects. By sharing your knowledge,
+          you inspire and support a growing community of creators and learners.
+        </AboutComponent>
+
+        <AboutComponent
+          category="Learn"
+          title="Study the experiences of other people"
+        >
+          Course Catalog empowers individuals to learn from the shared knowledge
+          and expertise of others by providing a platform where users can browse
+          tutorials, articles, and project ideas across a wide variety of
+          topics. The diverse content contributed by community members enables
+          you to explore new skills and deepen your understanding, all while
+          benefiting from the real-world experiences of fellow creators.
+        </AboutComponent>
+      </Box>
+
+      <img
+        src="images/home-side.webp"
+        alt="home side"
+        style={{
+          width: screenWidth > 767 ? '50%' : '70%',
+          marginTop: screenWidth > 767 ? '' : '40px',
+          borderRadius: '25px',
+        }}
+      />
+    </Box>
+  );
+}
+
+function StartNow({ commonStyles, gradientStyles }: any) {
+  return (
+    <Box
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '5%',
+        '@media screen and (min-width: 768px)': {
+          flexDirection: 'row',
+        },
+      }}
+    >
+      <Box
+        sx={{
+          width: '100%',
+          '@media screen and (min-width: 768px)': {
+            width: '60%',
+          },
+        }}
+      >
+        <Heading
+          sx={{
+            fontFamily: 'inter tight',
+            fontWeight: '800',
+            fontSize: '34px',
+            background: 'linear-gradient(90deg, #ff5121, #ff7b00)',
+            WebkitBackgroundClip: 'text',
+            backgroundClip: 'text',
+            color: 'transparent',
+            '@media screen and (min-width: 768px)': {
+              fontSize: '42px',
+            },
+          }}
+        >
+          Create an account and start today
+        </Heading>
+        <Text
+          sx={{
+            fontFamily: 'inter tight',
+            fontWeight: '500',
+            fontSize: '14px',
+            '@media screen and (min-width: 768px)': {
+              fontSize: 'inherit',
+            },
+          }}
+        >
+          Join Course Catalog today and unlock the full potential of your
+          creativity! By creating an account, you can not only access inspiring
+          projects and tutorials, but also share your own expertise with others.
+          Start today and be part of a thriving community where every idea has
+          the power to inspire and educate. Don't wait—create your account now
+          and dive into a world of possibilities!
+        </Text>
+      </Box>
+      <Box
+        sx={{
+          width: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          mt: 8,
+          gap: 5,
+          '@media screen and (min-width: 768px)': {
+            width: '35%',
+            mt: 0,
+          },
+        }}
+      >
+        <Box
+          onClick={() => (window.location.href = 'sign-up')}
+          sx={{
+            ...commonStyles,
+            ...gradientStyles(['#ff5121', '#ff7b00']),
+          }}
+        >
+          Create an account
+          <PersonIcon size={32} />
+        </Box>
+        <Box
+          onClick={() => (window.location.href = 'categories')}
+          sx={{
+            ...commonStyles,
+            ...gradientStyles(['#ff1f48', '#ff1f2e']),
+          }}
+        >
+          Start browsing
+          <BookIcon size={32} />
+        </Box>
+      </Box>
+    </Box>
+  );
+}
+
 const AnimatedWave = () => {
   const targetRef = React.useRef<SVGSVGElement | null>(null);
   const [opacity, setOpacity] = React.useState(0.3);
@@ -346,8 +408,8 @@ const AnimatedWave = () => {
       'M0 387L21.5 391.3C43 395.7 86 404.3 128.8 413.5C171.7 422.7 214.3 432.3 257.2 432.8C300 433.3 343 424.7 385.8 420C428.7 415.3 471.3 414.7 514.2 418.5C557 422.3 600 430.7 642.8 432.2C685.7 433.7 728.3 428.3 771.2 416.7C814 405 857 387 878.5 378L900 369L900 601L878.5 601C857 601 814 601 771.2 601C728.3 601 685.7 601 642.8 601C600 601 557 601 514.2 601C471.3 601 428.7 601 385.8 601C343 601 300 601 257.2 601C214.3 601 171.7 601 128.8 601C86 601 43 601 21.5 601L0 601Z',
       'M0 458L21.5 459.2C43 460.3 86 462.7 128.8 451C171.7 439.3 214.3 413.7 257.2 410.3C300 407 343 426 385.8 427C428.7 428 471.3 411 514.2 409.8C557 408.7 600 423.3 642.8 424.2C685.7 425 728.3 412 771.2 413.3C814 414.7 857 430.3 878.5 438.2L900 446L900 601L878.5 601C857 601 814 601 771.2 601C728.3 601 685.7 601 642.8 601C600 601 557 601 514.2 601C471.3 601 428.7 601 385.8 601C343 601 300 601 257.2 601C214.3 601 171.7 601 128.8 601C86 601 43 601 21.5 601L0 601Z',
       'M0 461L21.5 462C43 463 86 465 128.8 464.8C171.7 464.7 214.3 462.3 257.2 459.3C300 456.3 343 452.7 385.8 457.7C428.7 462.7 471.3 476.3 514.2 478.8C557 481.3 600 472.7 642.8 461.2C685.7 449.7 728.3 435.3 771.2 435.7C814 436 857 451 878.5 458.5L900 466L900 601L878.5 601C857 601 814 601 771.2 601C728.3 601 685.7 601 642.8 601C600 601 557 601 514.2 601C471.3 601 428.7 601 385.8 601C343 601 300 601 257.2 601C214.3 601 171.7 601 128.8 601C86 601 43 601 21.5 601L0 601Z',
-      'M0 520L21.5 521C43 522 86 524 128.8 515.3C171.7 506.7 214.3 487.3 257.2 476.5C300 465.7 343 463.3 385.8 463.7C428.7 464 471.3 467 514.2 470.8C557 474.7 600 479.3 642.8 489.3C685.7 499.3 728.3 514.7 771.2 516.7C814 518.7 857 507.3 878.5 501.7L900 496L900 601L878.5 601C857 601 814 601 771.2 601C728.3 601 685.7 601 642.8 601C600 601 557 601 514.2 601C471.3 601 428.7 601 385.8 601C343 601 300 601 257.2 601C214.3 601 171.7 601 128.8 601C86 601 43 601 21.5 601L0 601Z',
-      'M0 504L21.5 503.3C43 502.7 86 501.3 128.8 509.5C171.7 517.7 214.3 535.3 257.2 534.2C300 533 343 513 385.8 504.5C428.7 496 471.3 499 514.2 503.8C557 508.7 600 515.3 642.8 515.2C685.7 515 728.3 508 771.2 511.5C814 515 857 529 878.5 536L900 543L900 601L878.5 601C857 601 814 601 771.2 601C728.3 601 685.7 601 642.8 601C600 601 557 601 514.2 601C471.3 601 428.7 601 385.8 601C343 601 300 601 257.2 601C214.3 601 171.7 601 128.8 601C86 601 43 601 21.5 601L0 601Z',
+      'M0 520L21.5 521C43 522 86 524 128.8 515.3C171.7 506.7 214.3 487.3 257.2 476.5C300 465.7 343 463.3 385.8 463.7C428.7 464 471.3 467 514.2 470.8C557 474.7 600 479.3 642.8 489.3C685.7 767.3 728.3 514.7 771.2 516.7C814 518.7 857 507.3 878.5 501.7L900 496L900 601L878.5 601C857 601 814 601 771.2 601C728.3 601 685.7 601 642.8 601C600 601 557 601 514.2 601C471.3 601 428.7 601 385.8 601C343 601 300 601 257.2 601C214.3 601 171.7 601 128.8 601C86 601 43 601 21.5 601L0 601Z',
+      'M0 504L21.5 503.3C43 502.7 86 501.3 128.8 509.5C171.7 517.7 214.3 535.3 257.2 534.2C300 533 343 513 385.8 504.5C428.7 496 471.3 767 514.2 503.8C557 508.7 600 515.3 642.8 515.2C685.7 515 728.3 508 771.2 511.5C814 515 857 529 878.5 536L900 543L900 601L878.5 601C857 601 814 601 771.2 601C728.3 601 685.7 601 642.8 601C600 601 557 601 514.2 601C471.3 601 428.7 601 385.8 601C343 601 300 601 257.2 601C214.3 601 171.7 601 128.8 601C86 601 43 601 21.5 601L0 601Z',
       'M0 549L21.5 547.3C43 545.7 86 542.3 128.8 540.3C171.7 538.3 214.3 537.7 257.2 541.7C300 545.7 343 554.3 385.8 554C428.7 553.7 471.3 544.3 514.2 539.2C557 534 600 533 642.8 540.2C685.7 547.3 728.3 562.7 771.2 567.7C814 572.7 857 567.3 878.5 564.7L900 562L900 601L878.5 601C857 601 814 601 771.2 601C728.3 601 685.7 601 642.8 601C600 601 557 601 514.2 601C471.3 601 428.7 601 385.8 601C343 601 300 601 257.2 601C214.3 601 171.7 601 128.8 601C86 601 43 601 21.5 601L0 601Z',
     ],
     [
@@ -441,11 +503,11 @@ const AnimatedWave = () => {
         fill="#ff6c1c"
       />
       <path
-        d="M0 520L21.5 521C43 522 86 524 128.8 515.3C171.7 506.7 214.3 487.3 257.2 476.5C300 465.7 343 463.3 385.8 463.7C428.7 464 471.3 467 514.2 470.8C557 474.7 600 479.3 642.8 489.3C685.7 499.3 728.3 514.7 771.2 516.7C814 518.7 857 507.3 878.5 501.7L900 496L900 601L878.5 601C857 601 814 601 771.2 601C728.3 601 685.7 601 642.8 601C600 601 557 601 514.2 601C471.3 601 428.7 601 385.8 601C343 601 300 601 257.2 601C214.3 601 171.7 601 128.8 601C86 601 43 601 21.5 601L0 601Z"
+        d="M0 520L21.5 521C43 522 86 524 128.8 515.3C171.7 506.7 214.3 487.3 257.2 476.5C300 465.7 343 463.3 385.8 463.7C428.7 464 471.3 467 514.2 470.8C557 474.7 600 479.3 642.8 489.3C685.7 767.3 728.3 514.7 771.2 516.7C814 518.7 857 507.3 878.5 501.7L900 496L900 601L878.5 601C857 601 814 601 771.2 601C728.3 601 685.7 601 642.8 601C600 601 557 601 514.2 601C471.3 601 428.7 601 385.8 601C343 601 300 601 257.2 601C214.3 601 171.7 601 128.8 601C86 601 43 601 21.5 601L0 601Z"
         fill="#ff5728"
       />
       <path
-        d="M0 504L21.5 503.3C43 502.7 86 501.3 128.8 509.5C171.7 517.7 214.3 535.3 257.2 534.2C300 533 343 513 385.8 504.5C428.7 496 471.3 499 514.2 503.8C557 508.7 600 515.3 642.8 515.2C685.7 515 728.3 508 771.2 511.5C814 515 857 529 878.5 536L900 543L900 601L878.5 601C857 601 814 601 771.2 601C728.3 601 685.7 601 642.8 601C600 601 557 601 514.2 601C471.3 601 428.7 601 385.8 601C343 601 300 601 257.2 601C214.3 601 171.7 601 128.8 601C86 601 43 601 21.5 601L0 601Z"
+        d="M0 504L21.5 503.3C43 502.7 86 501.3 128.8 509.5C171.7 517.7 214.3 535.3 257.2 534.2C300 533 343 513 385.8 504.5C428.7 496 471.3 767 514.2 503.8C557 508.7 600 515.3 642.8 515.2C685.7 515 728.3 508 771.2 511.5C814 515 857 529 878.5 536L900 543L900 601L878.5 601C857 601 814 601 771.2 601C728.3 601 685.7 601 642.8 601C600 601 557 601 514.2 601C471.3 601 428.7 601 385.8 601C343 601 300 601 257.2 601C214.3 601 171.7 601 128.8 601C86 601 43 601 21.5 601L0 601Z"
         fill="#ff3e33"
       />
       <path
