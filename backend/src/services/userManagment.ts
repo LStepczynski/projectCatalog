@@ -20,42 +20,145 @@ import { client } from './dynamodb';
 
 dotenv.config();
 
+interface UserObject {
+  Username: string,
+  Password: string,
+  Email: string,
+  Admin: string,
+  Liked: string[],
+  CanPost: string,
+  ProfilePic: string;
+  ProfilePicChange: any,
+  AccountCreated: number,
+}
+
 export class UserManagment {
+  public static profilePicCooldown = 7 * 24 * 60 * 60 // 1 week
+
+  /**
+   * Checks if an email is valid using regex
+   *
+   * @public
+   * @static
+   * @param {string} email
+   * @returns {boolean}
+   */
   public static isValidEmail(email: string) {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
   }
 
+  /**
+   * Checks if the username matches the one in the user object or if the user is an admin
+   *
+   * @public
+   * @static
+   * @param {string} username
+   * @param {dict} user - user object
+   * @returns {boolean}
+   */
   public static checkUsername(username: string, user: any) {
     if (user.Admin === 'true') return true;
     if (user.Username === username) return true;
     return false;
   }
 
+  /**
+   * Checks if an user is an admin
+   *
+   * @public
+   * @static
+   * @param {UserObject} user - user object
+   * @returns {boolean}
+   */
   public static checkAdmin(user: any) {
     if (user.Admin === 'true') return true;
     return false;
   }
 
+  /**
+   * Checks if an user has the permision to post articles
+   *
+   * @public
+   * @static
+   * @param {UserObject} user - user object
+   * @returns {boolean}
+   */
   public static checkCanPost(user: any) {
     if (user.Admin === 'true') return true;
     if (user.CanPost === 'true') return true;
     return false;
   }
 
+  /**
+   * Creates a new JWT from an user object
+   *
+   * @public
+   * @static
+   * @param {UserObject} user
+   * @returns {string}
+   */
   public static getNewJWT(user: any) {
     return jwt.sign(user, process.env.JWT_KEY || 'default');
   }
 
+  /**
+   * Hashes a password and returns it
+   *
+   * @public
+   * @static
+   * @async
+   * @param {string} password
+   * @returns {string}
+   */
   public static async genPassHash(password: string) {
     const salt = await bcrypt.genSalt();
     return await bcrypt.hash(password, salt);
   }
 
+  /**
+   * Compares a password with a password hash
+   *
+   * @public
+   * @static
+   * @async
+   * @param {string} password
+   * @param {string} hash
+   * @returns {boolean}
+   */
   public static async compareHash(password: string, hash: string) {
     return await bcrypt.compare(password, hash);
   }
 
+  /**
+   * Checks if the provided timestamp is older than the cooldown value
+   *
+   * @public
+   * @static
+   * @param {*} timestamp
+   * @returns {boolean}
+   */
+  public static checkProfilePictureCooldown(timestamp: any) {
+    const currentTime = Helper.getUNIXTimestamp()
+    if (timestamp != 'null' && currentTime - timestamp < this.profilePicCooldown) {
+      return false
+    }
+    return true
+  }
+
+  /**
+   * Creates an user object, adds it to the database, and returns the api response
+   *
+   * @public
+   * @static
+   * @async
+   * @param {string} username
+   * @param {string} password
+   * @param {string} email
+   * @param {string} [canPost='false']
+   * @param {string} [admin='false']
+   * @returns {unknown}
+   */
   public static async createUser(
     username: string,
     password: string,
@@ -63,6 +166,7 @@ export class UserManagment {
     canPost: string = 'false',
     admin: string = 'false'
   ) {
+    // Validate the parameters
     if (!this.isValidEmail(email)) {
       return {
         status: 400,
@@ -83,9 +187,11 @@ export class UserManagment {
         response: { message: 'username is already in use' },
       };
     }
+    // Hash the password
     password = await this.genPassHash(password);
 
-    const userObject = {
+    // Create the user object
+    const userObject: UserObject = {
       Username: username,
       Password: password,
       Email: email,
@@ -94,9 +200,11 @@ export class UserManagment {
       CanPost: canPost,
       ProfilePic:
         'https://project-catalog-storage.s3.us-east-2.amazonaws.com/images/pfp.png',
+      ProfilePicChange: 'null',
       AccountCreated: Helper.getUNIXTimestamp(),
     };
 
+    // Add the object to the database and return a response
     const params: any = {
       TableName: 'Users',
       Item: marshall(userObject),
@@ -116,6 +224,15 @@ export class UserManagment {
     }
   }
 
+  /**
+   * Deletes a user from the database and returns a response
+   *
+   * @public
+   * @static
+   * @async
+   * @param {string} username
+   * @returns {unknown}
+   */
   public static async deleteUser(username: string) {
     const params = {
       TableName: 'Users',
@@ -141,6 +258,15 @@ export class UserManagment {
     }
   }
 
+  /**
+   * Fetches a user object from the database and returns it. Otherwise returns null
+   *
+   * @public
+   * @static
+   * @async
+   * @param {string} username
+   * @returns {unknown}
+   */
   public static async getUser(username: string) {
     const params: any = {
       TableName: 'Users',
@@ -161,6 +287,16 @@ export class UserManagment {
     }
   }
 
+  /**
+   * Checks if an article is in the user's liked list
+   *
+   * @public
+   * @static
+   * @async
+   * @param {string} username
+   * @param {string} articleId
+   * @returns {unknown}
+   */
   public static async isLikedByUser(username: string, articleId: string) {
     const user = await this.getUser(username);
     if (!user) {
@@ -172,20 +308,33 @@ export class UserManagment {
     return false;
   }
 
+  /**
+   * Updates the user object in the database and returns an api response
+   *
+   * @public
+   * @static
+   * @async
+   * @param {string} username
+   * @param {string} fieldName
+   * @param {*} fieldValue
+   * @returns {unknown}
+   */
   public static async updateUser(
     username: string,
     fieldName: string,
-    fieldValue: any // Accept any data type
+    fieldValue: any 
   ) {
     const allowedFields = [
       'Email',
       'Password',
       'ProfilePic',
+      'ProfilePicChange',
       'CanPost',
       'Admin',
       'Liked',
     ];
 
+    // Check for dissallowed fields
     if (!allowedFields.includes(fieldName)) {
       return {
         status: 400,
@@ -202,7 +351,7 @@ export class UserManagment {
     } else if (typeof fieldValue === 'boolean') {
       dynamoValue = { BOOL: fieldValue };
     } else if (Array.isArray(fieldValue)) {
-      dynamoValue = { L: fieldValue.map((item) => ({ S: item.toString() })) }; // Adjust for your use case
+      dynamoValue = { L: fieldValue.map((item) => ({ S: item.toString() })) };
     } else if (fieldValue === null) {
       dynamoValue = { NULL: true };
     } else {
@@ -227,6 +376,7 @@ export class UserManagment {
       ReturnValues: 'ALL_OLD',
     };
 
+    // Update the user and return a response
     try {
       const command = new UpdateItemCommand(params);
       const result = await client.send(command);
@@ -251,6 +401,17 @@ export class UserManagment {
     }
   }
 
+  /**
+   * Authenticates the user with the username and password. Returns the user JWT object 
+   * and the api response
+   *
+   * @public
+   * @static
+   * @async
+   * @param {string} username
+   * @param {string} password
+   * @returns {unknown}
+   */
   public static async verifyUser(username: string, password: string) {
     const user = await this.getUser(username);
     if (user == null) {
@@ -260,6 +421,7 @@ export class UserManagment {
       };
     }
 
+    // Check for valid login credentials
     const verified = await this.compareHash(password, user.Password);
     if (!verified) {
       return {
@@ -268,9 +430,12 @@ export class UserManagment {
       };
     }
 
+    // Delete the sensitive information from the user object before
+    // turning it into a JWT
     delete user.Password;
     delete user.Liked
 
+    // Create the JWT and return it
     const token = this.getNewJWT(user);
     return {
       status: 200,
@@ -278,13 +443,38 @@ export class UserManagment {
     };
   }
 
+  /**
+   * Changes the user's profile picture
+   *
+   * @public
+   * @static
+   * @async
+   * @param {string} username
+   * @param {file} file - profile picture image
+   * @returns {unknown} - api response
+   */
   public static async changeProfilePic(username: string, file: any) {
-    let user = await UserManagment.getUser(username);
 
+    // Fetch the user 
+    let user = await UserManagment.getUser(username);
     if (!user) {
       return { status: 404, response: { message: 'user not found' } }
     }
 
+    // Check if the cooldown for changing the profile picture has passed
+    const timestamp = Helper.getUNIXTimestamp()
+    if (!this.checkProfilePictureCooldown(user.ProfilePicChange)) {
+      return {status: 403, response: { message: 'the user profile picture was changed in the last week'}}
+    }
+
+    // Edit the ProfilePicChange property of the user object
+    const userEditRes = await this.updateUser(user.Username, 'ProfilePicChange', timestamp)
+    if (userEditRes.status != 200) {
+      return userEditRes
+    }
+    user.ProfilePicChange = timestamp
+
+    // Get the old user profile picture and delete it
     const oldImageId = user.ProfilePic.match(
       /images\/([a-f0-9-]+)\.(?:png|jpg|jpeg|gif)$/
     );
@@ -292,10 +482,11 @@ export class UserManagment {
       S3.removeImageFromS3(oldImageId[1]);
     }
 
+    // Create the url for the new picture
     const imageId = uuidv4();
-
     user.ProfilePic = `${process.env.AWS_S3_LINK}/images/${imageId}.png`;
 
+    // Save the picture in the S3 in 350x350 format
     try {
       const response = await S3.saveImage(imageId, file, 350, 350);
       if (!response) {
@@ -309,7 +500,9 @@ export class UserManagment {
       };
     }
 
+    // Update the profile picture link on all of the user's articles
     if (user.Admin || user.CanPost) {
+      // A function to get all of the user's articles from a table
       const queryArticles = async (tableName: string) => {
         const articleReq = await client.send(new QueryCommand({
           TableName: tableName,
@@ -323,6 +516,7 @@ export class UserManagment {
         return articleReq.Items || [];
       };
     
+      // A function to update all the user articles from a table
       const updateArticles = async (tableName: string, articles: any) => {
         return Promise.all(articles.map(async (item: any) => {
           const id = item.ID?.S;
@@ -339,24 +533,28 @@ export class UserManagment {
         }));
       };
     
+      // Get user's articles
       const [privateArticles, publicArticles] = await Promise.all([
         queryArticles('ArticlesUnpublished'),
         queryArticles('ArticlesPublished')
       ]);
     
+      // Update user's articles
       await Promise.all([
         updateArticles('ArticlesUnpublished', privateArticles),
         updateArticles('ArticlesPublished', publicArticles)
       ]);
     }
     
-
+    // Update the user's profile picture link
     const result = await UserManagment.updateUser(
       username,
       'ProfilePic',
       user.ProfilePic
     );
 
+    // Modify the response from the updateUser function by adding in the new JWT
+    // Token and return it
     const resultWithToken: any = result;
     delete user.Password;
     resultWithToken.response.verificationToken = UserManagment.getNewJWT(user);

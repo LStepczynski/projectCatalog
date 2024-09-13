@@ -1,14 +1,33 @@
-import { Modal } from '../core/Modal';
-import { Box, TextInput, Button } from '@primer/react';
 import React from 'react';
+import { Box, TextInput, Button } from '@primer/react';
+import { Modal } from '../core/Modal';
 import { MoveToBottomIcon } from '@primer/octicons-react';
+import { ConfirmationPopup } from './confirmationPopup';
+import { InformationPopup } from './informationPopup';
+import { getUserFromJWT } from '@helper/helper';
 
 export const ProfileUploadModal = ({ endpoint, isOpen, closeFunc }: any) => {
+  const [confirmationPopupState, setConfirmationPopupState] =
+    React.useState(false);
+  const [informationPopupState, setInformationPopupState] =
+    React.useState(false);
   const fileInputRef = React.useRef<any>(null);
+
+  const user = getUserFromJWT();
 
   const handleClick = () => {
     if (!fileInputRef.current) return;
-    fileInputRef.current.click();
+    const currentTime = Math.floor(Date.now() / 1000);
+    const cooldown = 7 * 24 * 60 * 60;
+
+    if (
+      user.ProfilePicChange == 'null' ||
+      currentTime - user.ProfilePicChange > cooldown
+    ) {
+      setConfirmationPopupState(true);
+    } else {
+      setInformationPopupState(true);
+    }
   };
 
   const handleFileChange = async (event: any) => {
@@ -25,7 +44,7 @@ export const ProfileUploadModal = ({ endpoint, isOpen, closeFunc }: any) => {
         return;
       }
 
-      closeFunc(false);
+      closeFunc();
       const result = await sendImage(file);
       if (result.status != 200) {
         return alert(
@@ -37,7 +56,7 @@ export const ProfileUploadModal = ({ endpoint, isOpen, closeFunc }: any) => {
         result.response.verificationToken
       );
 
-      alert('New profile picture uploaded. Refresh the page to see changes.');
+      location.reload();
     }
   };
 
@@ -91,6 +110,19 @@ export const ProfileUploadModal = ({ endpoint, isOpen, closeFunc }: any) => {
           Upload Picture
         </Box>
       </Button>
+      <ConfirmationPopup
+        title="Change profile picture"
+        description="Are you sure you want to change your profile picture? You can do that only once a week."
+        onDecline={() => setConfirmationPopupState(false)}
+        onAccept={() => fileInputRef.current.click()}
+        isOpen={confirmationPopupState}
+      />
+      <InformationPopup
+        title="Profile picture timeout"
+        description="You have already changed your profile picture in the last week."
+        closeFunc={() => setInformationPopupState(false)}
+        isOpen={informationPopupState}
+      />
     </Modal>
   );
 };

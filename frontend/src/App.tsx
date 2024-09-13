@@ -42,7 +42,7 @@ export const App = () => {
             width: '100%',
             display: 'grid',
             justifyItems: 'center',
-            mb:"10vh"
+            mb: '10vh',
           }}
         >
           <Box sx={boxSize}>

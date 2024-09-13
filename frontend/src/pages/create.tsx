@@ -169,7 +169,7 @@ const HeroInputImage = (props: HeroProps) => {
         <BannerUploadModal
           bannerFunc={setBannerFile}
           isOpen={uploadModal}
-          closeFunc={setUploadModal}
+          closeFunc={() => setUploadModal(false)}
         />
       </Box>
     </>

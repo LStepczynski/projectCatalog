@@ -1,10 +1,4 @@
 import { Router } from 'express';
-import { Request, Response } from 'express';
-
-import { marshall, unmarshall } from '@aws-sdk/util-dynamodb';
-import { ScanCommand } from '@aws-sdk/client-dynamodb';
-import { client } from ':api/services/dynamodb';
-
 import { Articles } from ':api/services/articles';
 import { S3 } from ':api/services/s3';
 
@@ -34,6 +28,7 @@ router.get(
     const status = req.query.status || 'review';
     const user = req.user;
 
+    // Check for permissions
     if (!UserManagment.checkAdmin(user)) {
       return res
         .status(403)
@@ -132,6 +127,7 @@ router.post(
         .send({ status: 400, response: { message: 'missing article id' } });
     }
 
+    // Check for permissions
     if (!UserManagment.checkAdmin(user)) {
       return res.status(403).send({
         status: 403,
@@ -160,6 +156,7 @@ router.post(
         .send({ status: 400, response: { message: 'missing article id' } });
     }
 
+    // Fetch the article
     const articleRequest = await Articles.getArticleMetadata(
       ID,
       'ArticlesPublished'
@@ -169,7 +166,7 @@ router.post(
       return res.status(articleRequest.status).send(articleRequest);
     }
 
-    // Check if the user has permission to delete
+    // Check if the user has permission to hide the article
     if (!UserManagment.checkUsername(article.Author, user)) {
       return res.status(403).send({
         status: 403,
@@ -208,6 +205,8 @@ router.get(
         tableName
       );
       const metadata = metadataResult.response.return;
+      
+      // If the article is private check for permissions
       if (
         visibility == 'private' &&
         !UserManagment.checkUsername(metadata.Author, user)
@@ -217,8 +216,9 @@ router.get(
           response: { message: 'permission denied' },
         });
       }
+      // Get only the body of the article from the S3
       const bodyResult = await Articles.getArticle(articleId, tableName);
-      bodyResult.response.return.metadata = metadata;
+      bodyResult.response.return.metadata = metadata; // Assign the metadata from the database
       return res.status(bodyResult.status).send(bodyResult);
     } catch (err) {
       console.log(err);
@@ -240,6 +240,7 @@ router.get(
     const visibility = req.query.visibility || 'public';
     const user = req.user;
 
+    // Check for permissions
     if (visibility == 'private' && !UserManagment.checkUsername(author, user)) {
       return res.status(403).send({
         status: 403,
@@ -305,6 +306,7 @@ router.get(
     const visibility = req.query.visibility || 'public';
     const user = req.user;
 
+    // Check for permissions
     if (visibility == 'private' && !UserManagment.checkAdmin(user)) {
       return res.status(403).send({
         status: 403,
@@ -370,6 +372,7 @@ router.get(
     const visibility = req.query.visibility || 'public';
     const user = req.user;
 
+    // Check for permissions
     if (visibility == 'private' && !UserManagment.checkAdmin(user)) {
       return res.status(403).send({
         status: 403,
@@ -434,6 +437,7 @@ router.get(
     const visibility = req.query.visibility || 'public';
     const user = req.user;
 
+    // Check for permissions
     if (visibility == 'private' && !UserManagment.checkAdmin(user)) {
       return res.status(403).send({
         status: 403,
@@ -487,6 +491,7 @@ router.post(
     //   });
     // }
 
+    // Check for permissions
     if (!UserManagment.checkCanPost(user)) {
       return res.status(403).send({
         status: 403,
@@ -531,6 +536,7 @@ router.put('/', UserManagment.authenticateToken, async (req: any, res: any) => {
     return;
   }
 
+  // Fetch the article metadata
   const articleRequest = await Articles.getArticleMetadata(
     metadata.ID,
     tableName
@@ -540,7 +546,7 @@ router.put('/', UserManagment.authenticateToken, async (req: any, res: any) => {
     return res.status(articleRequest.status).send(articleRequest);
   }
 
-  // Check if the user has permission to delete
+  // Check if the user has permission to edit
   if (!UserManagment.checkUsername(article.Author, user)) {
     return res.status(403).send({
       status: 403,
@@ -581,13 +587,14 @@ router.patch(
       return;
     }
 
+    // Fetch article
     const articleRequest = await Articles.getArticleMetadata(ID, tableName);
     const article = articleRequest.response.return;
     if (!article) {
       return res.status(articleRequest.status).send(articleRequest);
     }
 
-    // Check if the user has permission to delete
+    // Check if the user has permission to patch
     if (!UserManagment.checkUsername(article.Author, user)) {
       return res.status(403).send({
         status: 403,
@@ -620,6 +627,7 @@ router.post(
       });
     }
 
+    // Check for file
     if (!req.file) {
       return res.status(400).send({
         status: 400,
@@ -627,14 +635,14 @@ router.post(
       });
     }
 
+    // Fetch an article
     let articleRequest = await Articles.getArticle(ID, tableName);
-
     if (articleRequest.status != 200) {
       return res.status(articleRequest.status).send(articleRequest);
     }
 
     const article = articleRequest.response.return;
-    // Check if the user has permission to delete
+    // Check if the user has permission to add the image
     if (!UserManagment.checkUsername(article.metadata.Author, user)) {
       return res.status(403).send({
         status: 403,
@@ -643,8 +651,11 @@ router.post(
     }
 
     const imageId = uuidv4();
+
+    // Remove the last image of an article
     if (article.metadata.Image) {
       try {
+        // Extract the uuid from the image url
         const regex =
           /[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/i;
         const match = article.metadata.Image.match(regex);
@@ -656,8 +667,10 @@ router.post(
       }
     }
 
+    // Generate new image url
     article.metadata.Image = `${process.env.AWS_S3_LINK}/images/${imageId}.png`;
 
+    // Add the image to the S3
     try {
       const response = await S3.saveImage(imageId, req.file);
       if (!response) {
