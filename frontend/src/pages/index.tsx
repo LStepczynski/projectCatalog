@@ -60,6 +60,7 @@ export const Index = () => {
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'center',
+        alignItems: 'center',
         gap: '170px',
         mb: '70px',
         px: '5vw',
@@ -73,6 +74,8 @@ export const Index = () => {
       <Head screenWidth={screenWidth} keyframeStyles={keyframeStyles} />
 
       <About screenWidth={screenWidth} />
+
+      <Categories />
 
       <StartNow commonStyles={commonStyles} gradientStyles={gradientStyles} />
       <Box
@@ -305,6 +308,108 @@ function About({ screenWidth }: any) {
   );
 }
 
+function Categories() {
+  return (
+    <Box
+      sx={{
+        width: '100%',
+        display: 'flex',
+        gap: '10%',
+        alignItems: 'center',
+        '@media screen and (min-width: 768px)': {
+          width: '70%',
+        },
+        '@media screen and (min-width: 1012px)': {
+          width: '100%',
+        },
+      }}
+    >
+      <Box
+        sx={{
+          width: '100%',
+          '@media screen and (min-width: 1012px)': {
+            width: '50%',
+          },
+        }}
+      >
+        <Heading
+          sx={{
+            fontFamily: 'inter tight',
+            fontWeight: '800',
+            color: '#ff9d00',
+          }}
+        >
+          Variety of categories
+        </Heading>
+        <Text
+          sx={{
+            fontFamily: 'inter tight',
+            fontWeight: '500',
+          }}
+        >
+          Project Catalog offers a diverse selection of article categories
+          spanning numerous fields, ensuring there's something for everyone.
+          Whether you're interested in technology, tinkering, or arts, our
+          extensive range of topics provides valuable insights and information.
+        </Text>
+        <br></br>
+        <br></br>
+
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'space-around',
+            pr: 4,
+          }}
+        >
+          <ul
+            style={{
+              fontFamily: 'inter tight',
+              fontWeight: '600',
+              width: 'max-content',
+              fontSize: '18px',
+            }}
+          >
+            <li>Programming</li>
+            <li>3D printing</li>
+            <li>Chemistry</li>
+          </ul>
+          <ul
+            style={{
+              fontFamily: 'inter tight',
+              fontWeight: '600',
+              width: 'max-content',
+              fontSize: '18px',
+            }}
+          >
+            <li>Physics</li>
+            <li>Woodworking</li>
+            <li>Electronics</li>
+          </ul>
+        </Box>
+      </Box>
+      <Box
+        sx={{
+          display: 'none',
+          width: '40%',
+          '@media screen and (min-width: 1012px)': {
+            display: 'block',
+          },
+        }}
+      >
+        <img
+          src="images/home-category.webp"
+          alt="WoodWorking"
+          style={{
+            width: '100%',
+            borderRadius: '25px',
+          }}
+        />
+      </Box>
+    </Box>
+  );
+}
+
 function StartNow({ commonStyles, gradientStyles }: any) {
   return (
     <Box
@@ -466,7 +571,7 @@ const AnimatedWave = () => {
             { value: svgs[2][index] },
           ],
           easing: 'easeInOutSine',
-          duration: 22000,
+          duration: 18000,
           direction: 'alternate',
           loop: true,
         });
