@@ -433,7 +433,6 @@ const ArticleSubmit = (props: SubmitProps) => {
               AuthorProfilePic: user.ProfilePic,
               PrimaryCategory: formData.PrimaryCategory,
               SecondaryCategories: tags,
-              Rating: 0,
               Difficulty: formData.Difficulty,
               Image: formData.S3Link,
               Status: status,

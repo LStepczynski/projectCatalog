@@ -566,9 +566,9 @@ const AnimatedWave = () => {
         anime({
           targets: path,
           d: [
-            { value: svgs[1][index] },
-            { value: svgs[0][index] },
             { value: svgs[2][index] },
+            { value: svgs[0][index] },
+            { value: svgs[1][index] },
           ],
           easing: 'easeInOutSine',
           duration: 18000,

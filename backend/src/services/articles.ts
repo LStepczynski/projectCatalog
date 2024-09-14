@@ -47,7 +47,7 @@ export class Articles {
         AuthorProfilePic: { value: '', required: true },
         PrimaryCategory: { value: '', required: true },
         SecondaryCategories: { value: [], required: true },
-        Rating: { value: 0, required: true },
+        Rating: { value: 0, required: false },
         CreatedAt: { value: 0, required: true },
         UpdatedAt: { value: 0, required: false },
         PublishedAt: { value: 0, required: false },
@@ -64,7 +64,6 @@ export class Articles {
         AuthorProfilePic: { value: '', required: true },
         PrimaryCategory: { value: '', required: true },
         SecondaryCategories: { value: [], required: true },
-        Rating: { value: 0, required: false },
         CreatedAt: { value: 0, required: false },
         UpdatedAt: { value: 0, required: false },
         Difficulty: { value: '', required: true },
@@ -297,6 +296,9 @@ export class Articles {
     // Sets UpdatedAt and Image to null if not provided
     if (metadata.UpdatedAt == undefined) {
       metadata.UpdatedAt = null;
+    }
+    if (metadata.AuthorProfilePic == undefined) {
+      metadata.AuthorProfilePic = 'https://project-catalog-storage.s3.us-east-2.amazonaws.com/images/pfp.png'
     }
     if (metadata.Image == '' || metadata.Image == undefined) {
       metadata.Image = null;
