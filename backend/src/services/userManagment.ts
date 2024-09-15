@@ -439,7 +439,7 @@ export class UserManagment {
     const token = this.getNewJWT(user);
     return {
       status: 200,
-      response: { accessToken: token },
+      response: { accessToken: token, user: user },
     };
   }
 
@@ -558,12 +558,12 @@ export class UserManagment {
     const resultWithToken: any = result;
     delete user.Password;
     resultWithToken.response.verificationToken = UserManagment.getNewJWT(user);
+    resultWithToken.response.user = user
     return resultWithToken
   }
 
   public static authenticateToken(req: any, res: any, next: any) {
-    const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1];
+    const token = req.cookies.token
     if (token == null) {
       return res.status(400).send({
         status: 400,
@@ -576,6 +576,12 @@ export class UserManagment {
       process.env.JWT_KEY || 'default',
       (err: any, user: any) => {
         if (err) {
+          if (err.name === 'TokenExpiredError') {
+            return res.status(401).send({
+              status: 401,
+              response: { message: 'token expired' },
+            });
+          }
           return res.status(403).send({
             status: 403,
             response: { message: 'invalid token' },
@@ -588,8 +594,7 @@ export class UserManagment {
   }
 
   public static authTokenOptional(req: any, res: any, next: any) {
-    const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1];
+    const token = req.cookies.token
     if (token == null) {
       req.user = {};
       next();
@@ -601,6 +606,12 @@ export class UserManagment {
       process.env.JWT_KEY || 'default',
       (err: any, user: any) => {
         if (err) {
+          if (err.name === 'TokenExpiredError') {
+            return res.status(401).send({
+              status: 401,
+              response: { message: 'token expired' },
+            });
+          }
           return res.status(403).send({
             status: 403,
             response: { message: 'invalid token' },

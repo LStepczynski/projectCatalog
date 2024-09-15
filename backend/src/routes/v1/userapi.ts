@@ -41,6 +41,14 @@ router.post('/sign-in', async (req, res) => {
   }
   const response = await UserManagment.verifyUser(username, password);
 
+  // Send the token as a cookie and return the user object
+  res.cookie('token', response.response.accessToken, {
+    httpOnly: true,
+    secure: process.env.STATE === 'PRODUCTION',
+    maxAge: 30*60*1000
+  })
+  delete response.response.accessToken
+
   return res.status(response.status).send(response);
 });
 
@@ -73,6 +81,15 @@ router.post(
     }
 
     const response = await UserManagment.changeProfilePic(Username, req.file)
+
+    // Send the token as a cookie and return the user object
+    res.cookie('token', response.response.accessToken, {
+      httpOnly: true,
+      secure: process.env.STATE === 'PRODUCTION',
+      maxAge: 30*60*1000
+    })
+    delete response.response.accessToken
+
     return res.status(response.status).send(response);
   }
 );
@@ -120,11 +137,11 @@ router.post(
   }
 );
 
-router.post(
+router.get(
   '/isLiked',
   UserManagment.authenticateToken,
   async (req: any, res: any) => {
-    const articleId = req.body.articleId;
+    const articleId = req.query.articleId;
     const user = req.user;
 
     if (!articleId) {
