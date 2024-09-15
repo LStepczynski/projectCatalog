@@ -20,7 +20,7 @@ const router = Router();
 // All private
 router.get(
   '/private',
-  UserManagment.authTokenOptional,
+  UserManagment.authenticateToken,
   async (req: any, res: any) => {
     const sortBy = req.query.sortBy || 'highest';
     const limit = Number(req.query.limit) || 10;
@@ -233,7 +233,7 @@ router.get(
   UserManagment.authTokenOptional,
   async (req: any, res: any) => {
     const author = req.query.authorName;
-    const searchBy = req.query.searchBy || 'rating';
+    let searchBy = req.query.searchBy || 'rating';
     const sortBy = req.query.sortBy || 'highest';
     const limit = Number(req.query.limit) || 10;
     const page = Number(req.query.page) || 1;
@@ -241,11 +241,14 @@ router.get(
     const user = req.user;
 
     // Check for permissions
-    if (visibility == 'private' && !UserManagment.checkUsername(author, user)) {
-      return res.status(403).send({
-        status: 403,
-        response: { message: 'permission denied' },
-      });
+    if (visibility == 'private') {
+      if (!UserManagment.checkUsername(author, user)) {
+        return res.status(403).send({
+          status: 403,
+          response: { message: 'permission denied' },
+        });
+      }
+      searchBy = 'date'
     }
 
     // Validate the visibility parameter and choose a corresponding table
