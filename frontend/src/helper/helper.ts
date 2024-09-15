@@ -31,50 +31,81 @@ export const capitalize = (str: string) => {
   return str.charAt(0).toUpperCase() + str.slice(1);
 };
 
-export const getUserFromJWT = () => {
-  const jwtToken = localStorage.getItem('verificationToken') || '';
-  if (jwtToken == '') {
+interface User {
+  [key: string]: any;
+}
+
+export const getUser = (): User | undefined => {
+  // Retrieve the string from localStorage
+  const userString = localStorage.getItem('user');
+
+  // If no user is found, return undefined
+  if (!userString) {
     return undefined;
   }
-  return decodeJWT(jwtToken);
-};
 
-export const decodeJWT = (token: string) => {
+  // Parse the string into a User object (assuming it's stored as JSON)
   try {
-    const base64Url = token.split('.')[1];
-    if (!base64Url) {
-      return undefined;
-    }
-
-    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-    const jsonPayload = decodeURIComponent(
-      atob(base64)
-        .split('')
-        .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
-        .join('')
-    );
-
-    const user = JSON.parse(jsonPayload);
-    const requiredFields = [
-      'Username',
-      'ProfilePic',
-      'Email',
-      'AccountCreated',
-      'iat',
-    ];
-
-    if (requiredFields.some((field) => user[field] === undefined)) {
-      return undefined;
-    }
-
+    const user: User = JSON.parse(userString);
     return user;
   } catch (error) {
-    console.error('Failed to decode JWT:', error);
+    console.error("Error parsing user from localStorage", error);
     return undefined;
   }
 };
 
 export const logOut = () => {
-  localStorage.removeItem('verificationToken');
+  localStorage.removeItem('user');
   window.location.href = '/sign-in';
 };
+
+export const fetchWrapper = async (url: string, options: RequestInit = {}) => {
+  // Check if the body is FormData
+  const isFormData = options.body instanceof FormData;
+
+  // Set default headers if not provided
+  // Ensure defaultHeaders is always a valid HeadersInit
+  const defaultHeaders: HeadersInit = !isFormData ? {
+    'Content-Type': 'application/json',
+    ...options.headers,
+  } : options.headers ?? {}; // Use an empty object if headers is undefined
+
+  // Create the full options object with default headers
+  const fetchOptions: RequestInit = {
+    method: 'GET', // Default method
+    headers: defaultHeaders,
+    credentials: 'include',
+    ...options,
+  };
+
+  try {
+    const response = await fetch(url, fetchOptions);
+
+    // Check if the response status indicates an error
+    if (!response.ok) {
+      const errorDetails = await response.text(); // Use text to handle potential non-JSON error messages
+      throw new Error(`HTTP Error: ${response.status}. ${errorDetails}`);
+    }
+
+    // Parse response as JSON if content-type is application/json
+    const contentType = response.headers.get('Content-Type');
+    let data: any;
+    if (contentType?.includes('application/json')) {
+      data = await response.json();
+    } else {
+      // Handle non-JSON responses
+      data = await response.text();
+    }
+
+    // Example of setting user data to localStorage
+    if (data.response?.user) {
+      localStorage.setItem('user', JSON.stringify(data.response.user));
+    }
+
+    return data;
+  } catch (error) {
+    console.error('Fetch error:', error);
+    throw error; // Re-throw error to be handled by caller
+  }
+};
+
