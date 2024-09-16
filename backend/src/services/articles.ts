@@ -428,6 +428,7 @@ export class Articles {
     // Remove fields that are not needed
     delete getRespItems.metadata.ID;
     delete getRespItems.metadata.PublishedAt;
+    delete getRespItems.metadata.Rating
 
     // Create the article in the ArticlesUnpublished table
     const addResponse = await this.createArticle(
