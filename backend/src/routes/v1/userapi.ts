@@ -42,6 +42,12 @@ router.post('/sign-in', async (req, res) => {
   const response = await UserManagment.verifyUser(username, password);
 
   // Send the token as a cookie and return the user object
+  res.cookie('refresh', response.response.refreshToken, {
+    httpOnly: true,
+    secure: process.env.STATE === 'PRODUCTION',
+    maxAge: 3*24*60*60*1000
+  })
+  delete response.response.refreshToken
   res.cookie('token', response.response.accessToken, {
     httpOnly: true,
     secure: process.env.STATE === 'PRODUCTION',

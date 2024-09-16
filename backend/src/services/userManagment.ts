@@ -91,16 +91,28 @@ export class UserManagment {
   }
 
   /**
-   * Creates a new JWT from an user object
+   * Creates a new access JWT from an user object
    *
    * @public
    * @static
    * @param {UserObject} user
    * @returns {string}
    */
-  public static getNewJWT(user: any) {
-    return jwt.sign(user, process.env.JWT_KEY || 'default');
+  public static getAccessJWT(user: any) {
+    return jwt.sign(user, process.env.JWT_KEY || 'default', { expiresIn: '30m'});
   }
+
+  /**
+   * Creates a new refresh JWT from an user object
+   *
+   * @public
+   * @static
+   * @param {UserObject} user
+   * @returns {string}
+   */
+    public static getRefreshJWT(user: any) {
+      return jwt.sign(user, process.env.JWT_REFRESH_KEY || 'default', { expiresIn: '3d'});
+    }
 
   /**
    * Hashes a password and returns it
@@ -436,10 +448,11 @@ export class UserManagment {
     delete user.Liked
 
     // Create the JWT and return it
-    const token = this.getNewJWT(user);
+    const token = this.getAccessJWT(user);
+    const refresh = this.getRefreshJWT(user)
     return {
       status: 200,
-      response: { accessToken: token, user: user },
+      response: { accessToken: token, refreshToken: refresh, user: user },
     };
   }
 
@@ -557,7 +570,7 @@ export class UserManagment {
     // Token and return it
     const resultWithToken: any = result;
     delete user.Password;
-    resultWithToken.response.verificationToken = UserManagment.getNewJWT(user);
+    resultWithToken.response.verificationToken = UserManagment.getAccessJWT(user);
     resultWithToken.response.user = user
     return resultWithToken
   }
