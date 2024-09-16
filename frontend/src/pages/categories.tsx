@@ -6,7 +6,7 @@ import { ArticleLarge } from '../components/contentDisplay/articles/articleLarge
 import { ArticleMedium } from '../components/contentDisplay/articles/articleMedium';
 import { ArticleSmall } from '../components/contentDisplay/articles/articleSmall';
 
-import { capitalize } from '@helper/helper';
+import { capitalize, fetchWrapper } from '@helper/helper';
 import { useScreenWidth } from '../components/other/useScreenWidth';
 
 export const Categories = () => {
@@ -27,23 +27,10 @@ export const Categories = () => {
     const fetchArticles = async () => {
       const newArticles: any = {};
       for (const category of Object.keys(articles)) {
-        try {
-          const response = await fetch(
-            `${backendUrl}/articles/${category}?limit=5`
-          );
-          if (!response.ok) {
-            throw new Error(
-              'Network response was not ok ' + response.statusText
-            );
-          }
-          const data = await response.json();
-          newArticles[category] = data.response.return;
-        } catch (error) {
-          console.error(
-            'There has been a problem with calling the API:',
-            error
-          );
-        }
+        const data = await fetchWrapper(
+          `${backendUrl}/articles/${category}?limit=5`
+        );
+        newArticles[category] = data.response.return;
       }
       setArticles(newArticles);
     };

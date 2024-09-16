@@ -8,7 +8,7 @@ import {
   EyeClosedIcon,
 } from '@primer/octicons-react';
 
-import { capitalize } from '@helper/helper';
+import { capitalize, fetchWrapper } from '@helper/helper';
 
 export const Login = () => {
   const [passwordIcon, setPasswordIcon] = React.useState<any>(EyeIcon);
@@ -50,29 +50,18 @@ export const Login = () => {
     }
 
     const backendUrl = import.meta.env.VITE_BACKEND_URL;
-    fetch(`${backendUrl}/user/sign-in`, {
+    fetchWrapper(`${backendUrl}/user/sign-in`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
       body: JSON.stringify(formData),
-    })
-      .then((response) => {
-        return response.json();
-      })
-      .then((data) => {
-        console.log(data);
-        if (data.status != 200) {
-          setErrorMessage(capitalize(data.response.message) + '.');
-          return;
-        }
-        localStorage.setItem('verificationToken', data.response.accessToken);
-        window.location.href = '/';
-      })
-      .catch((error) => {
-        console.error(error);
+    }).then((data) => {
+      console.log(data);
+      if (data.status != 200) {
+        setErrorMessage(capitalize(data.response.message) + '.');
         return;
-      });
+      }
+
+      window.location.href = '/';
+    });
   };
 
   const inputStyle = {

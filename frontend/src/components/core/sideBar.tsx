@@ -15,7 +15,7 @@ import {
   ChecklistIcon,
 } from '@primer/octicons-react';
 import { debounce } from 'lodash';
-import { getUserFromJWT } from '@helper/helper';
+import { getUser } from '@helper/helper';
 
 interface Props {
   state: boolean;
@@ -84,7 +84,7 @@ const items = [
   },
 ];
 
-const user = getUserFromJWT();
+const user = getUser();
 if (user && (user.CanPost == 'true' || user.Admin == 'true')) {
   items[0].items.push({
     name: 'My Articles',

@@ -4,7 +4,7 @@ import { Modal } from '../core/Modal';
 import { MoveToBottomIcon } from '@primer/octicons-react';
 import { ConfirmationPopup } from './confirmationPopup';
 import { InformationPopup } from './informationPopup';
-import { getUserFromJWT } from '@helper/helper';
+import { getUser, fetchWrapper } from '@helper/helper';
 
 export const ProfileUploadModal = ({ endpoint, isOpen, closeFunc }: any) => {
   const [confirmationPopupState, setConfirmationPopupState] =
@@ -13,10 +13,11 @@ export const ProfileUploadModal = ({ endpoint, isOpen, closeFunc }: any) => {
     React.useState(false);
   const fileInputRef = React.useRef<any>(null);
 
-  const user = getUserFromJWT();
+  const user = getUser();
 
   const handleClick = () => {
     if (!fileInputRef.current) return;
+    if (!user) return;
     const currentTime = Math.floor(Date.now() / 1000);
     const cooldown = 7 * 24 * 60 * 60;
 
@@ -51,10 +52,6 @@ export const ProfileUploadModal = ({ endpoint, isOpen, closeFunc }: any) => {
           `There was a problem with updating the profile picture. Try again later. Status code: ${result.status}`
         );
       }
-      localStorage.setItem(
-        'verificationToken',
-        result.response.verificationToken
-      );
 
       location.reload();
     }
@@ -64,21 +61,10 @@ export const ProfileUploadModal = ({ endpoint, isOpen, closeFunc }: any) => {
     const formData = new FormData();
     formData.append('image', file);
 
-    try {
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: {
-          authorization: `Bearer ${
-            localStorage.getItem('verificationToken') || ''
-          }`,
-        },
-        body: formData,
-      });
-
-      return await response.json();
-    } catch (error) {
-      console.error('Error uploading file:', error);
-    }
+    return await fetchWrapper(endpoint, {
+      method: 'POST',
+      body: formData,
+    });
   };
 
   return (

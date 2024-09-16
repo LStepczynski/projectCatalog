@@ -4,7 +4,7 @@ import { useParams, useSearchParams } from 'react-router-dom';
 import { Box, Heading, Text, Avatar, Label, LabelGroup } from '@primer/react';
 
 import { useScreenWidth } from '../components/other/useScreenWidth';
-import { getRelativeDate, capitalize } from '@helper/helper';
+import { getRelativeDate, capitalize, fetchWrapper } from '@helper/helper';
 import { AnimatedImage } from '../components/animation/animatedImage';
 import { ArticleDifficultyLabel } from '../components/contentDisplay/articles/articleDifficultyLabel';
 import { Like } from '../components/contentDisplay/like';
@@ -23,27 +23,11 @@ export const Article = () => {
 
   React.useEffect(() => {
     if (id) {
-      fetch(`${backendUrl}/articles/get?id=${id}&visibility=${visibility}`, {
-        headers: {
-          Authorization: `Bearer ${
-            localStorage.getItem('verificationToken') || ''
-          }`,
-        },
-      })
-        .then((response) => {
-          if (!response.ok) {
-            throw new Error(
-              'Network response was not ok ' + response.statusText
-            );
-          }
-          return response.json();
-        })
-        .then((data) => {
-          setArticle(data.response.return);
-        })
-        .catch((error) => {
-          console.error('There has been a problem with calling the API:');
-        });
+      fetchWrapper(
+        `${backendUrl}/articles/get?id=${id}&visibility=${visibility}`
+      ).then((data) => {
+        setArticle(data.response.return);
+      });
     }
   }, [id]);
 
@@ -119,21 +103,14 @@ const ArticleDetails = (props: DetailsProps) => {
   const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
   React.useEffect(() => {
-    const fetchIsLiked = async () => {
-      const isLikedReq = await fetch(`${backendUrl}/user/isLiked`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${
-            localStorage.getItem('verificationToken') || ''
-          }`,
-        },
-        body: JSON.stringify({ articleId: article.metadata.ID }),
+    const fetchIsLiked = () => {
+      fetchWrapper(
+        `${backendUrl}/user/isLiked?articleId=${article.metadata.ID}`
+      ).then((data) => {
+        setIsLiked(data.response.result || false);
       });
-      const isLikedRes = await isLikedReq.json();
-      setIsLiked(isLikedRes.response.result || false);
     };
-    if (visibility == 'public') {
+    if (visibility == 'public' && article.metadata.Rating != 0) {
       fetchIsLiked();
     }
   }, []);

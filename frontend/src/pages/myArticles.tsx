@@ -5,7 +5,7 @@ import { Box, Heading, Pagination } from '@primer/react';
 
 import { ArticleSmall } from '../components/contentDisplay/articles/articleSmall';
 import { ArticlePrivate } from '../components/contentDisplay/articles/articlePrivate';
-import { getUserFromJWT } from '@helper/helper';
+import { getUser, fetchWrapper } from '@helper/helper';
 import { useScreenWidth } from '../components/other/useScreenWidth';
 import { PencilIcon } from '@primer/octicons-react';
 
@@ -17,40 +17,23 @@ export const MyArticles = () => {
 
   const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
-  const user = getUserFromJWT();
+  const user = getUser();
   if (user && !(user.CanPost == 'true' || user.Admin == 'true')) {
     return (window.location.href = '/');
   }
 
   React.useEffect(() => {
-    fetch(
-      `${backendUrl}/articles/author?authorName=${user.Username}&page=${page}`
-    )
-      .then((response) => response.json())
-      .then((data) => {
-        setPublicArticles(data.response.return);
-      })
-      .catch((error) => {
-        console.error('Error:', error);
-      });
+    fetchWrapper(
+      `${backendUrl}/articles/author?authorName=${user?.Username}&page=${page}`
+    ).then((data) => {
+      setPublicArticles(data.response.return);
+    });
 
-    fetch(
-      `${backendUrl}/articles/author?authorName=${user.Username}&visibility=private`,
-      {
-        headers: {
-          Authorization: `Bearer ${
-            localStorage.getItem('verificationToken') || ''
-          }`,
-        },
-      }
-    )
-      .then((response) => response.json())
-      .then((data) => {
-        setPrivateArticles(data.response.return);
-      })
-      .catch((error) => {
-        console.error('Error:', error);
-      });
+    fetchWrapper(
+      `${backendUrl}/articles/author?authorName=${user?.Username}&visibility=private`
+    ).then((data) => {
+      setPrivateArticles(data.response.return);
+    });
   }, []);
 
   return (

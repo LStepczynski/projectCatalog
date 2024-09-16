@@ -6,6 +6,7 @@ import { ArticleMedium } from '../components/contentDisplay/articles/articleMedi
 import { ArticleSmall } from '../components/contentDisplay/articles/articleSmall';
 import * as styles from '../componentStyles';
 import { useScreenWidth } from '../components/other/useScreenWidth';
+import { fetchWrapper } from '@helper/helper';
 
 export const Category: React.FC = () => {
   const { categoryName, page } = useParams<{
@@ -19,24 +20,11 @@ export const Category: React.FC = () => {
 
   React.useEffect(() => {
     if (categoryName && page) {
-      fetch(`${backendUrl}/articles/${categoryName}?page=${page}`)
-        .then((response) => {
-          if (!response.ok) {
-            throw new Error(
-              'Network response was not ok ' + response.statusText
-            );
-          }
-          return response.json();
-        })
-        .then((data) => {
+      fetchWrapper(`${backendUrl}/articles/${categoryName}?page=${page}`).then(
+        (data) => {
           setArticles(data.response.return);
-        })
-        .catch((error) => {
-          console.error(
-            'There has been a problem with calling the API:',
-            error
-          );
-        });
+        }
+      );
     }
   }, [categoryName, page]);
 

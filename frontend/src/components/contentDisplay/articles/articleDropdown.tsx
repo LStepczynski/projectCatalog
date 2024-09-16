@@ -11,7 +11,7 @@ import {
 import { PortalWrapper } from '../../core/portalWrapper';
 import { ConfirmationPopup } from '../confirmationPopup';
 
-import { getUserFromJWT } from '@helper/helper';
+import { getUser, fetchWrapper } from '@helper/helper';
 
 export const ArticleDropdown = ({ setHovering, article, visibility }: any) => {
   const [dropdownState, setDropdownState] = React.useState(false);
@@ -24,7 +24,7 @@ export const ArticleDropdown = ({ setHovering, article, visibility }: any) => {
 
   const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
-  const user = getUserFromJWT();
+  const user = getUser();
   let articleOwner = false;
   if (user && (article.Author == user.Username || user.Admin == 'true')) {
     articleOwner = true;
@@ -38,19 +38,12 @@ export const ArticleDropdown = ({ setHovering, article, visibility }: any) => {
   const handleDelete = () => {
     const deleteArticle = async () => {
       try {
-        const deleteResponse = await fetch(
+        const deleteData = await fetchWrapper(
           `${backendUrl}/articles/delete?id=${article.ID}&visibility=${visibility}`,
           {
             method: 'DELETE',
-            headers: {
-              Authorization: `Bearer ${
-                localStorage.getItem('verificationToken') || ''
-              }`,
-            },
           }
         );
-
-        const deleteData = await deleteResponse.json();
 
         if (deleteData.status == 200) {
           location.reload();
@@ -73,19 +66,12 @@ export const ArticleDropdown = ({ setHovering, article, visibility }: any) => {
   const handlePublish = () => {
     const publishArticle = async () => {
       try {
-        const publishResponse = await fetch(
+        const publishData = await fetchWrapper(
           `${backendUrl}/articles/publish?id=${article.ID}`,
           {
             method: 'POST',
-            headers: {
-              Authorization: `Bearer ${
-                localStorage.getItem('verificationToken') || ''
-              }`,
-            },
           }
         );
-
-        const publishData = await publishResponse.json();
 
         if (publishData.status == 200) {
           location.reload();
@@ -107,19 +93,12 @@ export const ArticleDropdown = ({ setHovering, article, visibility }: any) => {
   const handleUnpublish = () => {
     const unpublishArticle = async () => {
       try {
-        const hideResponse = await fetch(
+        const hideData = await fetchWrapper(
           `${backendUrl}/articles/hide?id=${article.ID}`,
           {
             method: 'POST',
-            headers: {
-              Authorization: `Bearer ${
-                localStorage.getItem('verificationToken') || ''
-              }`,
-            },
           }
         );
-
-        const hideData = await hideResponse.json();
 
         if (hideData.status == 200) {
           location.reload();
@@ -192,7 +171,7 @@ export const ArticleDropdown = ({ setHovering, article, visibility }: any) => {
                   </ActionList.LeadingVisual>
                 </ActionList.Item>
               )}
-              {user.Admin && visibility == 'private' && (
+              {user?.Admin && visibility == 'private' && (
                 <ActionList.Item onSelect={handlePublish} sx={actionListStyle}>
                   Publish
                   <ActionList.LeadingVisual>
@@ -200,7 +179,7 @@ export const ArticleDropdown = ({ setHovering, article, visibility }: any) => {
                   </ActionList.LeadingVisual>
                 </ActionList.Item>
               )}
-              {article.Author == user.Username && visibility == 'private' && (
+              {article.Author == user?.Username && visibility == 'private' && (
                 <ActionList.Item onSelect={handleEdit} sx={actionListStyle}>
                   Edit
                   <ActionList.LeadingVisual>

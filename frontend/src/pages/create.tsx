@@ -12,7 +12,7 @@ import React from 'react';
 import { useSearchParams } from 'react-router-dom';
 
 import { AnimatedImage } from '../components/animation/animatedImage';
-import { getUserFromJWT } from '@helper/helper';
+import { getUser, fetchWrapper } from '@helper/helper';
 import { BannerUploadModal } from '../components/contentDisplay/bannerUploadModal';
 import { useScreenWidth } from '../components/other/useScreenWidth';
 import { MultipleChoice } from '../components/core/multipleChoice';
@@ -33,7 +33,7 @@ export const Create = () => {
   });
 
   // Check user privliges
-  const user = getUserFromJWT();
+  const user = getUser();
   if (user && !(user.CanPost == 'true' || user.Admin == 'true')) {
     return (window.location.href = '/');
   }
@@ -44,20 +44,10 @@ export const Create = () => {
     }
 
     const backendUrl = import.meta.env.VITE_BACKEND_URL;
-    const articleResponse = await fetch(
-      `${backendUrl}/articles/get?id=${articleId}&visibility=private`,
-      {
-        headers: {
-          Authorization: `Bearer ${
-            localStorage.getItem('verificationToken') || ''
-          }`,
-        },
-      }
-    );
-
-    try {
-      const articleData = await articleResponse.json();
-      const article = articleData.response.return;
+    fetchWrapper(
+      `${backendUrl}/articles/get?id=${articleId}&visibility=private`
+    ).then((data) => {
+      const article = data.response.return;
       setFormData({
         Title: article.metadata.Title,
         Description: article.metadata.Description,
@@ -68,9 +58,7 @@ export const Create = () => {
       });
       setTags(article.metadata.SecondaryCategories);
       setBannerFile((prev: any) => [prev[0], article.metadata.Image]);
-    } catch {
-      alert('There was an error while trying to load the article');
-    }
+    });
   };
 
   React.useEffect(() => {
@@ -414,16 +402,10 @@ const ArticleSubmit = (props: SubmitProps) => {
 
     try {
       // Submit article data
-      const articleResponse = await fetch(
+      const articleData = await fetchWrapper(
         `${backendUrl}/articles?id=${existingId}`,
         {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${
-              localStorage.getItem('verificationToken') || ''
-            }`,
-          },
           body: JSON.stringify({
             body: formData.Body,
             metadata: {
@@ -441,8 +423,6 @@ const ArticleSubmit = (props: SubmitProps) => {
         }
       );
 
-      const articleData = await articleResponse.json();
-
       if (bannerFile[0] == null) {
         window.location.href = '/myArticles/1';
         return;
@@ -451,22 +431,17 @@ const ArticleSubmit = (props: SubmitProps) => {
       const imageData = new FormData();
       imageData.append('image', bannerFile[0]);
       const articleId = articleData.response.id;
-      await fetch(
+      await fetchWrapper(
         `${backendUrl}/articles/image?id=${articleId}&visibility=private`,
         {
           method: 'POST',
-          headers: {
-            Authorization: `Bearer ${
-              localStorage.getItem('verificationToken') || ''
-            }`,
-          },
           body: imageData,
         }
       );
     } catch (error) {
-      alert('An error occurred. Please try again later.');
+      return alert('An error occurred. Please try again later.');
     }
-    window.location.href = '/myArticles';
+    window.location.href = '/myArticles/1';
   };
 
   return (
