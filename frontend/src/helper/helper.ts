@@ -60,6 +60,25 @@ export const logOut = () => {
 };
 
 export const fetchWrapper = async (url: string, options: RequestInit = {}) => {
+  // Get the user and check for an expiration date
+  const user = getUser()
+  if (user && user.exp) {
+    const now = Math.floor(Date.now() / 1000);
+    const backendUrl = import.meta.env.VITE_BACKEND_URL;
+
+    // Request a new token if it is expired
+    if (now > user.exp) {
+      const renewReq = await fetch(`${backendUrl}/user/token-refresh`, {credentials: 'include'})
+      const renewRes = await renewReq.json()
+      if (renewRes.status != 200) {
+        // Log out on error
+        logOut()
+        throw Error('User token verification failed')
+      }
+      localStorage.setItem('user', JSON.stringify(renewRes.response.user));
+    }
+  }
+
   // Check if the body is FormData
   const isFormData = options.body instanceof FormData;
 
