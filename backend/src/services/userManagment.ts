@@ -90,6 +90,25 @@ export class UserManagment {
     return false;
   }
 
+  
+  /**
+   * Decodes the object from a JWT
+   *
+   * @public
+   * @static
+   * @param {string} token - JWT
+   * @returns {*} object
+   */
+  public static decodeJWT(token: string) {
+    const base64Url = token.split('.')[1]; // Get the payload part
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+      return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+    }).join(''));
+  
+    return JSON.parse(jsonPayload);
+  }
+
   /**
    * Creates a new access JWT from an user object
    *
@@ -452,7 +471,7 @@ export class UserManagment {
     const refresh = this.getRefreshJWT(user)
     return {
       status: 200,
-      response: { accessToken: token, refreshToken: refresh, user: user },
+      response: { accessToken: token, refreshToken: refresh, user: this.decodeJWT(token) },
     };
   }
 
