@@ -2,7 +2,7 @@ import React from 'react';
 
 import { Box, Heading, Text, Button } from '@primer/react';
 
-import { getUserFromJWT } from '@helper/helper';
+import { getUser } from '@helper/helper';
 import { ProfilePicture } from '../components/contentDisplay/profilePicture';
 import { ProfileUploadModal } from '../components/contentDisplay/profileUploadModal';
 
@@ -14,7 +14,7 @@ export const Account = () => {
 
   const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
-  const user = getUserFromJWT();
+  const user = getUser();
 
   const screenWidth = useScreenWidth();
 

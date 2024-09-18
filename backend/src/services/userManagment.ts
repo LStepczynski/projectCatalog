@@ -90,17 +90,48 @@ export class UserManagment {
     return false;
   }
 
+  
   /**
-   * Creates a new JWT from an user object
+   * Decodes the object from a JWT
+   *
+   * @public
+   * @static
+   * @param {string} token - JWT
+   * @returns {*} object
+   */
+  public static decodeJWT(token: string) {
+    const base64Url = token.split('.')[1]; // Get the payload part
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+      return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+    }).join(''));
+  
+    return JSON.parse(jsonPayload);
+  }
+
+  /**
+   * Creates a new access JWT from an user object
    *
    * @public
    * @static
    * @param {UserObject} user
    * @returns {string}
    */
-  public static getNewJWT(user: any) {
-    return jwt.sign(user, process.env.JWT_KEY || 'default');
+  public static getAccessJWT(user: any) {
+    return jwt.sign(user, process.env.JWT_KEY || 'default', { expiresIn: '30m'});
   }
+
+  /**
+   * Creates a new refresh JWT from an user object
+   *
+   * @public
+   * @static
+   * @param {UserObject} user
+   * @returns {string}
+   */
+    public static getRefreshJWT(user: any) {
+      return jwt.sign(user, process.env.JWT_REFRESH_KEY || 'default', { expiresIn: '3d'});
+    }
 
   /**
    * Hashes a password and returns it
@@ -436,10 +467,11 @@ export class UserManagment {
     delete user.Liked
 
     // Create the JWT and return it
-    const token = this.getNewJWT(user);
+    const token = this.getAccessJWT(user);
+    const refresh = this.getRefreshJWT(user)
     return {
       status: 200,
-      response: { accessToken: token },
+      response: { accessToken: token, refreshToken: refresh, user: this.decodeJWT(token) },
     };
   }
 
@@ -557,13 +589,13 @@ export class UserManagment {
     // Token and return it
     const resultWithToken: any = result;
     delete user.Password;
-    resultWithToken.response.verificationToken = UserManagment.getNewJWT(user);
+    resultWithToken.response.verificationToken = UserManagment.getAccessJWT(user);
+    resultWithToken.response.user = user
     return resultWithToken
   }
 
   public static authenticateToken(req: any, res: any, next: any) {
-    const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1];
+    const token = req.cookies.token
     if (token == null) {
       return res.status(400).send({
         status: 400,
@@ -576,6 +608,12 @@ export class UserManagment {
       process.env.JWT_KEY || 'default',
       (err: any, user: any) => {
         if (err) {
+          if (err.name === 'TokenExpiredError') {
+            return res.status(401).send({
+              status: 401,
+              response: { message: 'token expired' },
+            });
+          }
           return res.status(403).send({
             status: 403,
             response: { message: 'invalid token' },
@@ -588,8 +626,7 @@ export class UserManagment {
   }
 
   public static authTokenOptional(req: any, res: any, next: any) {
-    const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1];
+    const token = req.cookies.token
     if (token == null) {
       req.user = {};
       next();
@@ -601,6 +638,12 @@ export class UserManagment {
       process.env.JWT_KEY || 'default',
       (err: any, user: any) => {
         if (err) {
+          if (err.name === 'TokenExpiredError') {
+            return res.status(401).send({
+              status: 401,
+              response: { message: 'token expired' },
+            });
+          }
           return res.status(403).send({
             status: 403,
             response: { message: 'invalid token' },

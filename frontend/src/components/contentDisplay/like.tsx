@@ -1,6 +1,8 @@
 import { Box, Text } from '@primer/react';
 import { HeartFillIcon, HeartIcon } from '@primer/octicons-react';
 
+import { fetchWrapper, getUser } from '@helper/helper';
+
 import React from 'react';
 
 interface Props {
@@ -19,21 +21,15 @@ export const Like = (props: Props) => {
   const iconSize = 24;
 
   const handleLike = async () => {
-    const token = localStorage.getItem('verificationToken') || '';
-    if (token === '') {
-      window.location.href = 'sign-up';
+    const user = getUser();
+    if (!user) {
+      return (window.location.href = 'sign-up');
     }
 
-    const likeReq = await fetch(`${backendUrl}/user/like`, {
+    const likeRes = await fetchWrapper(`${backendUrl}/user/like`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
       body: JSON.stringify({ articleId: id }),
     });
-
-    const likeRes = await likeReq.json();
 
     if (likeRes.status != 200) {
       return alert('There was an error while rating the article');

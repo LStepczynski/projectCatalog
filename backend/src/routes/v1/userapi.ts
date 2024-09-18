@@ -3,6 +3,7 @@ import { Router } from 'express';
 import { UserManagment } from '../../services/userManagment';
 import { Articles } from ':api/services/articles';
 import { Helper } from ':api/services/helper';
+import jwt from 'jsonwebtoken';
 
 import dotenv from 'dotenv';
 dotenv.config();
@@ -41,6 +42,20 @@ router.post('/sign-in', async (req, res) => {
   }
   const response = await UserManagment.verifyUser(username, password);
 
+  // Send the token as a cookie and return the user object
+  res.cookie('refresh', response.response.refreshToken, {
+    httpOnly: true,
+    secure: process.env.STATE === 'PRODUCTION',
+    maxAge: 3*24*60*60*1000
+  })
+  delete response.response.refreshToken
+  res.cookie('token', response.response.accessToken, {
+    httpOnly: true,
+    secure: process.env.STATE === 'PRODUCTION',
+    maxAge: 30*60*1000
+  })
+  delete response.response.accessToken
+
   return res.status(response.status).send(response);
 });
 
@@ -73,9 +88,65 @@ router.post(
     }
 
     const response = await UserManagment.changeProfilePic(Username, req.file)
+
+    // Send the token as a cookie and return the user object
+    res.cookie('token', response.response.accessToken, {
+      httpOnly: true,
+      secure: process.env.STATE === 'PRODUCTION',
+      maxAge: 30*60*1000
+    })
+    delete response.response.accessToken
+
     return res.status(response.status).send(response);
   }
 );
+
+router.get('/token-refresh', async (req: any, res: any) => {
+  // Grab the refresh token and check if it exists
+  const refreshToken = req.cookies.refresh
+
+  if (!refreshToken) {
+    return res.status(401).send({status: 401, response: { message: 'missing refresh token cookie' }})
+  }
+
+  // Verify if the refresh token is valid
+  jwt.verify(
+    refreshToken,
+    process.env.JWT_REFRESH_KEY || 'default',
+    (err: any, user: any) => {
+      // Check for errors
+      if (err) {
+        if (err.name === 'TokenExpiredError') {
+          return res.status(401).send({
+            status: 401,
+            response: { message: 'token expired' },
+          });
+        }
+        return res.status(403).send({
+          status: 403,
+          response: { message: 'invalid token' },
+        });
+      }
+
+      // Create a new access token from the refresh token
+      delete user.exp
+      delete user.iat
+      const token = UserManagment.getAccessJWT(user)
+
+      // Return the cookie and the new user object
+      res.cookie('token', token, { 
+        httpOnly: true,
+        secure: process.env.STATE === 'PRODUCTION',
+        maxAge: 30*60*1000
+      })
+
+      return res.status(200).send({
+        status: 200,
+        response: { user: UserManagment.decodeJWT(token) },
+      });
+    }
+  );
+})
 
 router.post(
   '/like',
@@ -120,11 +191,11 @@ router.post(
   }
 );
 
-router.post(
+router.get(
   '/isLiked',
   UserManagment.authenticateToken,
   async (req: any, res: any) => {
-    const articleId = req.body.articleId;
+    const articleId = req.query.articleId;
     const user = req.user;
 
     if (!articleId) {

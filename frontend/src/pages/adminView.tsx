@@ -4,7 +4,7 @@ import { useParams } from 'react-router-dom';
 import { Box, Select, Text, Heading, Pagination } from '@primer/react';
 
 import { ArticlePrivate } from '../components/contentDisplay/articles/articlePrivate';
-import { getUserFromJWT } from '@helper/helper';
+import { getUser, fetchWrapper } from '@helper/helper';
 import { useScreenWidth } from '../components/other/useScreenWidth';
 
 export const AdminView = () => {
@@ -14,26 +14,18 @@ export const AdminView = () => {
   const { page } = useParams();
 
   const backendUrl = import.meta.env.VITE_BACKEND_URL;
-  const user = getUserFromJWT();
+  const user = getUser();
   if (user && user.Admin != 'true') {
     return (window.location.href = '/');
   }
 
   React.useEffect(() => {
-    fetch(`${backendUrl}/articles/private?status=${status}&page=${page}`, {
-      headers: {
-        Authorization: `Bearer ${
-          localStorage.getItem('verificationToken') || ''
-        }`,
-      },
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        setArticles(data.response.return);
-      })
-      .catch((error) => {
-        console.error('Error:', error);
-      });
+    fetchWrapper(
+      `${backendUrl}/articles/private?status=${status}&page=${page}`
+    ).then((data) => {
+      setArticles(data.response.return);
+      console.log(data.response.return);
+    });
   }, [status]);
 
   return (

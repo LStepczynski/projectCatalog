@@ -1,4 +1,4 @@
-import { getUserFromJWT } from '@helper/helper';
+import { getUser } from '@helper/helper';
 import { Box, ActionList, Text } from '@primer/react';
 
 import {
@@ -15,7 +15,7 @@ interface Props {
 
 export const ProfilePictureModal = (props: Props) => {
   const { state } = props;
-  const user = getUserFromJWT();
+  const user = getUser();
 
   if (!state || !user) {
     return <></>;

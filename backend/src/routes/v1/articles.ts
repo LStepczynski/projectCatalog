@@ -20,7 +20,7 @@ const router = Router();
 // All private
 router.get(
   '/private',
-  UserManagment.authTokenOptional,
+  UserManagment.authenticateToken,
   async (req: any, res: any) => {
     const sortBy = req.query.sortBy || 'highest';
     const limit = Number(req.query.limit) || 10;
@@ -233,7 +233,7 @@ router.get(
   UserManagment.authTokenOptional,
   async (req: any, res: any) => {
     const author = req.query.authorName;
-    const searchBy = req.query.searchBy || 'rating';
+    let searchBy = req.query.searchBy || 'rating';
     const sortBy = req.query.sortBy || 'highest';
     const limit = Number(req.query.limit) || 10;
     const page = Number(req.query.page) || 1;
@@ -241,11 +241,14 @@ router.get(
     const user = req.user;
 
     // Check for permissions
-    if (visibility == 'private' && !UserManagment.checkUsername(author, user)) {
-      return res.status(403).send({
-        status: 403,
-        response: { message: 'permission denied' },
-      });
+    if (visibility == 'private') {
+      if (!UserManagment.checkUsername(author, user)) {
+        return res.status(403).send({
+          status: 403,
+          response: { message: 'permission denied' },
+        });
+      }
+      searchBy = 'date'
     }
 
     // Validate the visibility parameter and choose a corresponding table
@@ -635,20 +638,28 @@ router.post(
       });
     }
 
-    // Fetch an article
-    let articleRequest = await Articles.getArticle(ID, tableName);
-    if (articleRequest.status != 200) {
-      return res.status(articleRequest.status).send(articleRequest);
+    // Fetch the article metadata from the database
+    const metadataResp = await Articles.getArticleMetadata(ID, 'ArticlesUnpublished');
+    if (metadataResp.status != 200) {
+      return res.status(metadataResp.status).send(metadataResp);
     }
 
-    const article = articleRequest.response.return;
     // Check if the user has permission to add the image
-    if (!UserManagment.checkUsername(article.metadata.Author, user)) {
+    if (!UserManagment.checkUsername(metadataResp.response.return.Author, user)) {
       return res.status(403).send({
         status: 403,
-        response: { message: 'permission denied' },
+        response: { message: 'invalid permisions' },
       });
     }
+
+    // Fetch the whole article from the S3
+    const bodyResp = await Articles.getArticle(ID, 'ArticlesUnpublished');
+    if (bodyResp.status != 200) {
+      return res.status(bodyResp.status).send(bodyResp);
+    }
+ 
+    // Combine the metadata from the database with the body from the S3 into a new object
+    const article = {body: bodyResp.response.return.body, metadata: metadataResp.response.return};
 
     const imageId = uuidv4();
 
@@ -689,6 +700,7 @@ router.post(
       article.metadata,
       article.body
     );
+
     return res.status(result.status).send(result);
   }
 );

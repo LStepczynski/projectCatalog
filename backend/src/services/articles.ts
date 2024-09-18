@@ -47,11 +47,11 @@ export class Articles {
         AuthorProfilePic: { value: '', required: true },
         PrimaryCategory: { value: '', required: true },
         SecondaryCategories: { value: [], required: true },
-        Rating: { value: 0, required: true },
+        Rating: { value: 0, required: false },
         CreatedAt: { value: 0, required: true },
+        Difficulty: { value: '', required: true },
         UpdatedAt: { value: 0, required: false },
         PublishedAt: { value: 0, required: false },
-        Difficulty: { value: '', required: true },
         Image: { value: '', required: false },
       },
     },
@@ -64,10 +64,9 @@ export class Articles {
         AuthorProfilePic: { value: '', required: true },
         PrimaryCategory: { value: '', required: true },
         SecondaryCategories: { value: [], required: true },
-        Rating: { value: 0, required: false },
+        Difficulty: { value: '', required: true },
         CreatedAt: { value: 0, required: false },
         UpdatedAt: { value: 0, required: false },
-        Difficulty: { value: '', required: true },
         Image: { value: '', required: false },
         Status: { value: '', required: false },
       },
@@ -298,6 +297,9 @@ export class Articles {
     if (metadata.UpdatedAt == undefined) {
       metadata.UpdatedAt = null;
     }
+    if (metadata.AuthorProfilePic == undefined) {
+      metadata.AuthorProfilePic = 'https://project-catalog-storage.s3.us-east-2.amazonaws.com/images/pfp.png'
+    }
     if (metadata.Image == '' || metadata.Image == undefined) {
       metadata.Image = null;
     }
@@ -426,6 +428,7 @@ export class Articles {
     // Remove fields that are not needed
     delete getRespItems.metadata.ID;
     delete getRespItems.metadata.PublishedAt;
+    delete getRespItems.metadata.Rating
 
     // Create the article in the ArticlesUnpublished table
     const addResponse = await this.createArticle(
