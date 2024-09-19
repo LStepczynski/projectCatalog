@@ -2,11 +2,11 @@ import { Box } from '@primer/react';
 import { SkeletonBox } from './skeletonBox';
 import { useScreenWidth } from '../../other/useScreenWidth';
 
-export const SkeletonCategoryPanel = () => {
+export const SkeletonCategoryPanel = ({ bigArticles = true }) => {
   const screenWidth = useScreenWidth();
 
   const skeletonReturn = () => {
-    if (screenWidth < 430) {
+    if (screenWidth < 430 || !bigArticles) {
       return [...Array(10)].map((_, index) => (
         <SkeletonBox key={index} width="310px" height="285px" />
       ));

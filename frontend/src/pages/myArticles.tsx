@@ -8,10 +8,11 @@ import { ArticlePrivate } from '../components/contentDisplay/articles/articlePri
 import { getUser, fetchWrapper } from '@helper/helper';
 import { useScreenWidth } from '../components/other/useScreenWidth';
 import { PencilIcon } from '@primer/octicons-react';
+import { SkeletonCategoryPanel } from '../components/core/skeletons/skeletonCategoryPanel';
 
 export const MyArticles = () => {
-  const [publicArticles, setPublicArticles] = React.useState<any>([]);
-  const [privateArticles, setPrivateArticles] = React.useState<any>([]);
+  const [publicArticles, setPublicArticles] = React.useState<any>(null);
+  const [privateArticles, setPrivateArticles] = React.useState<any>(null);
   const screenWidth = useScreenWidth();
   const { page } = useParams();
 
@@ -68,46 +69,52 @@ export const MyArticles = () => {
           mt: 4,
         }}
       >
-        {publicArticles.map((item: any, index: any) => (
-          <ArticleSmall key={index} article={item} />
-        ))}
-        {privateArticles.map((item: any, index: any) => (
-          <ArticlePrivate key={index} article={item} />
-        ))}
-        <Box
-          onClick={() => {
-            window.location.href = '/create';
-          }}
-          sx={{
-            width: '330px',
-            height: '260px',
-            position: 'relative',
-            borderRadius: '10px',
-            border: '1px solid',
-            borderColor: 'ansi.black',
-            boxShadow: '0px 0px 25px rgba(0, 255, 0, 0)',
-            transition: '0.3s all',
-            ':hover': {
-              boxShadow: '0px 0px 15px rgba(0, 255, 0, 0.4)',
-            },
-          }}
-        >
-          <Box
-            sx={{
-              width: '80px',
-              position: 'absolute',
-              left: '50%',
-              top: '20%',
-              transform: 'translate(-50%,0%)',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-            }}
-          >
-            <PencilIcon size={80} />
-            <Heading>Create</Heading>
-          </Box>
-        </Box>
+        {publicArticles && privateArticles ? (
+          <>
+            {publicArticles.map((item: any, index: any) => (
+              <ArticleSmall key={index} article={item} />
+            ))}
+            {privateArticles.map((item: any, index: any) => (
+              <ArticlePrivate key={index} article={item} />
+            ))}
+            <Box
+              onClick={() => {
+                window.location.href = '/create';
+              }}
+              sx={{
+                width: '330px',
+                height: '260px',
+                position: 'relative',
+                borderRadius: '10px',
+                border: '1px solid',
+                borderColor: 'ansi.black',
+                boxShadow: '0px 0px 25px rgba(0, 255, 0, 0)',
+                transition: '0.3s all',
+                ':hover': {
+                  boxShadow: '0px 0px 15px rgba(0, 255, 0, 0.4)',
+                },
+              }}
+            >
+              <Box
+                sx={{
+                  width: '80px',
+                  position: 'absolute',
+                  left: '50%',
+                  top: '20%',
+                  transform: 'translate(-50%,0%)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                }}
+              >
+                <PencilIcon size={80} />
+                <Heading>Create</Heading>
+              </Box>
+            </Box>
+          </>
+        ) : (
+          <SkeletonCategoryPanel bigArticles={false} />
+        )}
       </Box>
       <Pagination
         currentPage={Number(page) || 1}
