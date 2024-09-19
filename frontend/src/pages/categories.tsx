@@ -8,16 +8,17 @@ import { ArticleSmall } from '../components/contentDisplay/articles/articleSmall
 
 import { capitalize, fetchWrapper } from '@helper/helper';
 import { useScreenWidth } from '../components/other/useScreenWidth';
+import { SkeletonCategoriesPanel } from '../components/core/skeletons/skeletonCategoriesPanel';
 
 export const Categories = () => {
   const [articles, setArticles] = React.useState<any>({
-    programming: [],
-    '3d-modeling': [],
-    electronics: [],
-    woodworking: [],
-    chemistry: [],
-    cybersecurity: [],
-    physics: [],
+    programming: null,
+    '3d-modeling': null,
+    electronics: null,
+    woodworking: null,
+    chemistry: null,
+    cybersecurity: null,
+    physics: null,
   });
   const screenWidth = useScreenWidth();
 
@@ -82,8 +83,16 @@ export const Categories = () => {
   return (
     <Box>
       {Object.keys(articles).map((keyName: string) => {
+        if (!articles[keyName]) {
+          return (
+            <SkeletonCategoriesPanel
+              headerWidth={getHeaderWidth()}
+              key={keyName}
+            />
+          );
+        }
         if (articles[keyName].length == 0) {
-          return <></>;
+          return null;
         }
 
         return (

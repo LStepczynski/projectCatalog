@@ -7,23 +7,23 @@ export const SkeletonCategoryPanel = () => {
 
   const skeletonReturn = () => {
     if (screenWidth < 430) {
-      return [...Array(10)].map((item, index) => (
+      return [...Array(10)].map((_, index) => (
         <SkeletonBox key={index} width="310px" height="285px" />
       ));
     }
 
     if (screenWidth < 1280) {
-      return [...Array(10)].map((item, index) => (
+      return [...Array(10)].map((_, index) => (
         <SkeletonBox key={index} width="380px" height="342px" />
       ));
     }
 
     return (
       <>
-        {[...Array(2)].map((item, index) => (
+        {[...Array(2)].map((_, index) => (
           <SkeletonBox key={index} width="600px" height="487px" />
         ))}
-        {[...Array(8)].map((item, index) => (
+        {[...Array(8)].map((_, index) => (
           <SkeletonBox key={index} width="380px" height="342px" />
         ))}
       </>
