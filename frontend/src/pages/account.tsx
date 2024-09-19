@@ -113,7 +113,7 @@ export const Account = () => {
               sx={{
                 fontSize: '22px',
                 fontWeight: 'bold',
-                textAlign: screenWidth > 499 ? '' : 'center',
+                textAlign: screenWidth > 499 ? undefined : 'center',
               }}
             >
               {user.Username}
@@ -121,7 +121,7 @@ export const Account = () => {
             <Text
               sx={{
                 fontSize: '12px',
-                textAlign: screenWidth > 499 ? '' : 'center',
+                textAlign: screenWidth > 499 ? undefined : 'center',
               }}
             >
               {user.Email}

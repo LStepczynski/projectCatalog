@@ -8,12 +8,14 @@ import * as styles from '../componentStyles';
 import { useScreenWidth } from '../components/other/useScreenWidth';
 import { fetchWrapper } from '@helper/helper';
 
+import { SkeletonCategoryPanel } from '../components/core/skeletons/skeletonCategoryPanel';
+
 export const Category: React.FC = () => {
   const { categoryName, page } = useParams<{
     categoryName: string;
     page: string;
   }>();
-  const [articles, setArticles] = React.useState([]);
+  const [articles, setArticles] = React.useState<any>(null);
   const screenWidth = useScreenWidth();
 
   const backendUrl = import.meta.env.VITE_BACKEND_URL;
@@ -29,29 +31,44 @@ export const Category: React.FC = () => {
   }, [categoryName, page]);
 
   const getArticlesToRender = () => {
+    if (!articles) return null;
     if (screenWidth < 430) {
-      return articles.map((item, index) => (
+      return articles.map((item: any, index: any) => (
         <ArticleSmall key={index} article={item} />
       ));
     }
 
     if (screenWidth < 1280) {
-      return articles.map((item, index) => (
+      return articles.map((item: any, index: any) => (
         <ArticleMedium key={index} article={item} />
       ));
     }
 
     return (
       <>
-        {articles.slice(0, 2).map((item, index) => (
+        {articles.slice(0, 2).map((item: any, index: any) => (
           <ArticleLarge key={index} article={item} />
         ))}
-        {articles.slice(2).map((item, index) => (
+        {articles.slice(2).map((item: any, index: any) => (
           <ArticleMedium key={index} article={item} />
         ))}
       </>
     );
   };
+
+  if (!articles) {
+    return (
+      <Box
+        sx={{
+          display: 'grid',
+          justifyContent: 'center',
+          gap: 4,
+        }}
+      >
+        <SkeletonCategoryPanel />
+      </Box>
+    );
+  }
 
   if (articles.length == 0) {
     return (
