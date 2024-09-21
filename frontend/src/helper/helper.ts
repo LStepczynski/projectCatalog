@@ -59,11 +59,26 @@ export const logOut = () => {
   window.location.href = '/sign-in';
 };
 
-export const fetchWrapper = async (url: string, options: RequestInit = {}) => {
+export const fetchWrapper = async (url: string, options: RequestInit = {}, cache: boolean = false, cacheDuration: number = 360) => {
+  const now = Math.floor(Date.now() / 1000);
+
+  if (cache) {
+    const cachedRes = sessionStorage.getItem(url)
+    if (cachedRes) {
+      try {
+        const data = JSON.parse(cachedRes)
+        if (now < data.exp) {
+          return data.data
+        }
+      } catch (err) {
+        console.error(err)
+      }      
+    } 
+  }
+
   // Get the user and check for an expiration date
   const user = getUser()
   if (user && user.exp) {
-    const now = Math.floor(Date.now() / 1000);
     const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
     // Request a new token if it is expired
@@ -119,6 +134,14 @@ export const fetchWrapper = async (url: string, options: RequestInit = {}) => {
     // Example of setting user data to localStorage
     if (data.response?.user) {
       localStorage.setItem('user', JSON.stringify(data.response.user));
+    }
+
+    if (cache) {
+      const storageData = {
+        data: data,
+        exp: now + cacheDuration
+      }
+      sessionStorage.setItem(url, JSON.stringify(storageData))
     }
 
     return data;

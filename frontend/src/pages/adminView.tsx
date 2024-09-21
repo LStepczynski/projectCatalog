@@ -6,9 +6,10 @@ import { Box, Select, Text, Heading, Pagination } from '@primer/react';
 import { ArticlePrivate } from '../components/contentDisplay/articles/articlePrivate';
 import { getUser, fetchWrapper } from '@helper/helper';
 import { useScreenWidth } from '../components/other/useScreenWidth';
+import { SkeletonCategoryPanel } from '../components/core/skeletons/skeletonCategoryPanel';
 
 export const AdminView = () => {
-  const [articles, setArticles] = React.useState([]);
+  const [articles, setArticles] = React.useState<any>(null);
   const [status, setStatus] = React.useState('review');
   const screenWidth = useScreenWidth();
   const { page } = useParams();
@@ -20,13 +21,21 @@ export const AdminView = () => {
   }
 
   React.useEffect(() => {
+    const controller = new AbortController();
+    const signal = controller.signal;
+
     fetchWrapper(
-      `${backendUrl}/articles/private?status=${status}&page=${page}`
+      `${backendUrl}/articles/private?status=${status}&page=${page}`,
+      { signal },
+      true
     ).then((data) => {
       setArticles(data.response.return);
-      console.log(data.response.return);
     });
-  }, [status]);
+
+    return () => {
+      controller.abort();
+    };
+  }, [status, page]);
 
   return (
     <Box
@@ -73,6 +82,7 @@ export const AdminView = () => {
           </Text>
           <Select
             onChange={(event) => {
+              setArticles(null);
               setStatus(event?.target.value);
             }}
           >
@@ -92,9 +102,15 @@ export const AdminView = () => {
           mt: 4,
         }}
       >
-        {articles.map((item: any, index: any) => (
-          <ArticlePrivate key={index} article={item} />
-        ))}
+        {articles ? (
+          <>
+            {articles.map((item: any, index: any) => (
+              <ArticlePrivate key={index} article={item} />
+            ))}
+          </>
+        ) : (
+          <SkeletonCategoryPanel bigArticles={false} />
+        )}
       </Box>
       <Pagination
         currentPage={Number(page) || 1}

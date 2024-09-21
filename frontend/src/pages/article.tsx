@@ -22,13 +22,22 @@ export const Article = () => {
   const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
   React.useEffect(() => {
+    const controller = new AbortController();
+    const signal = controller.signal;
     if (id) {
       fetchWrapper(
-        `${backendUrl}/articles/get?id=${id}&visibility=${visibility}`
+        `${backendUrl}/articles/get?id=${id}&visibility=${visibility}`,
+        { signal },
+        true,
+        60 * 60
       ).then((data) => {
         setArticle(data.response.return);
       });
     }
+
+    return () => {
+      controller.abort();
+    };
   }, [id]);
 
   const screenWidth = useScreenWidth();
@@ -103,9 +112,15 @@ const ArticleDetails = (props: DetailsProps) => {
   const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
   React.useEffect(() => {
+    const controller = new AbortController();
+    const signal = controller.signal;
+
     const fetchIsLiked = () => {
       fetchWrapper(
-        `${backendUrl}/user/isLiked?articleId=${article.metadata.ID}`
+        `${backendUrl}/user/isLiked?articleId=${article.metadata.ID}`,
+        { signal },
+        true,
+        60 * 60
       ).then((data) => {
         setIsLiked(data.response.result || false);
       });
@@ -113,6 +128,10 @@ const ArticleDetails = (props: DetailsProps) => {
     if (visibility == 'public' && article.metadata.Rating != 0) {
       fetchIsLiked();
     }
+
+    return () => {
+      controller.abort();
+    };
   }, []);
 
   return (

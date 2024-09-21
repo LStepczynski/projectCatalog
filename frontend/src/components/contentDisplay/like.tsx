@@ -2,6 +2,7 @@ import { Box, Text } from '@primer/react';
 import { HeartFillIcon, HeartIcon } from '@primer/octicons-react';
 
 import { fetchWrapper, getUser } from '@helper/helper';
+import { useSearchParams } from 'react-router-dom';
 
 import React from 'react';
 
@@ -15,12 +16,31 @@ interface Props {
 export const Like = (props: Props) => {
   let { count, isLiked, setIsLiked, id } = props;
   const [likeCount, setLikeCount] = React.useState(count);
+  const [isButtonDisabled, setIsButtonDisabled] = React.useState(false);
+
+  const [searchParams, setSearchParams] = useSearchParams();
+  const visibility = searchParams.get('visibility') || 'public';
+
+  const cooldownTime = 2000;
 
   const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
   const iconSize = 24;
 
+  let controller: AbortController;
+
   const handleLike = async () => {
+    if (isButtonDisabled) return;
+
+    setIsButtonDisabled(true);
+
+    if (controller) {
+      controller.abort();
+    }
+
+    controller = new AbortController();
+    const signal = controller.signal;
+
     const user = getUser();
     if (!user) {
       return (window.location.href = 'sign-up');
@@ -29,17 +49,29 @@ export const Like = (props: Props) => {
     const likeRes = await fetchWrapper(`${backendUrl}/user/like`, {
       method: 'POST',
       body: JSON.stringify({ articleId: id }),
+      signal,
     });
 
     if (likeRes.status != 200) {
       return alert('There was an error while rating the article');
     }
+
     if (isLiked) {
       setLikeCount(likeCount - 1);
     } else {
       setLikeCount(likeCount + 1);
     }
+
     setIsLiked(!isLiked);
+
+    sessionStorage.removeItem(`${backendUrl}/user/isLiked?articleId=${id}`);
+    sessionStorage.removeItem(
+      `${backendUrl}/articles/get?id=${id}&visibility=${visibility}`
+    );
+
+    setTimeout(() => {
+      setIsButtonDisabled(false);
+    }, cooldownTime);
   };
 
   return (
