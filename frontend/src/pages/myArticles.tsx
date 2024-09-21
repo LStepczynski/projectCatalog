@@ -24,17 +24,26 @@ export const MyArticles = () => {
   }
 
   React.useEffect(() => {
+    const controller = new AbortController();
+    const signal = controller.signal;
+
     fetchWrapper(
-      `${backendUrl}/articles/author?authorName=${user?.Username}&page=${page}`
+      `${backendUrl}/articles/author?authorName=${user?.Username}&page=${page}`,
+      { signal }
     ).then((data) => {
       setPublicArticles(data.response.return);
     });
 
     fetchWrapper(
-      `${backendUrl}/articles/author?authorName=${user?.Username}&visibility=private`
+      `${backendUrl}/articles/author?authorName=${user?.Username}&visibility=private`,
+      { signal }
     ).then((data) => {
       setPrivateArticles(data.response.return);
     });
+
+    return () => {
+      controller.abort();
+    };
   }, []);
 
   return (

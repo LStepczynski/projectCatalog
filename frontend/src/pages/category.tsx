@@ -21,13 +21,20 @@ export const Category: React.FC = () => {
   const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
   React.useEffect(() => {
+    const controller = new AbortController();
+    const signal = controller.signal;
+
     if (categoryName && page) {
-      fetchWrapper(`${backendUrl}/articles/${categoryName}?page=${page}`).then(
-        (data) => {
-          setArticles(data.response.return);
-        }
-      );
+      fetchWrapper(`${backendUrl}/articles/${categoryName}?page=${page}`, {
+        signal,
+      }).then((data) => {
+        setArticles(data.response.return);
+      });
     }
+
+    return () => {
+      controller.abort();
+    };
   }, [categoryName, page]);
 
   const getArticlesToRender = () => {

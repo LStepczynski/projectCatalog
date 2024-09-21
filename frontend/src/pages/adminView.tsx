@@ -21,13 +21,20 @@ export const AdminView = () => {
   }
 
   React.useEffect(() => {
+    const controller = new AbortController();
+    const signal = controller.signal;
+
     fetchWrapper(
-      `${backendUrl}/articles/private?status=${status}&page=${page}`
+      `${backendUrl}/articles/private?status=${status}&page=${page}`,
+      { signal }
     ).then((data) => {
       setArticles(data.response.return);
-      console.log(data.response.return);
     });
-  }, [status]);
+
+    return () => {
+      controller.abort();
+    };
+  }, [status, page]);
 
   return (
     <Box

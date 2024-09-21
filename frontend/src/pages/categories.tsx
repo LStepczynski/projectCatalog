@@ -25,11 +25,15 @@ export const Categories = () => {
   const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
   React.useEffect(() => {
+    const controller = new AbortController();
+    const signal = controller.signal;
+
     const fetchArticles = async () => {
       const newArticles: any = {};
       for (const category of Object.keys(articles)) {
         const data = await fetchWrapper(
-          `${backendUrl}/articles/${category}?limit=5`
+          `${backendUrl}/articles/${category}?limit=5`,
+          { signal }
         );
         newArticles[category] = data.response.return;
       }
@@ -37,6 +41,10 @@ export const Categories = () => {
     };
 
     fetchArticles();
+
+    return () => {
+      controller.abort();
+    };
   }, []);
 
   const getArticlesToRender = (keyName: string) => {

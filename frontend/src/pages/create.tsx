@@ -38,14 +38,18 @@ export const Create = () => {
     return (window.location.href = '/');
   }
 
-  const fetchArticle = async () => {
+  React.useEffect(() => {
+    const controller = new AbortController();
+    const signal = controller.signal;
+
     if (!articleId) {
       return;
     }
 
     const backendUrl = import.meta.env.VITE_BACKEND_URL;
     fetchWrapper(
-      `${backendUrl}/articles/get?id=${articleId}&visibility=private`
+      `${backendUrl}/articles/get?id=${articleId}&visibility=private`,
+      { signal }
     ).then((data) => {
       const article = data.response.return;
       setFormData({
@@ -59,10 +63,10 @@ export const Create = () => {
       setTags(article.metadata.SecondaryCategories);
       setBannerFile((prev: any) => [prev[0], article.metadata.Image]);
     });
-  };
 
-  React.useEffect(() => {
-    fetchArticle();
+    return () => {
+      controller.abort();
+    };
   }, []);
 
   return (
