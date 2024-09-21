@@ -31,7 +31,7 @@ export const MyArticles = () => {
       `${backendUrl}/articles/author?authorName=${user?.Username}&page=${page}`,
       { signal },
       true,
-      60
+      60 * 15
     ).then((data) => {
       setPublicArticles(data.response.return);
     });
@@ -40,7 +40,7 @@ export const MyArticles = () => {
       `${backendUrl}/articles/author?authorName=${user?.Username}&visibility=private`,
       { signal },
       true,
-      60
+      60 * 15
     ).then((data) => {
       setPrivateArticles(data.response.return);
     });

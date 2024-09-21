@@ -46,6 +46,7 @@ export const ArticleDropdown = ({ setHovering, article, visibility }: any) => {
         );
 
         if (deleteData.status == 200) {
+          sessionStorage.clear();
           location.reload();
         } else {
           alert('There was a problem while trying to delete the article');
@@ -74,6 +75,7 @@ export const ArticleDropdown = ({ setHovering, article, visibility }: any) => {
         );
 
         if (publishData.status == 200) {
+          sessionStorage.clear();
           location.reload();
         } else {
           alert('There was a problem while trying to publish the article');
@@ -101,6 +103,7 @@ export const ArticleDropdown = ({ setHovering, article, visibility }: any) => {
         );
 
         if (hideData.status == 200) {
+          sessionStorage.clear();
           location.reload();
         } else {
           alert('There was a problem while trying to unpublish the article');

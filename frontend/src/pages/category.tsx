@@ -31,7 +31,7 @@ export const Category: React.FC = () => {
           signal,
         },
         true,
-        60 * 2
+        60 * 60
       ).then((data) => {
         setArticles(data.response.return);
       });

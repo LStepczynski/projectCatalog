@@ -2,6 +2,7 @@ import { Box, Text } from '@primer/react';
 import { HeartFillIcon, HeartIcon } from '@primer/octicons-react';
 
 import { fetchWrapper, getUser } from '@helper/helper';
+import { useSearchParams } from 'react-router-dom';
 
 import React from 'react';
 
@@ -16,6 +17,10 @@ export const Like = (props: Props) => {
   let { count, isLiked, setIsLiked, id } = props;
   const [likeCount, setLikeCount] = React.useState(count);
   const [isButtonDisabled, setIsButtonDisabled] = React.useState(false);
+
+  const [searchParams, setSearchParams] = useSearchParams();
+  const visibility = searchParams.get('visibility') || 'public';
+
   const cooldownTime = 2000;
 
   const backendUrl = import.meta.env.VITE_BACKEND_URL;
@@ -58,6 +63,11 @@ export const Like = (props: Props) => {
     }
 
     setIsLiked(!isLiked);
+
+    sessionStorage.removeItem(`${backendUrl}/user/isLiked?articleId=${id}`);
+    sessionStorage.removeItem(
+      `${backendUrl}/articles/get?id=${id}&visibility=${visibility}`
+    );
 
     setTimeout(() => {
       setIsButtonDisabled(false);

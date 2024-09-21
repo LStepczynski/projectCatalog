@@ -35,7 +35,7 @@ export const Categories = () => {
           `${backendUrl}/articles/${category}?limit=5`,
           { signal },
           true,
-          60 * 10
+          60 * 60 * 5
         );
         newArticles[category] = data.response.return;
       }

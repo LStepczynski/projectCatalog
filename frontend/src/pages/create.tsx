@@ -429,6 +429,10 @@ const ArticleSubmit = (props: SubmitProps) => {
         }
       );
 
+      sessionStorage.removeItem(
+        `${backendUrl}/articles/author?authorName=${user.Username}&visibility=private`
+      );
+
       if (bannerFile[0] == null) {
         window.location.href = '/myArticles/1';
         return;

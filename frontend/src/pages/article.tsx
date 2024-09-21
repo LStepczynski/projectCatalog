@@ -29,7 +29,7 @@ export const Article = () => {
         `${backendUrl}/articles/get?id=${id}&visibility=${visibility}`,
         { signal },
         true,
-        15
+        60 * 60
       ).then((data) => {
         setArticle(data.response.return);
       });
@@ -120,7 +120,7 @@ const ArticleDetails = (props: DetailsProps) => {
         `${backendUrl}/user/isLiked?articleId=${article.metadata.ID}`,
         { signal },
         true,
-        15
+        60 * 60
       ).then((data) => {
         setIsLiked(data.response.result || false);
       });
