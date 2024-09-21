@@ -27,7 +27,9 @@ export const Article = () => {
     if (id) {
       fetchWrapper(
         `${backendUrl}/articles/get?id=${id}&visibility=${visibility}`,
-        { signal }
+        { signal },
+        true,
+        15
       ).then((data) => {
         setArticle(data.response.return);
       });
@@ -116,7 +118,9 @@ const ArticleDetails = (props: DetailsProps) => {
     const fetchIsLiked = () => {
       fetchWrapper(
         `${backendUrl}/user/isLiked?articleId=${article.metadata.ID}`,
-        { signal }
+        { signal },
+        true,
+        15
       ).then((data) => {
         setIsLiked(data.response.result || false);
       });

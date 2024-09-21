@@ -33,7 +33,9 @@ export const Categories = () => {
       for (const category of Object.keys(articles)) {
         const data = await fetchWrapper(
           `${backendUrl}/articles/${category}?limit=5`,
-          { signal }
+          { signal },
+          true,
+          60 * 10
         );
         newArticles[category] = data.response.return;
       }

@@ -49,7 +49,9 @@ export const Create = () => {
     const backendUrl = import.meta.env.VITE_BACKEND_URL;
     fetchWrapper(
       `${backendUrl}/articles/get?id=${articleId}&visibility=private`,
-      { signal }
+      { signal },
+      true,
+      60
     ).then((data) => {
       const article = data.response.return;
       setFormData({

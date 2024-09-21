@@ -26,7 +26,8 @@ export const AdminView = () => {
 
     fetchWrapper(
       `${backendUrl}/articles/private?status=${status}&page=${page}`,
-      { signal }
+      { signal },
+      true
     ).then((data) => {
       setArticles(data.response.return);
     });

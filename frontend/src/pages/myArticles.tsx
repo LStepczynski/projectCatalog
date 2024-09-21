@@ -29,14 +29,18 @@ export const MyArticles = () => {
 
     fetchWrapper(
       `${backendUrl}/articles/author?authorName=${user?.Username}&page=${page}`,
-      { signal }
+      { signal },
+      true,
+      60
     ).then((data) => {
       setPublicArticles(data.response.return);
     });
 
     fetchWrapper(
       `${backendUrl}/articles/author?authorName=${user?.Username}&visibility=private`,
-      { signal }
+      { signal },
+      true,
+      60
     ).then((data) => {
       setPrivateArticles(data.response.return);
     });

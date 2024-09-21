@@ -25,9 +25,14 @@ export const Category: React.FC = () => {
     const signal = controller.signal;
 
     if (categoryName && page) {
-      fetchWrapper(`${backendUrl}/articles/${categoryName}?page=${page}`, {
-        signal,
-      }).then((data) => {
+      fetchWrapper(
+        `${backendUrl}/articles/${categoryName}?page=${page}`,
+        {
+          signal,
+        },
+        true,
+        60 * 2
+      ).then((data) => {
         setArticles(data.response.return);
       });
     }
