@@ -15,12 +15,27 @@ interface Props {
 export const Like = (props: Props) => {
   let { count, isLiked, setIsLiked, id } = props;
   const [likeCount, setLikeCount] = React.useState(count);
+  const [isButtonDisabled, setIsButtonDisabled] = React.useState(false);
+  const cooldownTime = 2000;
 
   const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
   const iconSize = 24;
 
+  let controller: AbortController;
+
   const handleLike = async () => {
+    if (isButtonDisabled) return;
+
+    setIsButtonDisabled(true);
+
+    if (controller) {
+      controller.abort();
+    }
+
+    controller = new AbortController();
+    const signal = controller.signal;
+
     const user = getUser();
     if (!user) {
       return (window.location.href = 'sign-up');
@@ -29,17 +44,24 @@ export const Like = (props: Props) => {
     const likeRes = await fetchWrapper(`${backendUrl}/user/like`, {
       method: 'POST',
       body: JSON.stringify({ articleId: id }),
+      signal,
     });
 
     if (likeRes.status != 200) {
       return alert('There was an error while rating the article');
     }
+
     if (isLiked) {
       setLikeCount(likeCount - 1);
     } else {
       setLikeCount(likeCount + 1);
     }
+
     setIsLiked(!isLiked);
+
+    setTimeout(() => {
+      setIsButtonDisabled(false);
+    }, cooldownTime);
   };
 
   return (
