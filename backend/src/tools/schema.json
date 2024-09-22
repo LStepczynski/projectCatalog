@@ -332,13 +332,23 @@
     "AttributeDefinitions": [
       { "AttributeName": "Username", "AttributeType": "S" },
       { "AttributeName": "Email", "AttributeType": "S" },
-      { "AttributeName": "AccountCreated", "AttributeType": "N" }
+      { "AttributeName": "AccountCreated", "AttributeType": "N" },
+      { "AttributeName": "VerificationCode", "AttributeType": "S" }
     ],
     "KeySchema": [{ "AttributeName": "Username", "KeyType": "HASH" }],
     "GlobalSecondaryIndexes": [
       {
         "IndexName": "EmailIndex",
         "KeySchema": [{ "AttributeName": "Email", "KeyType": "HASH" }],
+        "Projection": { "ProjectionType": "ALL" },
+        "ProvisionedThroughput": {
+          "ReadCapacityUnits": 5,
+          "WriteCapacityUnits": 5
+        }
+      },
+      {
+        "IndexName": "VerificationCodeIndex",
+        "KeySchema": [{ "AttributeName": "VerificationCode", "KeyType": "HASH" }],
         "Projection": { "ProjectionType": "ALL" },
         "ProvisionedThroughput": {
           "ReadCapacityUnits": 5,
