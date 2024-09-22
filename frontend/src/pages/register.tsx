@@ -57,16 +57,10 @@ export const Register = () => {
     }
 
     const backendUrl = import.meta.env.VITE_BACKEND_URL;
-    fetchWrapper(
-      `${backendUrl}/user/sign-up`,
-      {
-        method: 'POST',
-        body: JSON.stringify(formData),
-      },
-      undefined,
-      undefined,
-      async (response: any) => {}
-    )
+    fetchWrapper(`${backendUrl}/user/sign-up`, {
+      method: 'POST',
+      body: JSON.stringify(formData),
+    })
       .then((data) => {
         if (data.status != 200) {
           setErrorMessage(capitalize(data.response.message) + '.');

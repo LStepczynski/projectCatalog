@@ -59,10 +59,7 @@ export const logOut = () => {
   window.location.href = '/sign-in';
 };
 
-export const fetchWrapper = async (url: string, options: RequestInit = {}, cache: boolean = false, cacheDuration: number = 360, errorFunc = async (response: any): Promise<any> => {
-  const errorDetails = await response.text(); 
-  throw new Error(`HTTP Error: ${response.status}. ${errorDetails}`);
-}) => {
+export const fetchWrapper = async (url: string, options: RequestInit = {}, cache: boolean = false, cacheDuration: number = 360) => {
   const now = Math.floor(Date.now() / 1000);
 
   if (cache) {
@@ -117,21 +114,14 @@ export const fetchWrapper = async (url: string, options: RequestInit = {}, cache
 
   try {
     const response = await fetch(url, fetchOptions);
-
-    // Check if the response status indicates an error
-    if (!response.ok) {
-      errorFunc(response)
-    }
-
+    
     // Parse response as JSON if content-type is application/json
-    const contentType = response.headers.get('Content-Type');
-    let data: any;
-    if (contentType?.includes('application/json')) {
-      data = await response.json();
-    } else {
-      // Handle non-JSON responses
-      data = await response.text();
-    }
+    const data = await response.json();
+    
+    // // Check if the response status indicates an error
+    // if (!response.ok) {
+    //   errorFunc(response)
+    // }
 
     // Example of setting user data to localStorage
     if (data.response?.user) {
