@@ -59,7 +59,10 @@ export const logOut = () => {
   window.location.href = '/sign-in';
 };
 
-export const fetchWrapper = async (url: string, options: RequestInit = {}, cache: boolean = false, cacheDuration: number = 360) => {
+export const fetchWrapper = async (url: string, options: RequestInit = {}, cache: boolean = false, cacheDuration: number = 360, errorFunc = async (response: any): Promise<any> => {
+  const errorDetails = await response.text(); 
+  throw new Error(`HTTP Error: ${response.status}. ${errorDetails}`);
+}) => {
   const now = Math.floor(Date.now() / 1000);
 
   if (cache) {
@@ -117,8 +120,7 @@ export const fetchWrapper = async (url: string, options: RequestInit = {}, cache
 
     // Check if the response status indicates an error
     if (!response.ok) {
-      const errorDetails = await response.text(); // Use text to handle potential non-JSON error messages
-      throw new Error(`HTTP Error: ${response.status}. ${errorDetails}`);
+      errorFunc(response)
     }
 
     // Parse response as JSON if content-type is application/json
