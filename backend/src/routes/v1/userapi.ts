@@ -65,30 +65,30 @@ router.post(
   upload.single('image'),
   async (req: any, res: any) => {
     const Username = req.query.username;
-
+    
     if (!Username) {
       return res.status(400).send({
         status: 400,
         response: { message: 'missing username attribute' },
       });
     }
-
+    
     if (!UserManagment.checkUsername(Username, req.user)) {
       return res.status(400).send({
         status: 404,
         response: { message: 'permission denied' },
       });
     }
-
+    
     if (!req.file) {
       return res.status(400).send({
         status: 400,
         response: { message: 'missing image' },
       });
     }
-
+    
     const response = await UserManagment.changeProfilePic(Username, req.file)
-
+    
     // Send the token as a cookie and return the user object
     res.cookie('token', response.response.accessToken, {
       httpOnly: true,
@@ -104,11 +104,11 @@ router.post(
 router.get('/token-refresh', async (req: any, res: any) => {
   // Grab the refresh token and check if it exists
   const refreshToken = req.cookies.refresh
-
+  
   if (!refreshToken) {
     return res.status(401).send({status: 401, response: { message: 'missing refresh token cookie' }})
   }
-
+  
   // Verify if the refresh token is valid
   jwt.verify(
     refreshToken,
@@ -139,7 +139,7 @@ router.get('/token-refresh', async (req: any, res: any) => {
         secure: process.env.STATE === 'PRODUCTION',
         maxAge: 30*60*1000
       })
-
+      
       return res.status(200).send({
         status: 200,
         response: { user: UserManagment.decodeJWT(token) },
@@ -154,11 +154,11 @@ router.post(
   async (req: any, res: any) => {
     const articleId = req.body.articleId;
     const user = req.user;
-
+    
     if (!articleId) {
       return res
-        .status(400)
-        .send({ status: 400, response: { message: 'articleId not provided' } });
+      .status(400)
+      .send({ status: 400, response: { message: 'articleId not provided' } });
     }
 
     const fullUserObject = (await UserManagment.getUser(user.Username)) || {};
@@ -178,10 +178,10 @@ router.post(
     } catch (err) {
       console.log(err);
       return res
-        .status(500)
-        .send({ status: 500, response: { message: 'server error' } });
+      .status(500)
+      .send({ status: 500, response: { message: 'server error' } });
     }
-
+    
     const response = await UserManagment.updateUser(
       user.Username,
       'Liked',
@@ -197,16 +197,23 @@ router.get(
   async (req: any, res: any) => {
     const articleId = req.query.articleId;
     const user = req.user;
-
+    
     if (!articleId) {
       return res
-        .status(400)
-        .send({ status: 400, response: { message: 'articleId not provided' } });
+      .status(400)
+      .send({ status: 400, response: { message: 'articleId not provided' } });
     }
-
+    
     const isLiked = await UserManagment.isLikedByUser(user.Username, articleId);
     return res.status(200).send({ status: 200, response: { result: isLiked } });
   }
 );
+
+router.post('/email-verification/:code', async (req, res) => {
+  const code = req.params.code
+  
+  const result = await UserManagment.verifyEmail(code)
+  return res.status(result.status).send(result)
+})
 
 export default router;

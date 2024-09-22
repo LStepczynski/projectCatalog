@@ -15,8 +15,10 @@ import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
 import { S3 } from './s3';
 import { v4 as uuidv4 } from 'uuid';
+import { Email } from './email';
 
 import { client } from './dynamodb';
+import { QueryCommandInput } from '@aws-sdk/lib-dynamodb';
 
 dotenv.config();
 
@@ -30,6 +32,8 @@ interface UserObject {
   ProfilePic: string;
   ProfilePicChange: any,
   AccountCreated: number,
+  Verified: string,
+  VerificationCode: string
 }
 
 export class UserManagment {
@@ -47,6 +51,22 @@ export class UserManagment {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
   }
+
+  public static randomBytesHex(length: number) {
+    const buffer = new Uint8Array(length);
+  
+    // Fill the buffer with random values
+    for (let i = 0; i < length; i++) {
+      buffer[i] = Math.floor(Math.random() * 256);
+    }
+  
+    // Convert buffer to a hexadecimal string
+    const hexString = Array.from(buffer)
+      .map(byte => byte.toString(16).padStart(2, '0'))
+      .join('');
+  
+    return hexString;
+  } 
 
   /**
    * Checks if the username matches the one in the user object or if the user is an admin
@@ -90,7 +110,6 @@ export class UserManagment {
     return false;
   }
 
-  
   /**
    * Decodes the object from a JWT
    *
@@ -220,6 +239,7 @@ export class UserManagment {
     }
     // Hash the password
     password = await this.genPassHash(password);
+    const verificationCode = this.randomBytesHex(24)
 
     // Create the user object
     const userObject: UserObject = {
@@ -233,6 +253,8 @@ export class UserManagment {
         'https://project-catalog-storage.s3.us-east-2.amazonaws.com/images/pfp.png',
       ProfilePicChange: 'null',
       AccountCreated: Helper.getUNIXTimestamp(),
+      Verified: 'false',
+      VerificationCode: verificationCode,
     };
 
     // Add the object to the database and return a response
@@ -242,6 +264,9 @@ export class UserManagment {
     };
     try {
       await client.send(new PutItemCommand(params));
+
+      Email.sendAccountVerificationEmail(email, verificationCode)
+
       return {
         status: 200,
         response: { message: 'user created successfuly' },
@@ -363,6 +388,7 @@ export class UserManagment {
       'CanPost',
       'Admin',
       'Liked',
+      'Verified'
     ];
 
     // Check for dissallowed fields
@@ -592,6 +618,40 @@ export class UserManagment {
     resultWithToken.response.verificationToken = UserManagment.getAccessJWT(user);
     resultWithToken.response.user = user
     return resultWithToken
+  }
+
+  public static async verifyEmail(verificationCode: string) {
+    const params = {
+      TableName: 'Users',
+      IndexName: 'VerificationCodeIndex', // Use the index name for querying
+      KeyConditionExpression: 'VerificationCode = :code',
+      ExpressionAttributeValues: {
+        ':code': { S: verificationCode },
+      },
+    };
+  
+    try {
+      const result = await client.send(new QueryCommand(params));
+      if (result.Items && result.Items.length > 0) {
+        const user = unmarshall(result.Items[0]); 
+        console.log(user);
+        if (user.Verified === 'false') {
+          const updateRes = await this.updateUser(user.Username, 'Verified', 'true')
+
+          if (updateRes.status == 200) {
+            return { status: 200, response: { message: 'email verified' } };
+          } else {
+            throw new Error("unable to edit user verification property")
+          }
+        } else {
+          return { status: 410, response: { message: 'account already verified' } };
+        }
+      }
+      return { status: 404, response: { message: 'user not found' } };
+    } catch (err) {
+      console.log(err);
+      return { status: 500, response: { message: 'server error' } };
+    }
   }
 
   public static authenticateToken(req: any, res: any, next: any) {
