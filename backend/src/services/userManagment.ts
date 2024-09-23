@@ -491,6 +491,7 @@ export class UserManagment {
     // turning it into a JWT
     delete user.Password;
     delete user.Liked
+    delete user.VerificationCode
 
     // Create the JWT and return it
     const token = this.getAccessJWT(user);
@@ -615,6 +616,9 @@ export class UserManagment {
     // Token and return it
     const resultWithToken: any = result;
     delete user.Password;
+    delete user.Liked;
+    delete user.VerificationCode
+
     resultWithToken.response.verificationToken = UserManagment.getAccessJWT(user);
     resultWithToken.response.user = user
     return resultWithToken
@@ -662,7 +666,7 @@ export class UserManagment {
         response: { message: 'missing authentication token' },
       });
     }
-
+    
     jwt.verify(
       token,
       process.env.JWT_KEY || 'default',
@@ -679,6 +683,14 @@ export class UserManagment {
             response: { message: 'invalid token' },
           });
         }
+
+        if (user.Verified == 'false') {
+          return res.status(403).send({
+            status: 403,
+            response: { message: 'account not verified' },
+          });
+        }
+
         req.user = user;
         next();
       }
