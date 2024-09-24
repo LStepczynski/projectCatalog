@@ -265,7 +265,7 @@ export class UserManagment {
     try {
       await client.send(new PutItemCommand(params));
 
-      Email.sendAccountVerificationEmail(email, verificationCode)
+      Email.sendAccountVerificationEmail(email, username, verificationCode)
 
       return {
         status: 200,

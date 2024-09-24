@@ -36,11 +36,11 @@ export class Email {
     return false
   } 
 
-  public static sendAccountVerificationEmail(email: string, code: string) {
+  public static sendAccountVerificationEmail(email: string, username: string, code: string) {
     return this.sendEmail(
       email, 
       "Account Verification", 
-      `Please verify your Course Catalog account by clicking this link: ${process.env.FRONTEND_URL}/email-verification/${code}`
+      `Hello ${username}.\nPlease verify your Course Catalog account by clicking this link: ${process.env.FRONTEND_URL}/email-verification/${code}`
     )
   }
 }
