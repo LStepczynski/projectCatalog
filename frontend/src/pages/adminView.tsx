@@ -21,6 +21,14 @@ export const AdminView = () => {
   }
 
   React.useEffect(() => {
+    if (user?.Verified != 'true') {
+      alert(
+        'Your account is not verified. Please verify your email to review articles.'
+      );
+      window.location.href = '/account';
+      return;
+    }
+
     const controller = new AbortController();
     const signal = controller.signal;
 

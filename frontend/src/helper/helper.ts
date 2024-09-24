@@ -117,11 +117,6 @@ export const fetchWrapper = async (url: string, options: RequestInit = {}, cache
     
     // Parse response as JSON if content-type is application/json
     const data = await response.json();
-    
-    // // Check if the response status indicates an error
-    // if (!response.ok) {
-    //   errorFunc(response)
-    // }
 
     // Example of setting user data to localStorage
     if (data.response?.user) {
@@ -131,7 +126,7 @@ export const fetchWrapper = async (url: string, options: RequestInit = {}, cache
     if (cache) {
       const storageData = {
         data: data,
-        exp: now + cacheDuration
+        exp: now + (data.status == 200 ? cacheDuration : 90)
       }
       sessionStorage.setItem(url, JSON.stringify(storageData))
     }

@@ -25,6 +25,7 @@ export const ArticleDropdown = ({ setHovering, article, visibility }: any) => {
   const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
   const user = getUser();
+  const verified = user?.Verified == 'true' || false;
   let articleOwner = false;
   if (user && (article.Author == user.Username || user.Admin == 'true')) {
     articleOwner = true;
@@ -166,7 +167,7 @@ export const ArticleDropdown = ({ setHovering, article, visibility }: any) => {
             }}
           >
             <ActionList>
-              {articleOwner && (
+              {verified && articleOwner && (
                 <ActionList.Item onSelect={handleDelete} sx={actionListStyle}>
                   Delete
                   <ActionList.LeadingVisual>
@@ -174,7 +175,7 @@ export const ArticleDropdown = ({ setHovering, article, visibility }: any) => {
                   </ActionList.LeadingVisual>
                 </ActionList.Item>
               )}
-              {user?.Admin && visibility == 'private' && (
+              {verified && user?.Admin && visibility == 'private' && (
                 <ActionList.Item onSelect={handlePublish} sx={actionListStyle}>
                   Publish
                   <ActionList.LeadingVisual>
@@ -182,15 +183,17 @@ export const ArticleDropdown = ({ setHovering, article, visibility }: any) => {
                   </ActionList.LeadingVisual>
                 </ActionList.Item>
               )}
-              {article.Author == user?.Username && visibility == 'private' && (
-                <ActionList.Item onSelect={handleEdit} sx={actionListStyle}>
-                  Edit
-                  <ActionList.LeadingVisual>
-                    <PencilIcon size={20} />
-                  </ActionList.LeadingVisual>
-                </ActionList.Item>
-              )}
-              {articleOwner && visibility == 'public' && (
+              {verified &&
+                article.Author == user?.Username &&
+                visibility == 'private' && (
+                  <ActionList.Item onSelect={handleEdit} sx={actionListStyle}>
+                    Edit
+                    <ActionList.LeadingVisual>
+                      <PencilIcon size={20} />
+                    </ActionList.LeadingVisual>
+                  </ActionList.Item>
+                )}
+              {verified && articleOwner && visibility == 'public' && (
                 <ActionList.Item
                   onSelect={handleUnpublish}
                   sx={actionListStyle}
