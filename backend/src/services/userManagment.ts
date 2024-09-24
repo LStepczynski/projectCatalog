@@ -15,7 +15,7 @@ import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
 import { S3 } from './s3';
 import { v4 as uuidv4 } from 'uuid';
-import { Email } from './email';
+import { Email } from './Email';
 
 import { client } from './dynamodb';
 import { QueryCommandInput } from '@aws-sdk/lib-dynamodb';
