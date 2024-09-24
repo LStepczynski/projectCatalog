@@ -50,6 +50,15 @@ export const MyArticles = () => {
     };
   }, []);
 
+  const handleCreate = () => {
+    if (user?.Verified == 'true') {
+      return (window.location.href = '/create');
+    }
+    alert(
+      'This account is not verified. Please verify your email to create articles.'
+    );
+  };
+
   return (
     <Box
       sx={{
@@ -91,9 +100,7 @@ export const MyArticles = () => {
               <ArticlePrivate key={index} article={item} />
             ))}
             <Box
-              onClick={() => {
-                window.location.href = '/create';
-              }}
+              onClick={handleCreate}
               sx={{
                 width: '330px',
                 height: '260px',

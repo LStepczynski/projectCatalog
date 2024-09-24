@@ -114,22 +114,9 @@ export const fetchWrapper = async (url: string, options: RequestInit = {}, cache
 
   try {
     const response = await fetch(url, fetchOptions);
-
-    // Check if the response status indicates an error
-    if (!response.ok) {
-      const errorDetails = await response.text(); // Use text to handle potential non-JSON error messages
-      throw new Error(`HTTP Error: ${response.status}. ${errorDetails}`);
-    }
-
+    
     // Parse response as JSON if content-type is application/json
-    const contentType = response.headers.get('Content-Type');
-    let data: any;
-    if (contentType?.includes('application/json')) {
-      data = await response.json();
-    } else {
-      // Handle non-JSON responses
-      data = await response.text();
-    }
+    const data = await response.json();
 
     // Example of setting user data to localStorage
     if (data.response?.user) {
@@ -139,7 +126,7 @@ export const fetchWrapper = async (url: string, options: RequestInit = {}, cache
     if (cache) {
       const storageData = {
         data: data,
-        exp: now + cacheDuration
+        exp: now + (data.status == 200 ? cacheDuration : 90)
       }
       sessionStorage.setItem(url, JSON.stringify(storageData))
     }

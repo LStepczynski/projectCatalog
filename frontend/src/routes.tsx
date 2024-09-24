@@ -9,6 +9,7 @@ import { Article } from './pages/article';
 import { Create } from './pages/create';
 import { MyArticles } from './pages/myArticles';
 import { AdminView } from './pages/adminView';
+import { EmailVerification } from './pages/emailVerification';
 
 export const Routes = () => {
   const router = createBrowserRouter([
@@ -35,6 +36,10 @@ export const Routes = () => {
     {
       path: '/create',
       element: <Create />,
+    },
+    {
+      path: '/email-verification/:code',
+      element: <EmailVerification />,
     },
     {
       path: '/adminView/:page',

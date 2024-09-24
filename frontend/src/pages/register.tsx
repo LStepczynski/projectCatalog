@@ -60,13 +60,17 @@ export const Register = () => {
     fetchWrapper(`${backendUrl}/user/sign-up`, {
       method: 'POST',
       body: JSON.stringify(formData),
-    }).then((data) => {
-      if (data.status != 200) {
-        setErrorMessage(capitalize(data.response.message) + '.');
-        return;
-      }
-      window.location.href = '/sign-in';
-    });
+    })
+      .then((data) => {
+        if (data.status != 200) {
+          setErrorMessage(capitalize(data.response.message) + '.');
+          return;
+        }
+        window.location.href = '/sign-in';
+      })
+      .catch((err) => {
+        setErrorMessage(capitalize(err) + '.');
+      });
   };
 
   const inputStyle = {

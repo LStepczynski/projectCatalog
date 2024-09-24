@@ -62,7 +62,6 @@ export const Account = () => {
           sx={{
             display: screenWidth > 499 ? 'flex' : 'grid',
             alignItems: 'center',
-            // justifyContent: "center",
             gap: 5,
             m: 5,
           }}
@@ -107,7 +106,6 @@ export const Account = () => {
               />
             </Box>
           </Box>
-
           <Box sx={{ display: 'flex', flexDirection: 'column' }}>
             <Text
               sx={{
@@ -129,6 +127,15 @@ export const Account = () => {
           </Box>
         </Box>
 
+        {user?.Verified != 'true' && (
+          <Box sx={{ mt: 7 }}>
+            <Text as="p" sx={{ color: 'red', textAlign: 'center' }}>
+              This account is not verified. <br></br> Check your inbox for a
+              verification email.
+            </Text>
+          </Box>
+        )}
+
         <Box sx={{ mt: 4 }}>
           <Heading sx={{ fontSize: screenWidth > 699 ? '32px' : '24px' }}>
             Security:
@@ -137,7 +144,6 @@ export const Account = () => {
         <Box
           sx={{ width: '100%', height: '1px', backgroundColor: 'ansi.black' }}
         ></Box>
-
         <Box sx={{ display: 'grid', gap: 6, my: 3 }}>
           <Box sx={{ display: 'grid', gap: 2 }}>
             <Text sx={{ fontSize: '22px' }}>Password:</Text>
@@ -171,7 +177,6 @@ export const Account = () => {
             </Box>
           </Box>
         </Box>
-
         <Box
           sx={{
             width: '100%',

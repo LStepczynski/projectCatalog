@@ -32,6 +32,16 @@ export const Like = (props: Props) => {
   const handleLike = async () => {
     if (isButtonDisabled) return;
 
+    const user = getUser();
+    if (!user) {
+      return (window.location.href = 'sign-up');
+    }
+    if (user?.Verified != 'true') {
+      return alert(
+        'Your account is not verified. Please verify your email to like this post.'
+      );
+    }
+
     setIsButtonDisabled(true);
 
     if (controller) {
@@ -40,11 +50,6 @@ export const Like = (props: Props) => {
 
     controller = new AbortController();
     const signal = controller.signal;
-
-    const user = getUser();
-    if (!user) {
-      return (window.location.href = 'sign-up');
-    }
 
     const likeRes = await fetchWrapper(`${backendUrl}/user/like`, {
       method: 'POST',
