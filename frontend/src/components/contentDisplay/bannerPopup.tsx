@@ -2,6 +2,8 @@ import React from 'react';
 import { debounce } from 'lodash';
 
 import { Box, Text } from '@primer/react';
+import { useScreenWidth } from '../other/useScreenWidth';
+import { XCircleIcon } from '@primer/octicons-react';
 
 interface Props {
   isOpen: boolean;
@@ -13,6 +15,8 @@ export const BannerPopup = (props: Props) => {
   const [prevScrollPos, setPrevScrollPos] = React.useState(window.pageYOffset);
   const [bannerVis, setBannerVis] = React.useState(true);
   const { isOpen, closeFunc, message } = props;
+
+  const screenWidth = useScreenWidth();
 
   const handleScroll = debounce(() => {
     const currentScrollPos = window.pageYOffset;
@@ -31,7 +35,7 @@ export const BannerPopup = (props: Props) => {
   return (
     <Box
       sx={{
-        height: '50px',
+        height: screenWidth < 500 ? '75px' : '50px',
         width: '100%',
         zIndex: 998,
         backgroundColor: 'attention.emphasis',
@@ -51,12 +55,14 @@ export const BannerPopup = (props: Props) => {
           display: 'flex',
         }}
       >
-        <Text>{message}</Text>
+        <Text as="p" sx={{ textAlign: 'center', mx: 6 }}>
+          {message}
+        </Text>
         <Box
           onClick={closeFunc}
           sx={{
             position: 'absolute',
-            width: '50px',
+            width: screenWidth < 500 ? '50px' : '70px',
             height: '100%',
             right: 0,
             display: 'flex',
@@ -65,7 +71,7 @@ export const BannerPopup = (props: Props) => {
             cursor: 'pointer',
           }}
         >
-          X
+          <XCircleIcon size={24} />
         </Box>
       </Box>
     </Box>
