@@ -332,23 +332,13 @@
     "AttributeDefinitions": [
       { "AttributeName": "Username", "AttributeType": "S" },
       { "AttributeName": "Email", "AttributeType": "S" },
-      { "AttributeName": "AccountCreated", "AttributeType": "N" },
-      { "AttributeName": "VerificationCode", "AttributeType": "S" }
+      { "AttributeName": "AccountCreated", "AttributeType": "N" }
     ],
     "KeySchema": [{ "AttributeName": "Username", "KeyType": "HASH" }],
     "GlobalSecondaryIndexes": [
       {
         "IndexName": "EmailIndex",
         "KeySchema": [{ "AttributeName": "Email", "KeyType": "HASH" }],
-        "Projection": { "ProjectionType": "ALL" },
-        "ProvisionedThroughput": {
-          "ReadCapacityUnits": 5,
-          "WriteCapacityUnits": 5
-        }
-      },
-      {
-        "IndexName": "VerificationCodeIndex",
-        "KeySchema": [{ "AttributeName": "VerificationCode", "KeyType": "HASH" }],
         "Projection": { "ProjectionType": "ALL" },
         "ProvisionedThroughput": {
           "ReadCapacityUnits": 5,
@@ -365,6 +355,17 @@
         }
       }
     ],
+    "ProvisionedThroughput": {
+      "ReadCapacityUnits": 10,
+      "WriteCapacityUnits": 10
+    }
+  },
+  {
+    "TableName": "Tokens",
+    "AttributeDefinitions": [
+      { "AttributeName": "Value", "AttributeType": "S" }
+    ],
+    "KeySchema": [{ "AttributeName": "Value", "KeyType": "HASH" }],
     "ProvisionedThroughput": {
       "ReadCapacityUnits": 10,
       "WriteCapacityUnits": 10

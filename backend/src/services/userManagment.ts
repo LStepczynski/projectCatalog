@@ -18,7 +18,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { Email } from './Email';
 
 import { client } from './dynamodb';
-import { QueryCommandInput } from '@aws-sdk/lib-dynamodb';
+import { Tokens } from './tokens';
 
 dotenv.config();
 
@@ -33,7 +33,6 @@ interface UserObject {
   ProfilePicChange: any,
   AccountCreated: number,
   Verified: string,
-  VerificationCode: string
 }
 
 export class UserManagment {
@@ -223,25 +222,25 @@ export class UserManagment {
         response: { message: 'invalid email address' },
       };
     }
-
+  
     if (password.length < 8) {
       return {
         status: 400,
         response: { message: 'password must be at least 8 characters long' },
       };
     }
-
+  
     if ((await this.getUser(username)) != null) {
       return {
         status: 400,
         response: { message: 'username is already in use' },
       };
     }
+  
     // Hash the password
     password = await this.genPassHash(password);
-    const verificationCode = this.randomBytesHex(24)
-
-    // Create the user object
+  
+    // Create the user object without the VerificationCode
     const userObject: UserObject = {
       Username: username,
       Password: password,
@@ -254,22 +253,37 @@ export class UserManagment {
       ProfilePicChange: 'null',
       AccountCreated: Helper.getUNIXTimestamp(),
       Verified: 'false',
-      VerificationCode: verificationCode,
     };
-
-    // Add the object to the database and return a response
+  
+    // Add the user object to the database
     const params: any = {
       TableName: 'Users',
       Item: marshall(userObject),
     };
+  
     try {
       await client.send(new PutItemCommand(params));
-
-      Email.sendAccountVerificationEmail(email, username, verificationCode)
-
+  
+      // Generate a verification code
+      const verificationCode = this.randomBytesHex(24);
+  
+      // Create a token object
+      const token = {
+        username: username,
+        value: verificationCode,
+        type: 'email_verification',
+        expiration: 0, 
+      };
+  
+      // Store the token using the Tokens class
+      await Tokens.createToken(token);
+  
+      // Send verification email
+      Email.sendAccountVerificationEmail(email, username, verificationCode);
+  
       return {
         status: 200,
-        response: { message: 'user created successfuly' },
+        response: { message: 'user created successfully' },
       };
     } catch (err) {
       console.log(err);
@@ -625,38 +639,44 @@ export class UserManagment {
   }
 
   public static async verifyEmail(verificationCode: string) {
-    const params = {
-      TableName: 'Users',
-      IndexName: 'VerificationCodeIndex', // Use the index name for querying
-      KeyConditionExpression: 'VerificationCode = :code',
-      ExpressionAttributeValues: {
-        ':code': { S: verificationCode },
-      },
-    };
-  
     try {
-      const result = await client.send(new QueryCommand(params));
-      if (result.Items && result.Items.length > 0) {
-        const user = unmarshall(result.Items[0]); 
-        console.log(user);
-        if (user.Verified === 'false') {
-          const updateRes = await this.updateUser(user.Username, 'Verified', 'true')
-
-          if (updateRes.status == 200) {
-            return { status: 200, response: { message: 'email verified' } };
+      // Retrieve the token using the Tokens class
+      const token = await Tokens.getToken(verificationCode);
+  
+      if (token && token.type === 'email_verification') {
+        const username = token.username;
+  
+        // Get the user associated with the token
+        const user = await this.getUser(username);
+  
+        if (user) {
+          if (user.Verified === 'false') {
+            // Update the user's Verified status
+            const updateRes = await this.updateUser(username, 'Verified', 'true');
+  
+            if (updateRes.status == 200) {
+              // Delete the token after successful verification
+              await Tokens.deleteToken(verificationCode);
+  
+              return { status: 200, response: { message: 'email verified' } };
+            } else {
+              throw new Error('Unable to update user verification status');
+            }
           } else {
-            throw new Error("unable to edit user verification property")
+            return { status: 410, response: { message: 'account already verified' } };
           }
         } else {
-          return { status: 410, response: { message: 'account already verified' } };
+          return { status: 404, response: { message: 'user not found' } };
         }
+      } else {
+        return { status: 404, response: { message: 'invalid or expired verification code' } };
       }
-      return { status: 404, response: { message: 'user not found' } };
     } catch (err) {
       console.log(err);
       return { status: 500, response: { message: 'server error' } };
     }
   }
+  
 
   public static authenticateToken(req: any, res: any, next: any) {
     const token = req.cookies.token
