@@ -1,6 +1,8 @@
 import React from 'react';
 import { Box, TextInput, Button, Text, Heading, Link } from '@primer/react';
 
+import { InformationPopup } from '../components/contentDisplay/informationPopup';
+
 import {
   PersonIcon,
   LockIcon,
@@ -130,9 +132,13 @@ export const Login = () => {
           />
         </Box>
 
-        <Text sx={{ textAlign: 'center' }}>
-          Don't have an account? • <Link href="/sign-up">Sign Up</Link>
-        </Text>
+        <Box sx={{ display: 'flex', justifyContent: 'space-around' }}>
+          <Link sx={{ width: '40%', textAlign: 'center' }} href="/sign-up">
+            Sign Up
+          </Link>
+
+          <PasswordReset username={formData.username} />
+        </Box>
 
         {errorMessage && (
           <Text sx={{ color: 'red', fontSize: '14px', textAlign: 'center' }}>
@@ -151,5 +157,38 @@ export const Login = () => {
         </Button>
       </Box>
     </Box>
+  );
+};
+
+const PasswordReset = ({ username }: any) => {
+  const [open, setOpen] = React.useState(false);
+  const [text, setText] = React.useState('');
+
+  const backendUrl = import.meta.env.VITE_BACKEND_URL;
+
+  const handleClick = async () => {
+    if (username == '') return;
+
+    const response = await fetchWrapper(`${backendUrl}/user/forgot-password`, {
+      method: 'POST',
+      body: JSON.stringify({ username: username }),
+    });
+
+    setText(response.response.message);
+    setOpen(true);
+  };
+
+  return (
+    <>
+      <Link onClick={handleClick} sx={{ cursor: 'pointer', width: '40%' }}>
+        Forgot Password
+      </Link>
+      <InformationPopup
+        isOpen={open}
+        closeFunc={() => setOpen(false)}
+        title="Forgot Password"
+        description={text}
+      />
+    </>
   );
 };

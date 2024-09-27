@@ -209,7 +209,65 @@ router.get(
   }
 );
 
-router.post('/email-verification/:code', async (req, res) => {
+router.post('/password-reset', UserManagment.authenticateToken, async (req: any, res: any) => {
+  const user = req.user
+
+  const result = await UserManagment.sendPasswordResetEmail(user.Username)
+
+  if (result.response.accessToken) {
+    res.cookie('token', result.response.accessToken, {
+      httpOnly: true,
+      secure: process.env.STATE === 'PRODUCTION',
+      maxAge: 30*60*1000
+    })
+  }
+  
+  delete result.response.accessToken
+
+  return res.status(result.status).send(result)
+})
+
+router.post('/forgot-password', async (req: any, res: any) => {
+  const username = req.body.username;
+
+  // Call the sendPasswordResetEmail method
+  const result = await UserManagment.sendPasswordResetEmail(username);
+
+  // Initialize the response object
+  let response = {
+    status: 0,
+    response: { message: '' }
+  };
+
+  // Handle different status codes using switch
+  switch (result.status) {
+    case 200:
+    case 403:
+    case 404:
+    case 429:
+      response.status = 200;
+      response.response.message = 'if the user is verified, a password reset email will be sent.';
+      break;
+
+    default:
+      // Handle unexpected errors
+      response.status = 500;
+      response.response.message = 'server error. Please try again later.';
+      break;
+  }
+
+  // Send the response with the appropriate status code
+  return res.status(response.status).send(response);
+});
+
+router.post('/password-reset/:code', async (req: any, res: any) => {
+  const code = req.params.code
+
+  const result = await UserManagment.resetPassword(code)
+  return res.status(result.status).send(result)
+})
+
+router.post('/email-verification/:code', async (req: any, res: any) => {
   const code = req.params.code
   
   const result = await UserManagment.verifyEmail(code)

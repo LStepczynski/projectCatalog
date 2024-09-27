@@ -5,7 +5,7 @@ import { InformationPopup } from '../components/contentDisplay/informationPopup'
 
 import React from 'react';
 
-export const EmailVerification = () => {
+export const PasswordReset = () => {
   const [response, setResponse] = React.useState<any>(null);
   const { code } = useParams();
 
@@ -14,7 +14,7 @@ export const EmailVerification = () => {
     const controller = new AbortController();
     const signal = controller.signal;
 
-    fetchWrapper(`${backendUrl}/user/email-verification/${code}`, {
+    fetchWrapper(`${backendUrl}/user/password-reset/${code}`, {
       method: 'POST',
       signal,
     }).then((data) => {
@@ -36,8 +36,8 @@ export const EmailVerification = () => {
           logOut();
           window.location.href = '/sign-in';
         }}
-        title="Email Verification"
-        description="Your account has been verified. Please log into your account to view changes."
+        title="Password Reset"
+        description="Your password has been reset. Check your inbox to view your new password."
       />
     );
   } else if (response.status == 404) {
@@ -47,7 +47,7 @@ export const EmailVerification = () => {
         closeFunc={() => {
           window.location.href = '/';
         }}
-        title="Email Verification"
+        title="Password Reset"
         description="This verification link is invalid. Please try a different one."
       />
     );
@@ -58,8 +58,8 @@ export const EmailVerification = () => {
         closeFunc={() => {
           window.location.href = '/';
         }}
-        title="Email Verification"
-        description="This verification link is invalid. Your account is already verified."
+        title="Password Reset"
+        description="This verification link is invalid. Please request a new one."
       />
     );
   } else if (response.status == 500) {
@@ -69,8 +69,8 @@ export const EmailVerification = () => {
         closeFunc={() => {
           window.location.href = '/';
         }}
-        title="Email Verification"
-        description="There was a problem with verification. Please try again later."
+        title="Password Reset"
+        description="There was a problem the password reset. Please try again later."
       />
     );
   }

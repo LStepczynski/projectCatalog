@@ -10,6 +10,7 @@ import { Create } from './pages/create';
 import { MyArticles } from './pages/myArticles';
 import { AdminView } from './pages/adminView';
 import { EmailVerification } from './pages/emailVerification';
+import { PasswordReset } from './pages/passwordReset';
 
 export const Routes = () => {
   const router = createBrowserRouter([
@@ -40,6 +41,10 @@ export const Routes = () => {
     {
       path: '/email-verification/:code',
       element: <EmailVerification />,
+    },
+    {
+      path: '/password-reset/:code',
+      element: <PasswordReset />,
     },
     {
       path: '/adminView/:page',

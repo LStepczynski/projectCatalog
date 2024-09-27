@@ -18,7 +18,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { Email } from './Email';
 
 import { client } from './dynamodb';
-import { QueryCommandInput } from '@aws-sdk/lib-dynamodb';
+import { Tokens } from './tokens';
 
 dotenv.config();
 
@@ -27,13 +27,13 @@ interface UserObject {
   Password: string,
   Email: string,
   Admin: string,
-  Liked: string[],
   CanPost: string,
+  Verified: string,
+  LastPasswordChange: number;
+  Liked: string[],
   ProfilePic: string;
   ProfilePicChange: any,
   AccountCreated: number,
-  Verified: string,
-  VerificationCode: string
 }
 
 export class UserManagment {
@@ -148,9 +148,9 @@ export class UserManagment {
    * @param {UserObject} user
    * @returns {string}
    */
-    public static getRefreshJWT(user: any) {
+  public static getRefreshJWT(user: any) {
       return jwt.sign(user, process.env.JWT_REFRESH_KEY || 'default', { expiresIn: '3d'});
-    }
+  }
 
   /**
    * Hashes a password and returns it
@@ -223,25 +223,25 @@ export class UserManagment {
         response: { message: 'invalid email address' },
       };
     }
-
+  
     if (password.length < 8) {
       return {
         status: 400,
         response: { message: 'password must be at least 8 characters long' },
       };
     }
-
+  
     if ((await this.getUser(username)) != null) {
       return {
         status: 400,
         response: { message: 'username is already in use' },
       };
     }
+  
     // Hash the password
     password = await this.genPassHash(password);
-    const verificationCode = this.randomBytesHex(24)
-
-    // Create the user object
+  
+    // Create the user object without the VerificationCode
     const userObject: UserObject = {
       Username: username,
       Password: password,
@@ -254,22 +254,38 @@ export class UserManagment {
       ProfilePicChange: 'null',
       AccountCreated: Helper.getUNIXTimestamp(),
       Verified: 'false',
-      VerificationCode: verificationCode,
+      LastPasswordChange: Helper.getUNIXTimestamp()
     };
-
-    // Add the object to the database and return a response
+  
+    // Add the user object to the database
     const params: any = {
       TableName: 'Users',
       Item: marshall(userObject),
     };
+  
     try {
       await client.send(new PutItemCommand(params));
-
-      Email.sendAccountVerificationEmail(email, username, verificationCode)
-
+  
+      // Generate a verification code
+      const verificationCode = this.randomBytesHex(24);
+  
+      // Create a token object
+      const token = {
+        username: username,
+        value: verificationCode,
+        type: 'email_verification',
+        expiration: 0, 
+      };
+  
+      // Store the token using the Tokens class
+      await Tokens.createToken(token);
+  
+      // Send verification email
+      Email.sendAccountVerificationEmail(email, username, verificationCode);
+  
       return {
         status: 200,
-        response: { message: 'user created successfuly' },
+        response: { message: 'user created successfully' },
       };
     } catch (err) {
       console.log(err);
@@ -388,7 +404,8 @@ export class UserManagment {
       'CanPost',
       'Admin',
       'Liked',
-      'Verified'
+      'Verified',
+      'LastPasswordChange'
     ];
 
     // Check for dissallowed fields
@@ -625,39 +642,177 @@ export class UserManagment {
   }
 
   public static async verifyEmail(verificationCode: string) {
-    const params = {
-      TableName: 'Users',
-      IndexName: 'VerificationCodeIndex', // Use the index name for querying
-      KeyConditionExpression: 'VerificationCode = :code',
-      ExpressionAttributeValues: {
-        ':code': { S: verificationCode },
-      },
-    };
-  
     try {
-      const result = await client.send(new QueryCommand(params));
-      if (result.Items && result.Items.length > 0) {
-        const user = unmarshall(result.Items[0]); 
-        console.log(user);
-        if (user.Verified === 'false') {
-          const updateRes = await this.updateUser(user.Username, 'Verified', 'true')
-
-          if (updateRes.status == 200) {
-            return { status: 200, response: { message: 'email verified' } };
+      // Retrieve the token using the Tokens class
+      const token = await Tokens.getToken(verificationCode);
+  
+      if (token && token.type === 'email_verification') {
+        const username = token.username;
+  
+        // Get the user associated with the token
+        const user = await this.getUser(username);
+  
+        if (user) {
+          if (user.Verified === 'false') {
+            // Update the user's Verified status
+            const updateRes = await this.updateUser(username, 'Verified', 'true');
+  
+            if (updateRes.status == 200) {
+              // Delete the token after successful verification
+              await Tokens.deleteToken(verificationCode);
+  
+              return { status: 200, response: { message: 'email verified' } };
+            } else {
+              throw new Error('Unable to update user verification status');
+            }
           } else {
-            throw new Error("unable to edit user verification property")
+            return { status: 410, response: { message: 'account already verified' } };
           }
         } else {
-          return { status: 410, response: { message: 'account already verified' } };
+          return { status: 404, response: { message: 'user not found' } };
         }
+      } else {
+        return { status: 404, response: { message: 'invalid or expired verification code' } };
       }
-      return { status: 404, response: { message: 'user not found' } };
     } catch (err) {
       console.log(err);
       return { status: 500, response: { message: 'server error' } };
     }
   }
 
+  public static async sendPasswordResetEmail(username: string) {
+    const currentTime = Helper.getUNIXTimestamp()
+
+    // Get the user by username
+    const user = await this.getUser(username);
+    if (!user) {
+      return {
+        status: 404,
+        response: { message: 'user not found' },
+      };
+    }
+  
+    // Check if user is verified
+    if (user.Verified !== 'true') {
+      return {
+        status: 403,
+        response: { message: 'user is not verified' },
+      };
+    }
+
+    if (user.LastPasswordChange + 60*15 > currentTime) {
+      return {
+        status: 429,
+        response: { message: 'you have requested a password reset recently. Please try again later.' }
+      }
+    }
+  
+    // Generate a password reset token
+    const resetTokenValue = this.randomBytesHex(24);
+  
+    // Create a token object
+    const resetToken = {
+      username: username,
+      value: resetTokenValue,
+      type: 'password_reset',
+      expiration: currentTime + 6 * 3600, 
+    };
+  
+    // Store the token using the Tokens class
+    await Tokens.createToken(resetToken);
+  
+    // Send password reset email
+    Email.sendPasswordResetEmail(user.Email, username, resetTokenValue);
+
+    await this.updateUser(user.Username, 'LastPasswordChange', currentTime)
+  
+    user.LastPasswordChange = currentTime
+    delete user.iat
+    delete user.exp
+
+    const verificationToken = this.getAccessJWT(user)
+
+    return {
+      status: 200,
+      response: { 
+        message: 'password reset email sent.', 
+        accessToken: verificationToken, 
+        user: this.decodeJWT(verificationToken)
+      }
+    };
+  }
+  
+  public static async resetPassword(verificationCode: string) {
+    try {
+      // Retrieve the token using the Tokens class
+      const token = await Tokens.getToken(verificationCode);
+  
+      if (token && token.type === 'password_reset') {
+        const currentTimestamp = Helper.getUNIXTimestamp();
+  
+        // Check if the token has expired
+        if (token.expiration < currentTimestamp) {
+          // Token has expired, delete it
+          await Tokens.deleteToken(verificationCode);
+          return { 
+            status: 410, 
+            response: { message: 'Verification code has expired. Please request a new password reset.' } 
+          };
+        }
+  
+        const username = token.username;
+  
+        // Get the user associated with the token
+        const user = await this.getUser(username);
+  
+        if (user) {
+          // Generate a new password: username + 8 random characters
+          const newPassword = username + this.randomBytesHex(8);
+  
+          // Hash the new password
+          const hashedPassword = await this.genPassHash(newPassword);
+  
+          // Update the user's password
+          const updateRes = await this.updateUser(username, 'Password', hashedPassword);
+  
+          if (updateRes.status === 200) {
+            // Delete the token after successful password reset
+            await Tokens.deleteToken(verificationCode);
+  
+            // Send email to user with the new password
+            const emailSent = Email.sendNewPasswordEmail(user.Email, username, newPassword);
+            if (!emailSent) {
+              console.warn(`Failed to send new password email to ${user.Email}`);
+            }
+  
+            return { 
+              status: 200, 
+              response: { message: 'Password reset successful. Please check your email for the new password.' } 
+            };
+          } else {
+            throw new Error('Unable to update user password.');
+          }
+        } else {
+          return { 
+            status: 404, 
+            response: { message: 'User not found.' } 
+          };
+        }
+      } else {
+        return { 
+          status: 404, 
+          response: { message: 'Invalid or expired verification code.' } 
+        };
+      }
+    } catch (err) {
+      console.error('Error in resetPassword:', err);
+      return { 
+        status: 500, 
+        response: { message: 'Server error. Please try again later.' } 
+      };
+    }
+  }
+  
   public static authenticateToken(req: any, res: any, next: any) {
     const token = req.cookies.token
     if (token == null) {
