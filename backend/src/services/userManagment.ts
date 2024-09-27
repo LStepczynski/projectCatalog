@@ -27,12 +27,13 @@ interface UserObject {
   Password: string,
   Email: string,
   Admin: string,
-  Liked: string[],
   CanPost: string,
+  Verified: string,
+  LastPasswordChange: number;
+  Liked: string[],
   ProfilePic: string;
   ProfilePicChange: any,
   AccountCreated: number,
-  Verified: string,
 }
 
 export class UserManagment {
@@ -147,9 +148,9 @@ export class UserManagment {
    * @param {UserObject} user
    * @returns {string}
    */
-    public static getRefreshJWT(user: any) {
+  public static getRefreshJWT(user: any) {
       return jwt.sign(user, process.env.JWT_REFRESH_KEY || 'default', { expiresIn: '3d'});
-    }
+  }
 
   /**
    * Hashes a password and returns it
@@ -253,6 +254,7 @@ export class UserManagment {
       ProfilePicChange: 'null',
       AccountCreated: Helper.getUNIXTimestamp(),
       Verified: 'false',
+      LastPasswordChange: Helper.getUNIXTimestamp()
     };
   
     // Add the user object to the database
@@ -402,7 +404,8 @@ export class UserManagment {
       'CanPost',
       'Admin',
       'Liked',
-      'Verified'
+      'Verified',
+      'LastPasswordChange'
     ];
 
     // Check for dissallowed fields
@@ -676,8 +679,140 @@ export class UserManagment {
       return { status: 500, response: { message: 'server error' } };
     }
   }
-  
 
+  public static async sendPasswordResetEmail(username: string) {
+    const currentTime = Helper.getUNIXTimestamp()
+
+    // Get the user by username
+    const user = await this.getUser(username);
+    if (!user) {
+      return {
+        status: 404,
+        response: { message: 'user not found' },
+      };
+    }
+  
+    // Check if user is verified
+    if (user.Verified !== 'true') {
+      return {
+        status: 403,
+        response: { message: 'user is not verified' },
+      };
+    }
+
+    if (user.LastPasswordChange + 60*15 > currentTime) {
+      return {
+        status: 429,
+        response: { message: 'you have requested a password reset recently. Please try again later.' }
+      }
+    }
+  
+    // Generate a password reset token
+    const resetTokenValue = this.randomBytesHex(24);
+  
+    // Create a token object
+    const resetToken = {
+      username: username,
+      value: resetTokenValue,
+      type: 'password_reset',
+      expiration: currentTime + 6 * 3600, 
+    };
+  
+    // Store the token using the Tokens class
+    await Tokens.createToken(resetToken);
+  
+    // Send password reset email
+    Email.sendPasswordResetEmail(user.Email, username, resetTokenValue);
+
+    await this.updateUser(user.Username, 'LastPasswordChange', currentTime)
+  
+    user.LastPasswordChange = currentTime
+    delete user.iat
+    delete user.exp
+
+    const verificationToken = this.getAccessJWT(user)
+
+    return {
+      status: 200,
+      response: { 
+        message: 'password reset email sent.', 
+        accessToken: verificationToken, 
+        user: this.decodeJWT(verificationToken)
+      }
+    };
+  }
+  
+  public static async resetPassword(verificationCode: string) {
+    try {
+      // Retrieve the token using the Tokens class
+      const token = await Tokens.getToken(verificationCode);
+  
+      if (token && token.type === 'password_reset') {
+        const currentTimestamp = Helper.getUNIXTimestamp();
+  
+        // Check if the token has expired
+        if (token.expiration < currentTimestamp) {
+          // Token has expired, delete it
+          await Tokens.deleteToken(verificationCode);
+          return { 
+            status: 410, 
+            response: { message: 'Verification code has expired. Please request a new password reset.' } 
+          };
+        }
+  
+        const username = token.username;
+  
+        // Get the user associated with the token
+        const user = await this.getUser(username);
+  
+        if (user) {
+          // Generate a new password: username + 8 random characters
+          const newPassword = username + this.randomBytesHex(8);
+  
+          // Hash the new password
+          const hashedPassword = await this.genPassHash(newPassword);
+  
+          // Update the user's password
+          const updateRes = await this.updateUser(username, 'Password', hashedPassword);
+  
+          if (updateRes.status === 200) {
+            // Delete the token after successful password reset
+            await Tokens.deleteToken(verificationCode);
+  
+            // Send email to user with the new password
+            const emailSent = Email.sendNewPasswordEmail(user.Email, username, newPassword);
+            if (!emailSent) {
+              console.warn(`Failed to send new password email to ${user.Email}`);
+            }
+  
+            return { 
+              status: 200, 
+              response: { message: 'Password reset successful. Please check your email for the new password.' } 
+            };
+          } else {
+            throw new Error('Unable to update user password.');
+          }
+        } else {
+          return { 
+            status: 404, 
+            response: { message: 'User not found.' } 
+          };
+        }
+      } else {
+        return { 
+          status: 404, 
+          response: { message: 'Invalid or expired verification code.' } 
+        };
+      }
+    } catch (err) {
+      console.error('Error in resetPassword:', err);
+      return { 
+        status: 500, 
+        response: { message: 'Server error. Please try again later.' } 
+      };
+    }
+  }
+  
   public static authenticateToken(req: any, res: any, next: any) {
     const token = req.cookies.token
     if (token == null) {
