@@ -5,18 +5,55 @@ import { Box, Heading, Text, Button } from '@primer/react';
 import { getUser } from '@helper/helper';
 import { ProfilePicture } from '../components/contentDisplay/profilePicture';
 import { ProfileUploadModal } from '../components/contentDisplay/profileUploadModal';
+import { InformationPopup } from '../components/contentDisplay/informationPopup';
+
+import { fetchWrapper, capitalize } from '@helper/helper';
 
 import { useScreenWidth } from '../components/other/useScreenWidth';
 
 export const Account = () => {
   const [uploadModal, setUploadModal] = React.useState<any>(false);
   const [pfpHover, setpfpHover] = React.useState<any>(false);
+  const [open, setOpen] = React.useState(false);
+  const [popupText, setPopupText] = React.useState({
+    title: '',
+    description: '',
+  });
 
   const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
   const user = getUser();
 
   const screenWidth = useScreenWidth();
+
+  const handleResetPassword = async () => {
+    if (user?.Verified != 'true') return;
+    if (
+      !(
+        typeof user.LastPasswordChange == 'number' &&
+        user.LastPasswordChange + 15 * 60 < Math.floor(Date.now() / 1000)
+      )
+    ) {
+      setPopupText({
+        title: 'Password Reset',
+        description: capitalize(
+          'you have requested too many password resets. Please try later.'
+        ),
+      });
+      setOpen(true);
+      return;
+    }
+
+    const response = await fetchWrapper(`${backendUrl}/user/password-reset`, {
+      method: 'POST',
+    });
+
+    setPopupText({
+      title: 'Password Reset',
+      description: capitalize(response.response.message),
+    });
+    setOpen(true);
+  };
 
   const getContainerWidth = () => {
     if (screenWidth < 430) {
@@ -45,6 +82,12 @@ export const Account = () => {
         mt: '60px',
       }}
     >
+      <InformationPopup
+        isOpen={open}
+        closeFunc={() => setOpen(false)}
+        title={popupText.title}
+        description={popupText.description}
+      />
       <Box
         sx={{
           width: getContainerWidth(),
@@ -159,7 +202,7 @@ export const Account = () => {
               }}
             >
               <Button>Change Password</Button>
-              <Button>Reset Password</Button>
+              <Button onClick={handleResetPassword}>Reset Password</Button>
             </Box>
           </Box>
           <Box sx={{ display: 'grid', gap: 2 }}>
