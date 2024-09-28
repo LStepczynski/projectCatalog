@@ -2,7 +2,7 @@ import { Router } from 'express';
 
 import { UserManagment } from '../../services/userManagment';
 import { Articles } from ':api/services/articles';
-import { Helper } from ':api/services/helper';
+import { RateLimiting } from ':api/services/rateLimiting';
 import jwt from 'jsonwebtoken';
 
 import dotenv from 'dotenv';
@@ -14,7 +14,7 @@ const upload = multer({ storage: storage });
 
 const router = Router();
 
-router.post('/sign-up', async (req, res) => {
+router.post('/sign-up', RateLimiting.register, async (req, res) => {
   const username = req.body.username;
   const password = req.body.password;
   const email = req.body.email;
@@ -30,7 +30,7 @@ router.post('/sign-up', async (req, res) => {
   return res.status(response.status).send(response);
 });
 
-router.post('/sign-in', async (req, res) => {
+router.post('/sign-in', RateLimiting.login, async (req, res) => {
   const username = req.body.username;
   const password = req.body.password;
 
@@ -61,6 +61,7 @@ router.post('/sign-in', async (req, res) => {
 
 router.post(
   '/image',
+  RateLimiting.profileChange,
   UserManagment.authenticateToken,
   upload.single('image'),
   async (req: any, res: any) => {
@@ -101,7 +102,7 @@ router.post(
   }
 );
 
-router.get('/token-refresh', async (req: any, res: any) => {
+router.get('/token-refresh', RateLimiting.tokenRefresh, async (req: any, res: any) => {
   // Grab the refresh token and check if it exists
   const refreshToken = req.cookies.refresh
   
@@ -150,6 +151,7 @@ router.get('/token-refresh', async (req: any, res: any) => {
 
 router.post(
   '/like',
+  RateLimiting.like,
   UserManagment.authenticateToken,
   async (req: any, res: any) => {
     const articleId = req.body.articleId;
@@ -193,6 +195,7 @@ router.post(
 
 router.get(
   '/isLiked',
+  RateLimiting.generalAPI,
   UserManagment.authenticateToken,
   async (req: any, res: any) => {
     const articleId = req.query.articleId;
@@ -209,7 +212,7 @@ router.get(
   }
 );
 
-router.post('/password-reset', UserManagment.authenticateToken, async (req: any, res: any) => {
+router.post('/password-reset', RateLimiting.passwordReset, UserManagment.authenticateToken, async (req: any, res: any) => {
   const user = req.user
 
   const result = await UserManagment.sendPasswordResetEmail(user.Username)
@@ -227,7 +230,7 @@ router.post('/password-reset', UserManagment.authenticateToken, async (req: any,
   return res.status(result.status).send(result)
 })
 
-router.post('/forgot-password', async (req: any, res: any) => {
+router.post('/forgot-password', RateLimiting.forgotPassword, async (req: any, res: any) => {
   const username = req.body.username;
 
   // Call the sendPasswordResetEmail method
@@ -260,14 +263,14 @@ router.post('/forgot-password', async (req: any, res: any) => {
   return res.status(response.status).send(response);
 });
 
-router.post('/password-reset/:code', async (req: any, res: any) => {
+router.post('/password-reset/:code', RateLimiting.passwordReset, async (req: any, res: any) => {
   const code = req.params.code
 
   const result = await UserManagment.resetPassword(code)
   return res.status(result.status).send(result)
 })
 
-router.post('/email-verification/:code', async (req: any, res: any) => {
+router.post('/email-verification/:code', RateLimiting.emailVerification, async (req: any, res: any) => {
   const code = req.params.code
   
   const result = await UserManagment.verifyEmail(code)
