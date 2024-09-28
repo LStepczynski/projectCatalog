@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { Box, Heading, Text, Button } from '@primer/react';
+import { Box, Heading, Text, Button, TextInput } from '@primer/react';
 
 import { getUser } from '@helper/helper';
 import { ProfilePicture } from '../components/contentDisplay/profilePicture';
@@ -8,6 +8,7 @@ import { ProfileUploadModal } from '../components/contentDisplay/profileUploadMo
 import { InformationPopup } from '../components/contentDisplay/informationPopup';
 
 import { fetchWrapper, capitalize } from '@helper/helper';
+import { PortalWrapper } from '../components/core/portalWrapper';
 
 import { useScreenWidth } from '../components/other/useScreenWidth';
 
@@ -201,7 +202,7 @@ export const Account = () => {
                 backgroundColor: 'canvas.overlay',
               }}
             >
-              <Button>Change Password</Button>
+              <ChangePassword />
               <Button onClick={handleResetPassword}>Reset Password</Button>
             </Box>
           </Box>
@@ -240,5 +241,208 @@ export const Account = () => {
         </Box>
       </Box>
     </Box>
+  );
+};
+
+const ChangePassword = () => {
+  const [open, setOpen] = React.useState(false);
+  const [popupOpen, setPopupOpen] = React.useState(false);
+  const [oldPassword, setOldPassword] = React.useState('');
+  const [newPassword, setNewPassword] = React.useState('');
+  const [confirmNewPassword, setConfirmNewPassword] = React.useState('');
+  const [popupText, setPopupText] = React.useState({
+    title: '',
+    description: '',
+  });
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
+
+  const backendUrl = import.meta.env.VITE_BACKEND_URL;
+
+  const handleChangePassword = async () => {
+    // Input Validation
+    if (!oldPassword || !newPassword || !confirmNewPassword) {
+      setPopupText({
+        title: 'Error',
+        description: 'All fields are required.',
+      });
+      setPopupOpen(true);
+      return;
+    }
+
+    if (newPassword !== confirmNewPassword) {
+      setPopupText({
+        title: 'Error',
+        description: 'New password and confirmation do not match.',
+      });
+      setPopupOpen(true);
+      return;
+    }
+
+    if (newPassword.length < 8) {
+      setPopupText({
+        title: 'Error',
+        description: 'New password must be at least 8 characters long.',
+      });
+      setPopupOpen(true);
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const response = await fetchWrapper(
+        `${backendUrl}/user/change-password`,
+        {
+          method: 'POST',
+          body: JSON.stringify({
+            oldPassword,
+            newPassword,
+          }),
+        }
+      );
+
+      if (response.status === 200) {
+        setPopupText({
+          title: 'Success',
+          description: 'Your password has been changed successfully.',
+        });
+        // Optionally, you might want to reset the form fields
+        setOldPassword('');
+        setNewPassword('');
+        setConfirmNewPassword('');
+      } else {
+        // Handle different error messages based on response
+        setPopupText({
+          title: 'Error',
+          description: capitalize(response.response.message),
+        });
+      }
+    } catch (error) {
+      console.error('Error changing password:', error);
+      setPopupText({
+        title: 'Error',
+        description: 'An unexpected error occurred. Please try again later.',
+      });
+    } finally {
+      setIsSubmitting(false);
+      setPopupOpen(true);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await handleChangePassword();
+  };
+
+  return (
+    <>
+      <Button onClick={() => setOpen(true)}>Change Password</Button>
+      {open && (
+        <PortalWrapper>
+          <Box
+            sx={{
+              backgroundColor: 'rgba(0,0,0,0.5)',
+              justifyContent: 'center',
+              alignItems: 'center',
+              position: 'fixed',
+              display: 'flex',
+              height: '100vh',
+              width: '100vw',
+              zIndex: 1000,
+              left: 0,
+              top: 0,
+            }}
+          >
+            <Box
+              onClick={() => setOpen(false)}
+              sx={{
+                backgroundColor: 'rgba(0,0,0,0.5)',
+                position: 'fixed',
+                height: '100vh',
+                width: '100vw',
+                zIndex: -1,
+                left: 0,
+                top: 0,
+              }}
+            ></Box>
+            <Box
+              as="form"
+              onSubmit={handleSubmit}
+              sx={{
+                backgroundColor: 'canvas.default',
+                border: 'solid 1px',
+                borderColor: 'ansi.black',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'center',
+                borderRadius: '10px',
+                position: 'relative',
+                width: '330px',
+                px: 4,
+                gap: 2,
+                py: 3,
+              }}
+            >
+              <Text sx={{ fontSize: '22px', textAlign: 'center' }}>
+                Password Change
+              </Text>
+              <Box
+                sx={{
+                  width: '100%',
+                  height: '1px',
+                  backgroundColor: 'ansi.black',
+                  px: 3,
+                  my: 2,
+                }}
+              ></Box>
+              <Text>Old Password:</Text>
+              <TextInput
+                type="password"
+                value={oldPassword}
+                onChange={(e) => setOldPassword(e.target.value)}
+                required
+              />
+              <Text>New Password:</Text>
+              <TextInput
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                required
+              />
+              <Text>Confirm New Password:</Text>
+              <TextInput
+                type="password"
+                value={confirmNewPassword}
+                onChange={(e) => setConfirmNewPassword(e.target.value)}
+                required
+              />
+              <Box
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'center',
+                  mt: 4,
+                  mb: 2,
+                }}
+              >
+                <Button
+                  type="submit"
+                  sx={{ width: '30%' }}
+                  variant="danger"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? 'Changing...' : 'Change Password'}
+                </Button>
+              </Box>
+            </Box>
+          </Box>
+        </PortalWrapper>
+      )}
+      <InformationPopup
+        isOpen={popupOpen}
+        closeFunc={() => setPopupOpen(false)}
+        title={popupText.title}
+        description={popupText.description}
+      />
+    </>
   );
 };
