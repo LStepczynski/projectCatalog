@@ -212,6 +212,21 @@ router.get(
   }
 );
 
+router.post('/change-password', RateLimiting.passwordReset, UserManagment.authenticateToken, async (req: any, res: any) => {
+  const { oldPassword, newPassword } = req.body;
+  const username = req.user.Username
+
+  if ([username, oldPassword, newPassword].some((val) => val === undefined)) {
+    return res.status(400).send({
+      status: 400,
+      response: { message: 'Username, old password, or new password is missing.' },
+    });
+  }
+
+  const response = await UserManagment.changePassword(username, oldPassword, newPassword);
+  return res.status(response.status).send(response);
+});
+
 router.post('/password-reset', RateLimiting.passwordReset, UserManagment.authenticateToken, async (req: any, res: any) => {
   const user = req.user
 
