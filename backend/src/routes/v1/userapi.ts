@@ -46,15 +46,15 @@ router.post('/sign-in', RateLimiting.login, async (req, res) => {
   res.cookie('refresh', response.response.refreshToken, {
     httpOnly: true,
     secure: process.env.STATE === 'PRODUCTION',
-    maxAge: 3*24*60*60*1000
-  })
-  delete response.response.refreshToken
+    maxAge: 3 * 24 * 60 * 60 * 1000,
+  });
+  delete response.response.refreshToken;
   res.cookie('token', response.response.accessToken, {
     httpOnly: true,
     secure: process.env.STATE === 'PRODUCTION',
-    maxAge: 30*60*1000
-  })
-  delete response.response.accessToken
+    maxAge: 30 * 60 * 1000,
+  });
+  delete response.response.accessToken;
 
   return res.status(response.status).send(response);
 });
@@ -66,88 +66,95 @@ router.post(
   upload.single('image'),
   async (req: any, res: any) => {
     const Username = req.query.username;
-    
+
     if (!Username) {
       return res.status(400).send({
         status: 400,
         response: { message: 'missing username attribute' },
       });
     }
-    
+
     if (!UserManagment.checkUsername(Username, req.user)) {
       return res.status(400).send({
         status: 404,
         response: { message: 'permission denied' },
       });
     }
-    
+
     if (!req.file) {
       return res.status(400).send({
         status: 400,
         response: { message: 'missing image' },
       });
     }
-    
-    const response = await UserManagment.changeProfilePic(Username, req.file)
-    
+
+    const response = await UserManagment.changeProfilePic(Username, req.file);
+
     // Send the token as a cookie and return the user object
     res.cookie('token', response.response.accessToken, {
       httpOnly: true,
       secure: process.env.STATE === 'PRODUCTION',
-      maxAge: 30*60*1000
-    })
-    delete response.response.accessToken
+      maxAge: 30 * 60 * 1000,
+    });
+    delete response.response.accessToken;
 
     return res.status(response.status).send(response);
   }
 );
 
-router.get('/token-refresh', RateLimiting.tokenRefresh, async (req: any, res: any) => {
-  // Grab the refresh token and check if it exists
-  const refreshToken = req.cookies.refresh
-  
-  if (!refreshToken) {
-    return res.status(401).send({status: 401, response: { message: 'missing refresh token cookie' }})
-  }
-  
-  // Verify if the refresh token is valid
-  jwt.verify(
-    refreshToken,
-    process.env.JWT_REFRESH_KEY || 'default',
-    (err: any, user: any) => {
-      // Check for errors
-      if (err) {
-        if (err.name === 'TokenExpiredError') {
-          return res.status(401).send({
-            status: 401,
-            response: { message: 'token expired' },
-          });
-        }
-        return res.status(403).send({
-          status: 403,
-          response: { message: 'invalid token' },
-        });
-      }
+router.get(
+  '/token-refresh',
+  RateLimiting.tokenRefresh,
+  async (req: any, res: any) => {
+    // Grab the refresh token and check if it exists
+    const refreshToken = req.cookies.refresh;
 
-      // Create a new access token from the refresh token
-      delete user.exp
-      delete user.iat
-      const token = UserManagment.getAccessJWT(user)
-
-      // Return the cookie and the new user object
-      res.cookie('token', token, { 
-        httpOnly: true,
-        secure: process.env.STATE === 'PRODUCTION',
-        maxAge: 30*60*1000
-      })
-      
-      return res.status(200).send({
-        status: 200,
-        response: { user: UserManagment.decodeJWT(token) },
+    if (!refreshToken) {
+      return res.status(401).send({
+        status: 401,
+        response: { message: 'missing refresh token cookie' },
       });
     }
-  );
-})
+
+    // Verify if the refresh token is valid
+    jwt.verify(
+      refreshToken,
+      process.env.JWT_REFRESH_KEY || 'default',
+      (err: any, user: any) => {
+        // Check for errors
+        if (err) {
+          if (err.name === 'TokenExpiredError') {
+            return res.status(401).send({
+              status: 401,
+              response: { message: 'token expired' },
+            });
+          }
+          return res.status(403).send({
+            status: 403,
+            response: { message: 'invalid token' },
+          });
+        }
+
+        // Create a new access token from the refresh token
+        delete user.exp;
+        delete user.iat;
+        const token = UserManagment.getAccessJWT(user);
+
+        // Return the cookie and the new user object
+        res.cookie('token', token, {
+          httpOnly: true,
+          secure: process.env.STATE === 'PRODUCTION',
+          maxAge: 30 * 60 * 1000,
+        });
+
+        return res.status(200).send({
+          status: 200,
+          response: { user: UserManagment.decodeJWT(token) },
+        });
+      }
+    );
+  }
+);
 
 router.post(
   '/like',
@@ -156,16 +163,16 @@ router.post(
   async (req: any, res: any) => {
     const articleId = req.body.articleId;
     const user = req.user;
-    
+
     if (!articleId) {
       return res
-      .status(400)
-      .send({ status: 400, response: { message: 'articleId not provided' } });
+        .status(400)
+        .send({ status: 400, response: { message: 'articleId not provided' } });
     }
 
     const fullUserObject = (await UserManagment.getUser(user.Username)) || {};
     try {
-      // Checks if fullUserObject.Liked includes the article id 
+      // Checks if fullUserObject.Liked includes the article id
       if (fullUserObject.Liked.includes(articleId)) {
         // Remove the id and decrement rating
         fullUserObject.Liked = fullUserObject.Liked.filter(
@@ -180,10 +187,10 @@ router.post(
     } catch (err) {
       console.log(err);
       return res
-      .status(500)
-      .send({ status: 500, response: { message: 'server error' } });
+        .status(500)
+        .send({ status: 500, response: { message: 'server error' } });
     }
-    
+
     const response = await UserManagment.updateUser(
       user.Username,
       'Liked',
@@ -200,96 +207,163 @@ router.get(
   async (req: any, res: any) => {
     const articleId = req.query.articleId;
     const user = req.user;
-    
+
     if (!articleId) {
       return res
-      .status(400)
-      .send({ status: 400, response: { message: 'articleId not provided' } });
+        .status(400)
+        .send({ status: 400, response: { message: 'articleId not provided' } });
     }
-    
+
     const isLiked = await UserManagment.isLikedByUser(user.Username, articleId);
     return res.status(200).send({ status: 200, response: { result: isLiked } });
   }
 );
 
-router.post('/change-password', RateLimiting.passwordReset, UserManagment.authenticateToken, async (req: any, res: any) => {
-  const { oldPassword, newPassword } = req.body;
-  const username = req.user.Username
+router.post(
+  '/change-password',
+  RateLimiting.accountDataChange,
+  UserManagment.authenticateToken,
+  async (req: any, res: any) => {
+    const { oldPassword, newPassword } = req.body;
+    const username = req.user.Username;
 
-  if ([username, oldPassword, newPassword].some((val) => val === undefined)) {
-    return res.status(400).send({
-      status: 400,
-      response: { message: 'Username, old password, or new password is missing.' },
-    });
+    if ([username, oldPassword, newPassword].some((val) => val === undefined)) {
+      return res.status(400).send({
+        status: 400,
+        response: {
+          message: 'Username, old password, or new password is missing.',
+        },
+      });
+    }
+
+    const response = await UserManagment.changePassword(
+      username,
+      oldPassword,
+      newPassword
+    );
+    return res.status(response.status).send(response);
   }
+);
 
-  const response = await UserManagment.changePassword(username, oldPassword, newPassword);
+router.post(
+  '/password-reset',
+  RateLimiting.accountDataChange,
+  UserManagment.authenticateToken,
+  async (req: any, res: any) => {
+    const user = req.user;
+
+    const result = await UserManagment.sendPasswordResetEmail(user.Username);
+
+    if (result.response.accessToken) {
+      res.cookie('token', result.response.accessToken, {
+        httpOnly: true,
+        secure: process.env.STATE === 'PRODUCTION',
+        maxAge: 30 * 60 * 1000,
+      });
+    }
+
+    delete result.response.accessToken;
+
+    return res.status(result.status).send(result);
+  }
+);
+
+router.post(
+  '/forgot-password',
+  RateLimiting.forgotPassword,
+  async (req: any, res: any) => {
+    const username = req.body.username;
+
+    // Call the sendPasswordResetEmail method
+    const result = await UserManagment.sendPasswordResetEmail(username);
+
+    // Initialize the response object
+    let response = {
+      status: 0,
+      response: { message: '' },
+    };
+
+    // Handle different status codes using switch
+    switch (result.status) {
+      case 200:
+      case 403:
+      case 404:
+      case 429:
+        response.status = 200;
+        response.response.message =
+          'if the user is verified, a password reset email will be sent.';
+        break;
+
+      default:
+        // Handle unexpected errors
+        response.status = 500;
+        response.response.message = 'server error. Please try again later.';
+        break;
+    }
+
+    // Send the response with the appropriate status code
+    return res.status(response.status).send(response);
+  }
+);
+
+router.post(
+  '/change-email',
+  RateLimiting.accountDataChange,
+  UserManagment.authenticateToken,
+  async (req: any, res: any) => {
+    const { password, newEmail } = req.body;
+    const user = req.user;
+
+    if ([user.Username, password, newEmail].some((val) => val === undefined)) {
+      return res.status(400).send({
+        status: 400,
+        response: { message: 'Username, password, or new email is missing.' },
+      });
+    }
+
+    if (user.Verified != 'true') {
+      return res.status(403).send({
+        status: 403,
+        response: { message: "User's email is not verified." },
+      });
+    }
+
+    const response = await UserManagment.requestEmailChange(
+      user.Username,
+      password,
+      newEmail
+    );
+    return res.status(response.status).send(response);
+  }
+);
+
+router.post('/verify-email-change/:token', async (req: any, res: any) => {
+  const { token } = req.params;
+
+  const response = await UserManagment.verifyEmailChange(token);
   return res.status(response.status).send(response);
 });
 
-router.post('/password-reset', RateLimiting.passwordReset, UserManagment.authenticateToken, async (req: any, res: any) => {
-  const user = req.user
+router.post(
+  '/password-reset/:code',
+  RateLimiting.accountDataChange,
+  async (req: any, res: any) => {
+    const code = req.params.code;
 
-  const result = await UserManagment.sendPasswordResetEmail(user.Username)
-
-  if (result.response.accessToken) {
-    res.cookie('token', result.response.accessToken, {
-      httpOnly: true,
-      secure: process.env.STATE === 'PRODUCTION',
-      maxAge: 30*60*1000
-    })
+    const result = await UserManagment.resetPassword(code);
+    return res.status(result.status).send(result);
   }
-  
-  delete result.response.accessToken
+);
 
-  return res.status(result.status).send(result)
-})
+router.post(
+  '/email-verification/:code',
+  RateLimiting.accountDataChange,
+  async (req: any, res: any) => {
+    const code = req.params.code;
 
-router.post('/forgot-password', RateLimiting.forgotPassword, async (req: any, res: any) => {
-  const username = req.body.username;
-
-  // Call the sendPasswordResetEmail method
-  const result = await UserManagment.sendPasswordResetEmail(username);
-
-  // Initialize the response object
-  let response = {
-    status: 0,
-    response: { message: '' }
-  };
-
-  // Handle different status codes using switch
-  switch (result.status) {
-    case 200:
-    case 403:
-    case 404:
-    case 429:
-      response.status = 200;
-      response.response.message = 'if the user is verified, a password reset email will be sent.';
-      break;
-
-    default:
-      // Handle unexpected errors
-      response.status = 500;
-      response.response.message = 'server error. Please try again later.';
-      break;
+    const result = await UserManagment.verifyEmail(code);
+    return res.status(result.status).send(result);
   }
-
-  // Send the response with the appropriate status code
-  return res.status(response.status).send(response);
-});
-
-router.post('/password-reset/:code', RateLimiting.passwordReset, async (req: any, res: any) => {
-  const code = req.params.code
-
-  const result = await UserManagment.resetPassword(code)
-  return res.status(result.status).send(result)
-})
-
-router.post('/email-verification/:code', RateLimiting.emailVerification, async (req: any, res: any) => {
-  const code = req.params.code
-  
-  const result = await UserManagment.verifyEmail(code)
-  return res.status(result.status).send(result)
-})
+);
 
 export default router;

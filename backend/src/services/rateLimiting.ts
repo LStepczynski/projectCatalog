@@ -23,35 +23,26 @@ export class RateLimiting {
     max: 1, // Limit each IP to 1 requests per windowMs
     message: {
       status: 429,
-      response: { message: 'Too many password reset requests. Please try again later.' },
+      response: {
+        message: 'Too many password reset requests. Please try again later.',
+      },
     },
     standardHeaders: true,
     legacyHeaders: false,
   });
 
   /**
-   * Password reset rate limiter: 6 requests per 10 minutes per IP.
+   * Account data change rate limiter: 25 requests per 10 minutes per IP.
    */
-  public static passwordReset: RateLimitRequestHandler = rateLimit({
+  public static accountDataChange: RateLimitRequestHandler = rateLimit({
     windowMs: 10 * 60 * 1000, // 10 minutes
-    max: 6, // Limit each IP to 6 requests per windowMs
+    max: 25, // Limit each IP to 25 requests per windowMs
     message: {
       status: 429,
-      response: { message: 'Too many password reset requests. Please try again later.' },
-    },
-    standardHeaders: true,
-    legacyHeaders: false,
-  });
-
-  /**
-   * Email verification rate limiter: 10 requests per 5 minutes per IP.
-   */
-  public static emailVerification: RateLimitRequestHandler = rateLimit({
-    windowMs: 5 * 60 * 1000, // 5 minutes
-    max: 10, // Limit each IP to 10 requests per windowMs
-    message: {
-      status: 429,
-      response: { message: 'Too many email verification attempts. Please try again later.' },
+      response: {
+        message:
+          'Too many account modification requests. Please try again later.',
+      },
     },
     standardHeaders: true,
     legacyHeaders: false,
@@ -66,13 +57,15 @@ export class RateLimiting {
     max: 16, // Limit each IP to 16 requests per windowMs
     message: {
       status: 429,
-      response: { message: 'Too many article actions. Please try again later.' },
+      response: {
+        message: 'Too many article actions. Please try again later.',
+      },
     },
     standardHeaders: true,
     legacyHeaders: false,
   });
 
-    /**
+  /**
    * Article Creation/Edit rate limiter: 20 requests per 10 minutes per IP.
    * For hiding, publishing, and deleting articles.
    */
@@ -81,7 +74,9 @@ export class RateLimiting {
     max: 20, // Limit each IP to 20 requests per windowMs
     message: {
       status: 429,
-      response: { message: 'Too many article actions. Please try again later.' },
+      response: {
+        message: 'Too many article actions. Please try again later.',
+      },
     },
     standardHeaders: true,
     legacyHeaders: false,
@@ -109,7 +104,9 @@ export class RateLimiting {
     max: 3, // Limit each IP to 3 requests per windowMs
     message: {
       status: 429,
-      response: { message: 'Too many registration attempts. Please try again later.' },
+      response: {
+        message: 'Too many registration attempts. Please try again later.',
+      },
     },
     standardHeaders: true,
     legacyHeaders: false,
@@ -123,7 +120,10 @@ export class RateLimiting {
     max: 1, // Limit each IP to 1 request per windowMs
     message: {
       status: 429,
-      response: { message: 'Too many profile picture change attempts. Please try again later.' },
+      response: {
+        message:
+          'Too many profile picture change attempts. Please try again later.',
+      },
     },
     standardHeaders: true,
     legacyHeaders: false,
@@ -137,7 +137,9 @@ export class RateLimiting {
     max: 10, // Limit each IP to 10 requests per windowMs
     message: {
       status: 429,
-      response: { message: 'Too many token refresh attempts. Please try again later.' },
+      response: {
+        message: 'Too many token refresh attempts. Please try again later.',
+      },
     },
     standardHeaders: true,
     legacyHeaders: false,
@@ -151,7 +153,9 @@ export class RateLimiting {
     max: 40, // Limit each IP to 40 requests per windowMs
     message: {
       status: 429,
-      response: { message: 'Too many article like attempts. Please try again later.' },
+      response: {
+        message: 'Too many article like attempts. Please try again later.',
+      },
     },
     standardHeaders: true,
     legacyHeaders: false,

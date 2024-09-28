@@ -23,21 +23,22 @@ import { Tokens } from './tokens';
 dotenv.config();
 
 interface UserObject {
-  Username: string,
-  Password: string,
-  Email: string,
-  Admin: string,
-  CanPost: string,
-  Verified: string,
+  Username: string;
+  Password: string;
+  Email: string;
+  Admin: string;
+  CanPost: string;
+  Verified: string;
   LastPasswordChange: number;
-  Liked: string[],
+  LastEmailChange: number;
+  Liked: string[];
   ProfilePic: string;
-  ProfilePicChange: any,
-  AccountCreated: number,
+  ProfilePicChange: any;
+  AccountCreated: number;
 }
 
 export class UserManagment {
-  public static profilePicCooldown = 7 * 24 * 60 * 60 // 1 week
+  public static profilePicCooldown = 7 * 24 * 60 * 60; // 1 week
 
   /**
    * Checks if an email is valid using regex
@@ -54,19 +55,19 @@ export class UserManagment {
 
   public static randomBytesHex(length: number) {
     const buffer = new Uint8Array(length);
-  
+
     // Fill the buffer with random values
     for (let i = 0; i < length; i++) {
       buffer[i] = Math.floor(Math.random() * 256);
     }
-  
+
     // Convert buffer to a hexadecimal string
     const hexString = Array.from(buffer)
-      .map(byte => byte.toString(16).padStart(2, '0'))
+      .map((byte) => byte.toString(16).padStart(2, '0'))
       .join('');
-  
+
     return hexString;
-  } 
+  }
 
   /**
    * Checks if the username matches the one in the user object or if the user is an admin
@@ -121,10 +122,15 @@ export class UserManagment {
   public static decodeJWT(token: string) {
     const base64Url = token.split('.')[1]; // Get the payload part
     const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-    const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
-      return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-    }).join(''));
-  
+    const jsonPayload = decodeURIComponent(
+      atob(base64)
+        .split('')
+        .map(function (c) {
+          return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+        })
+        .join('')
+    );
+
     return JSON.parse(jsonPayload);
   }
 
@@ -137,7 +143,9 @@ export class UserManagment {
    * @returns {string}
    */
   public static getAccessJWT(user: any) {
-    return jwt.sign(user, process.env.JWT_KEY || 'default', { expiresIn: '30m'});
+    return jwt.sign(user, process.env.JWT_KEY || 'default', {
+      expiresIn: '30m',
+    });
   }
 
   /**
@@ -149,7 +157,9 @@ export class UserManagment {
    * @returns {string}
    */
   public static getRefreshJWT(user: any) {
-      return jwt.sign(user, process.env.JWT_REFRESH_KEY || 'default', { expiresIn: '3d'});
+    return jwt.sign(user, process.env.JWT_REFRESH_KEY || 'default', {
+      expiresIn: '3d',
+    });
   }
 
   /**
@@ -189,11 +199,14 @@ export class UserManagment {
    * @returns {boolean}
    */
   public static checkProfilePictureCooldown(timestamp: any) {
-    const currentTime = Helper.getUNIXTimestamp()
-    if (timestamp != 'null' && currentTime - timestamp < this.profilePicCooldown) {
-      return false
+    const currentTime = Helper.getUNIXTimestamp();
+    if (
+      timestamp != 'null' &&
+      currentTime - timestamp < this.profilePicCooldown
+    ) {
+      return false;
     }
-    return true
+    return true;
   }
 
   /**
@@ -223,24 +236,24 @@ export class UserManagment {
         response: { message: 'invalid email address' },
       };
     }
-  
+
     if (password.length < 8) {
       return {
         status: 400,
         response: { message: 'password must be at least 8 characters long' },
       };
     }
-  
+
     if ((await this.getUser(username)) != null) {
       return {
         status: 400,
         response: { message: 'username is already in use' },
       };
     }
-  
+
     // Hash the password
     password = await this.genPassHash(password);
-  
+
     // Create the user object without the VerificationCode
     const userObject: UserObject = {
       Username: username,
@@ -254,35 +267,36 @@ export class UserManagment {
       ProfilePicChange: 'null',
       AccountCreated: Helper.getUNIXTimestamp(),
       Verified: 'false',
-      LastPasswordChange: Helper.getUNIXTimestamp()
+      LastPasswordChange: Helper.getUNIXTimestamp(),
+      LastEmailChange: Helper.getUNIXTimestamp(),
     };
-  
+
     // Add the user object to the database
     const params: any = {
       TableName: 'Users',
       Item: marshall(userObject),
     };
-  
+
     try {
       await client.send(new PutItemCommand(params));
-  
+
       // Generate a verification code
       const verificationCode = this.randomBytesHex(24);
-  
+
       // Create a token object
       const token = {
         username: username,
         value: verificationCode,
         type: 'email_verification',
-        expiration: 0, 
+        expiration: 0,
       };
-  
+
       // Store the token using the Tokens class
       await Tokens.createToken(token);
-  
+
       // Send verification email
       Email.sendAccountVerificationEmail(email, username, verificationCode);
-  
+
       return {
         status: 200,
         response: { message: 'user created successfully' },
@@ -394,7 +408,7 @@ export class UserManagment {
   public static async updateUser(
     username: string,
     fieldName: string,
-    fieldValue: any 
+    fieldValue: any
   ) {
     const allowedFields = [
       'Email',
@@ -405,7 +419,8 @@ export class UserManagment {
       'Admin',
       'Liked',
       'Verified',
-      'LastPasswordChange'
+      'LastPasswordChange',
+      'LastEmailChange',
     ];
 
     // Check for dissallowed fields
@@ -476,7 +491,7 @@ export class UserManagment {
   }
 
   /**
-   * Authenticates the user with the username and password. Returns the user JWT object 
+   * Authenticates the user with the username and password. Returns the user JWT object
    * and the api response
    *
    * @public
@@ -507,15 +522,19 @@ export class UserManagment {
     // Delete the sensitive information from the user object before
     // turning it into a JWT
     delete user.Password;
-    delete user.Liked
-    delete user.VerificationCode
+    delete user.Liked;
+    delete user.VerificationCode;
 
     // Create the JWT and return it
     const token = this.getAccessJWT(user);
-    const refresh = this.getRefreshJWT(user)
+    const refresh = this.getRefreshJWT(user);
     return {
       status: 200,
-      response: { accessToken: token, refreshToken: refresh, user: this.decodeJWT(token) },
+      response: {
+        accessToken: token,
+        refreshToken: refresh,
+        user: this.decodeJWT(token),
+      },
     };
   }
 
@@ -557,7 +576,9 @@ export class UserManagment {
     if (newPassword.length < 8) {
       return {
         status: 400,
-        response: { message: 'New password must be at least 8 characters long.' },
+        response: {
+          message: 'New password must be at least 8 characters long.',
+        },
       };
     }
 
@@ -565,14 +586,22 @@ export class UserManagment {
     const hashedNewPassword = await this.genPassHash(newPassword);
 
     // Update the user's password in the database
-    const updateResponse = await this.updateUser(username, 'Password', hashedNewPassword);
+    const updateResponse = await this.updateUser(
+      username,
+      'Password',
+      hashedNewPassword
+    );
     if (updateResponse.status !== 200) {
       return updateResponse;
     }
 
     // Optionally, you might want to update the LastPasswordChange timestamp
     const currentTimestamp = Helper.getUNIXTimestamp();
-    const timestampUpdateResponse = await this.updateUser(username, 'LastPasswordChange', currentTimestamp);
+    const timestampUpdateResponse = await this.updateUser(
+      username,
+      'LastPasswordChange',
+      currentTimestamp
+    );
     if (timestampUpdateResponse.status !== 200) {
       return timestampUpdateResponse;
     }
@@ -594,25 +623,33 @@ export class UserManagment {
    * @returns {unknown} - api response
    */
   public static async changeProfilePic(username: string, file: any) {
-
-    // Fetch the user 
+    // Fetch the user
     let user = await UserManagment.getUser(username);
     if (!user) {
-      return { status: 404, response: { message: 'user not found' } }
+      return { status: 404, response: { message: 'user not found' } };
     }
 
     // Check if the cooldown for changing the profile picture has passed
-    const timestamp = Helper.getUNIXTimestamp()
+    const timestamp = Helper.getUNIXTimestamp();
     if (!this.checkProfilePictureCooldown(user.ProfilePicChange)) {
-      return {status: 403, response: { message: 'the user profile picture was changed in the last week'}}
+      return {
+        status: 403,
+        response: {
+          message: 'the user profile picture was changed in the last week',
+        },
+      };
     }
 
     // Edit the ProfilePicChange property of the user object
-    const userEditRes = await this.updateUser(user.Username, 'ProfilePicChange', timestamp)
+    const userEditRes = await this.updateUser(
+      user.Username,
+      'ProfilePicChange',
+      timestamp
+    );
     if (userEditRes.status != 200) {
-      return userEditRes
+      return userEditRes;
     }
-    user.ProfilePicChange = timestamp
+    user.ProfilePicChange = timestamp;
 
     // Get the old user profile picture and delete it
     const oldImageId = user.ProfilePic.match(
@@ -644,48 +681,54 @@ export class UserManagment {
     if (user.Admin || user.CanPost) {
       // A function to get all of the user's articles from a table
       const queryArticles = async (tableName: string) => {
-        const articleReq = await client.send(new QueryCommand({
-          TableName: tableName,
-          IndexName: 'AuthorDifficulty',
-          KeyConditionExpression: 'Author = :username',
-          ExpressionAttributeValues: {
-            ':username': { S: user.Username }
-          },
-          ProjectionExpression: 'ID'
-        }));
+        const articleReq = await client.send(
+          new QueryCommand({
+            TableName: tableName,
+            IndexName: 'AuthorDifficulty',
+            KeyConditionExpression: 'Author = :username',
+            ExpressionAttributeValues: {
+              ':username': { S: user.Username },
+            },
+            ProjectionExpression: 'ID',
+          })
+        );
         return articleReq.Items || [];
       };
-    
+
       // A function to update all the user articles from a table
       const updateArticles = async (tableName: string, articles: any) => {
-        return Promise.all(articles.map(async (item: any) => {
-          const id = item.ID?.S;
-          if (id) {
-            await client.send(new UpdateItemCommand({
-              TableName: tableName,
-              Key: { ID: { S: id } },
-              UpdateExpression: 'SET AuthorProfilePic = :newLink',
-              ExpressionAttributeValues: {
-                ':newLink': { S: user.ProfilePic }
-              }
-            }));
-          }
-        }));
+        return Promise.all(
+          articles.map(async (item: any) => {
+            const id = item.ID?.S;
+            if (id) {
+              await client.send(
+                new UpdateItemCommand({
+                  TableName: tableName,
+                  Key: { ID: { S: id } },
+                  UpdateExpression: 'SET AuthorProfilePic = :newLink',
+                  ExpressionAttributeValues: {
+                    ':newLink': { S: user.ProfilePic },
+                  },
+                })
+              );
+            }
+          })
+        );
       };
-    
+
       // Get user's articles
       const [privateArticles, publicArticles] = await Promise.all([
         queryArticles('ArticlesUnpublished'),
-        queryArticles('ArticlesPublished')
+        queryArticles('ArticlesPublished'),
       ]);
-    
+
       // Update user's articles
       await Promise.all([
         updateArticles('ArticlesUnpublished', privateArticles),
-        updateArticles('ArticlesPublished', publicArticles)
+        updateArticles('ArticlesPublished', publicArticles),
       ]);
     }
-    
+
     // Update the user's profile picture link
     const result = await UserManagment.updateUser(
       username,
@@ -698,45 +741,56 @@ export class UserManagment {
     const resultWithToken: any = result;
     delete user.Password;
     delete user.Liked;
-    delete user.VerificationCode
+    delete user.VerificationCode;
 
-    resultWithToken.response.verificationToken = UserManagment.getAccessJWT(user);
-    resultWithToken.response.user = user
-    return resultWithToken
+    resultWithToken.response.verificationToken =
+      UserManagment.getAccessJWT(user);
+    resultWithToken.response.user = user;
+    return resultWithToken;
   }
 
   public static async verifyEmail(verificationCode: string) {
     try {
       // Retrieve the token using the Tokens class
       const token = await Tokens.getToken(verificationCode);
-  
+
       if (token && token.type === 'email_verification') {
         const username = token.username;
-  
+
         // Get the user associated with the token
         const user = await this.getUser(username);
-  
+
         if (user) {
           if (user.Verified === 'false') {
             // Update the user's Verified status
-            const updateRes = await this.updateUser(username, 'Verified', 'true');
-  
+            const updateRes = await this.updateUser(
+              username,
+              'Verified',
+              'true'
+            );
+
             if (updateRes.status == 200) {
               // Delete the token after successful verification
               await Tokens.deleteToken(verificationCode);
-  
+
               return { status: 200, response: { message: 'email verified' } };
             } else {
               throw new Error('Unable to update user verification status');
             }
           } else {
-            return { status: 410, response: { message: 'account already verified' } };
+            return {
+              status: 410,
+              response: { message: 'account already verified' },
+            };
           }
         } else {
           return { status: 404, response: { message: 'user not found' } };
         }
       } else {
-        return { status: 404, response: { message: 'invalid or expired verification code' } };
+        return {
+          status: 404,
+          response: { message: 'invalid or expired verification code' },
+        };
       }
     } catch (err) {
       console.log(err);
@@ -744,8 +798,126 @@ export class UserManagment {
     }
   }
 
+  public static async verifyEmailChange(token: string) {
+    try {
+      // Retrieve the token using the Tokens class
+      const storedToken = await Tokens.getToken(token);
+
+      if (
+        !storedToken ||
+        storedToken.type !== 'email_change' ||
+        storedToken.expiration < Math.floor(Date.now() / 1000)
+      ) {
+        return {
+          status: 410,
+          response: {
+            message: 'Verification token is invalid or has expired.',
+          },
+        };
+      }
+
+      const username = storedToken.username;
+      const newEmail = storedToken.newEmail; // Extract the new email from the token
+
+      // Get the user associated with the token
+      const user = await this.getUser(username);
+
+      if (!user) {
+        return {
+          status: 404,
+          response: { message: 'User not found.' },
+        };
+      }
+
+      // Update the user's email in the database
+      const updateResponse = await this.updateUser(username, 'Email', newEmail);
+      if (updateResponse.status !== 200) {
+        return updateResponse;
+      }
+
+      // Delete the token after successful verification
+      await Tokens.deleteToken(token);
+
+      return {
+        status: 200,
+        response: { message: 'Email address successfully updated.' },
+      };
+    } catch (err) {
+      console.error('Error in verifyEmailChange:', err);
+      return {
+        status: 500,
+        response: { message: 'Server error. Please try again later.' },
+      };
+    }
+  }
+
+  public static async requestEmailChange(
+    username: string,
+    password: string,
+    newEmail: string
+  ) {
+    try {
+      const currentTime = Helper.getUNIXTimestamp();
+
+      const user = await this.getUser(username);
+      if (!user) {
+        return {
+          status: 404,
+          response: { message: 'User not found.' },
+        };
+      }
+
+      if (user.LastEmailChange + 3 * 60 * 15 > currentTime) {
+        return {
+          status: 429,
+          response: {
+            message:
+              'you have requested an email change recently. Please try again later.',
+          },
+        };
+      }
+
+      const isPasswordValid = await this.compareHash(password, user.Password);
+      if (!isPasswordValid) {
+        return {
+          status: 401,
+          response: { message: 'Invalid password.' },
+        };
+      }
+
+      const verificationTokenValue = this.randomBytesHex(24);
+      const token = {
+        username: username,
+        value: verificationTokenValue,
+        type: 'email_change',
+        newEmail: newEmail,
+        expiration: Math.floor(Date.now() / 1000) + 6 * 3600, // Token expires in 6 hours
+      };
+
+      await Tokens.createToken(token);
+      Email.sendEmailChangeVerificationEmail(
+        newEmail,
+        username,
+        verificationTokenValue
+      );
+
+      await this.updateUser(user.Username, 'LastEmailChange', currentTime);
+
+      return {
+        status: 200,
+        response: { message: 'Verification email sent to new email address.' },
+      };
+    } catch (err) {
+      console.error('Error in requestEmailChange:', err);
+      return {
+        status: 500,
+        response: { message: 'Server error. Please try again later.' },
+      };
+    }
+  }
+
   public static async sendPasswordResetEmail(username: string) {
-    const currentTime = Helper.getUNIXTimestamp()
+    const currentTime = Helper.getUNIXTimestamp();
 
     // Get the user by username
     const user = await this.getUser(username);
@@ -755,7 +927,7 @@ export class UserManagment {
         response: { message: 'user not found' },
       };
     }
-  
+
     // Check if user is verified
     if (user.Verified !== 'true') {
       return {
@@ -764,128 +936,147 @@ export class UserManagment {
       };
     }
 
-    if (user.LastPasswordChange + 60*15 > currentTime) {
+    if (user.LastPasswordChange + 60 * 15 > currentTime) {
       return {
         status: 429,
-        response: { message: 'you have requested a password reset recently. Please try again later.' }
-      }
+        response: {
+          message:
+            'you have requested a password reset recently. Please try again later.',
+        },
+      };
     }
-  
+
     // Generate a password reset token
     const resetTokenValue = this.randomBytesHex(24);
-  
+
     // Create a token object
     const resetToken = {
       username: username,
       value: resetTokenValue,
       type: 'password_reset',
-      expiration: currentTime + 6 * 3600, 
+      expiration: currentTime + 6 * 3600,
     };
-  
+
     // Store the token using the Tokens class
     await Tokens.createToken(resetToken);
-  
+
     // Send password reset email
     Email.sendPasswordResetEmail(user.Email, username, resetTokenValue);
 
-    await this.updateUser(user.Username, 'LastPasswordChange', currentTime)
-  
-    user.LastPasswordChange = currentTime
-    delete user.iat
-    delete user.exp
+    await this.updateUser(user.Username, 'LastPasswordChange', currentTime);
 
-    const verificationToken = this.getAccessJWT(user)
+    user.LastPasswordChange = currentTime;
+    delete user.iat;
+    delete user.exp;
+
+    const verificationToken = this.getAccessJWT(user);
 
     return {
       status: 200,
-      response: { 
-        message: 'password reset email sent.', 
-        accessToken: verificationToken, 
-        user: this.decodeJWT(verificationToken)
-      }
+      response: {
+        message: 'password reset email sent.',
+        accessToken: verificationToken,
+        user: this.decodeJWT(verificationToken),
+      },
     };
   }
-  
+
   public static async resetPassword(verificationCode: string) {
     try {
       // Retrieve the token using the Tokens class
       const token = await Tokens.getToken(verificationCode);
-  
+
       if (token && token.type === 'password_reset') {
         const currentTimestamp = Helper.getUNIXTimestamp();
-  
+
         // Check if the token has expired
         if (token.expiration < currentTimestamp) {
           // Token has expired, delete it
           await Tokens.deleteToken(verificationCode);
-          return { 
-            status: 410, 
-            response: { message: 'Verification code has expired. Please request a new password reset.' } 
+          return {
+            status: 410,
+            response: {
+              message:
+                'Verification code has expired. Please request a new password reset.',
+            },
           };
         }
-  
+
         const username = token.username;
-  
+
         // Get the user associated with the token
         const user = await this.getUser(username);
-  
+
         if (user) {
           // Generate a new password: username + 8 random characters
           const newPassword = username + this.randomBytesHex(8);
-  
+
           // Hash the new password
           const hashedPassword = await this.genPassHash(newPassword);
-  
+
           // Update the user's password
-          const updateRes = await this.updateUser(username, 'Password', hashedPassword);
-  
+          const updateRes = await this.updateUser(
+            username,
+            'Password',
+            hashedPassword
+          );
+
           if (updateRes.status === 200) {
             // Delete the token after successful password reset
             await Tokens.deleteToken(verificationCode);
-  
+
             // Send email to user with the new password
-            const emailSent = Email.sendNewPasswordEmail(user.Email, username, newPassword);
+            const emailSent = Email.sendNewPasswordEmail(
+              user.Email,
+              username,
+              newPassword
+            );
             if (!emailSent) {
-              console.warn(`Failed to send new password email to ${user.Email}`);
+              console.warn(
+                `Failed to send new password email to ${user.Email}`
+              );
             }
-  
-            return { 
-              status: 200, 
-              response: { message: 'Password reset successful. Please check your email for the new password.' } 
+
+            return {
+              status: 200,
+              response: {
+                message:
+                  'Password reset successful. Please check your email for the new password.',
+              },
             };
           } else {
             throw new Error('Unable to update user password.');
           }
         } else {
-          return { 
-            status: 404, 
-            response: { message: 'User not found.' } 
+          return {
+            status: 404,
+            response: { message: 'User not found.' },
           };
         }
       } else {
-        return { 
-          status: 404, 
-          response: { message: 'Invalid or expired verification code.' } 
+        return {
+          status: 404,
+          response: { message: 'Invalid or expired verification code.' },
         };
       }
     } catch (err) {
       console.error('Error in resetPassword:', err);
-      return { 
-        status: 500, 
-        response: { message: 'Server error. Please try again later.' } 
+      return {
+        status: 500,
+        response: { message: 'Server error. Please try again later.' },
       };
     }
   }
-  
+
   public static authenticateToken(req: any, res: any, next: any) {
-    const token = req.cookies.token
+    const token = req.cookies.token;
     if (token == null) {
       return res.status(400).send({
         status: 400,
         response: { message: 'missing authentication token' },
       });
     }
-    
+
     jwt.verify(
       token,
       process.env.JWT_KEY || 'default',
@@ -917,7 +1108,7 @@ export class UserManagment {
   }
 
   public static authTokenOptional(req: any, res: any, next: any) {
-    const token = req.cookies.token
+    const token = req.cookies.token;
     if (token == null) {
       req.user = {};
       next();
