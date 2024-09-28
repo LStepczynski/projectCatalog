@@ -11,6 +11,7 @@ import { MyArticles } from './pages/myArticles';
 import { AdminView } from './pages/adminView';
 import { EmailVerification } from './pages/emailVerification';
 import { PasswordReset } from './pages/passwordReset';
+import { VerifyEmailChange } from './pages/verifyEmailChange';
 
 export const Routes = () => {
   const router = createBrowserRouter([
@@ -37,6 +38,10 @@ export const Routes = () => {
     {
       path: '/create',
       element: <Create />,
+    },
+    {
+      path: '/verify-email-change/:code',
+      element: <VerifyEmailChange />,
     },
     {
       path: '/email-verification/:code',
