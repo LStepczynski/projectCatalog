@@ -217,7 +217,7 @@ export const Account = () => {
                 backgroundColor: 'canvas.overlay',
               }}
             >
-              <Button>Change Email</Button>
+              <EmailChange />
             </Box>
           </Box>
         </Box>
@@ -258,6 +258,8 @@ const ChangePassword = () => {
 
   const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
+  const user = getUser();
+
   const handleChangePassword = async () => {
     // Input Validation
     if (!oldPassword || !newPassword || !confirmNewPassword) {
@@ -282,6 +284,21 @@ const ChangePassword = () => {
       setPopupText({
         title: 'Error',
         description: 'New password must be at least 8 characters long.',
+      });
+      setPopupOpen(true);
+      return;
+    }
+
+    if (
+      !(
+        typeof user?.LastPasswordChange == 'number' &&
+        user.LastPasswordChange + 15 * 60 < Math.floor(Date.now() / 1000)
+      )
+    ) {
+      setPopupText({
+        title: 'Password Reset',
+        description:
+          'You have requested too many password changes. Please try later.',
       });
       setPopupOpen(true);
       return;
@@ -431,6 +448,208 @@ const ChangePassword = () => {
                   disabled={isSubmitting}
                 >
                   {isSubmitting ? 'Changing...' : 'Change Password'}
+                </Button>
+              </Box>
+            </Box>
+          </Box>
+        </PortalWrapper>
+      )}
+      <InformationPopup
+        isOpen={popupOpen}
+        closeFunc={() => setPopupOpen(false)}
+        title={popupText.title}
+        description={popupText.description}
+      />
+    </>
+  );
+};
+
+const EmailChange = () => {
+  const [open, setOpen] = React.useState(false);
+  const [popupOpen, setPopupOpen] = React.useState(false);
+  const [currentPassword, setCurrentPassword] = React.useState('');
+  const [newEmail, setNewEmail] = React.useState('');
+  const [popupText, setPopupText] = React.useState({
+    title: '',
+    description: '',
+  });
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
+
+  const backendUrl = import.meta.env.VITE_BACKEND_URL;
+
+  const user = getUser();
+
+  const handleChangeEmail = async () => {
+    // Input Validation
+    if (!currentPassword || !newEmail) {
+      setPopupText({
+        title: 'Error',
+        description: 'Current password and new email are required.',
+      });
+      setPopupOpen(true);
+      return;
+    }
+
+    // Simple email format validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(newEmail)) {
+      setPopupText({
+        title: 'Error',
+        description: 'Please enter a valid email address.',
+      });
+      setPopupOpen(true);
+      return;
+    }
+
+    if (
+      !(
+        typeof user?.LastEmailChange == 'number' &&
+        user.LastEmailChange + 3 * 60 * 60 < Math.floor(Date.now() / 1000)
+      )
+    ) {
+      setPopupText({
+        title: 'Password Reset',
+        description:
+          'You have requested too many email changes. Please try later.',
+      });
+      setPopupOpen(true);
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const response = await fetchWrapper(`${backendUrl}/user/change-email`, {
+        method: 'POST',
+        body: JSON.stringify({
+          password: currentPassword,
+          newEmail: newEmail,
+        }),
+      });
+
+      if (response.status === 200) {
+        setPopupText({
+          title: 'Success',
+          description: 'Verification email sent to your new email address.',
+        });
+        // Optionally, you might want to reset the form fields
+        setCurrentPassword('');
+        setNewEmail('');
+      } else {
+        // Handle different error messages based on response
+        setPopupText({
+          title: 'Error',
+          description: capitalize(response.response.message),
+        });
+      }
+    } catch (error) {
+      console.error('Error changing email:', error);
+      setPopupText({
+        title: 'Error',
+        description: 'An unexpected error occurred. Please try again later.',
+      });
+    } finally {
+      setIsSubmitting(false);
+      setPopupOpen(true);
+      setOpen(false);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await handleChangeEmail();
+  };
+
+  return (
+    <>
+      <Button onClick={() => setOpen(true)}>Change Email</Button>
+      {open && (
+        <PortalWrapper>
+          <Box
+            sx={{
+              backgroundColor: 'rgba(0,0,0,0.5)',
+              justifyContent: 'center',
+              alignItems: 'center',
+              position: 'fixed',
+              display: 'flex',
+              height: '100vh',
+              width: '100vw',
+              zIndex: 1000,
+              left: 0,
+              top: 0,
+            }}
+          >
+            <Box
+              onClick={() => setOpen(false)}
+              sx={{
+                backgroundColor: 'rgba(0,0,0,0.5)',
+                position: 'fixed',
+                height: '100vh',
+                width: '100vw',
+                zIndex: -1,
+                left: 0,
+                top: 0,
+              }}
+            ></Box>
+            <Box
+              as="form"
+              onSubmit={handleSubmit}
+              sx={{
+                backgroundColor: 'canvas.default',
+                border: 'solid 1px',
+                borderColor: 'ansi.black',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'center',
+                borderRadius: '10px',
+                position: 'relative',
+                width: '330px',
+                px: 4,
+                gap: 2,
+                py: 3,
+              }}
+            >
+              <Text sx={{ fontSize: '22px', textAlign: 'center' }}>
+                Change Email Address
+              </Text>
+              <Box
+                sx={{
+                  width: '100%',
+                  height: '1px',
+                  backgroundColor: 'ansi.black',
+                  px: 3,
+                  my: 2,
+                }}
+              ></Box>
+              <Text>Current Password:</Text>
+              <TextInput
+                type="password"
+                value={currentPassword}
+                onChange={(e) => setCurrentPassword(e.target.value)}
+                required
+              />
+              <Text>New Email Address:</Text>
+              <TextInput
+                type="email"
+                value={newEmail}
+                onChange={(e) => setNewEmail(e.target.value)}
+                required
+              />
+              <Box
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'center',
+                  mt: 4,
+                  mb: 2,
+                }}
+              >
+                <Button
+                  type="submit"
+                  sx={{ width: '30%' }}
+                  variant="danger"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? 'Sending...' : 'Change Email'}
                 </Button>
               </Box>
             </Box>
