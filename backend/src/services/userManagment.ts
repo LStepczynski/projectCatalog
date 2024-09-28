@@ -520,6 +520,70 @@ export class UserManagment {
   }
 
   /**
+   * Changes the user's password after verifying the old password.
+   *
+   * @public
+   * @static
+   * @async
+   * @param {string} username - The username of the user.
+   * @param {string} oldPassword - The current password of the user.
+   * @param {string} newPassword - The new password to be set.
+   * @returns {unknown} - API response indicating success or failure.
+   */
+  public static async changePassword(
+    username: string,
+    oldPassword: string,
+    newPassword: string
+  ) {
+    // Fetch the user object
+    const user = await this.getUser(username);
+    if (!user) {
+      return {
+        status: 404,
+        response: { message: 'User not found.' },
+      };
+    }
+
+    // Verify if the old password matches
+    const isPasswordValid = await this.compareHash(oldPassword, user.Password);
+    if (!isPasswordValid) {
+      return {
+        status: 401,
+        response: { message: 'The old password is invalid.' },
+      };
+    }
+
+    // Validate the new password length
+    if (newPassword.length < 8) {
+      return {
+        status: 400,
+        response: { message: 'New password must be at least 8 characters long.' },
+      };
+    }
+
+    // Hash the new password
+    const hashedNewPassword = await this.genPassHash(newPassword);
+
+    // Update the user's password in the database
+    const updateResponse = await this.updateUser(username, 'Password', hashedNewPassword);
+    if (updateResponse.status !== 200) {
+      return updateResponse;
+    }
+
+    // Optionally, you might want to update the LastPasswordChange timestamp
+    const currentTimestamp = Helper.getUNIXTimestamp();
+    const timestampUpdateResponse = await this.updateUser(username, 'LastPasswordChange', currentTimestamp);
+    if (timestampUpdateResponse.status !== 200) {
+      return timestampUpdateResponse;
+    }
+
+    return {
+      status: 200,
+      response: { message: 'Password changed successfully.' },
+    };
+  }
+
+  /**
    * Changes the user's profile picture
    *
    * @public
