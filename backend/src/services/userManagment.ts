@@ -867,7 +867,7 @@ export class UserManagment {
         };
       }
 
-      if (user.LastEmailChange + 3 * 60 * 15 > currentTime) {
+      if (user.LastEmailChange + 3 * 60 * 60 > currentTime) {
         return {
           status: 429,
           response: {
@@ -903,9 +903,16 @@ export class UserManagment {
 
       await this.updateUser(user.Username, 'LastEmailChange', currentTime);
 
+      user.LastPasswordChange = currentTime;
+
+      const verificationToken = this.getAccessJWT(user);
       return {
         status: 200,
-        response: { message: 'Verification email sent to new email address.' },
+        response: {
+          message: 'Verification email sent to new email address.',
+          accessToken: verificationToken,
+          user: this.decodeJWT(verificationToken),
+        },
       };
     } catch (err) {
       console.error('Error in requestEmailChange:', err);
@@ -966,8 +973,6 @@ export class UserManagment {
     await this.updateUser(user.Username, 'LastPasswordChange', currentTime);
 
     user.LastPasswordChange = currentTime;
-    delete user.iat;
-    delete user.exp;
 
     const verificationToken = this.getAccessJWT(user);
 

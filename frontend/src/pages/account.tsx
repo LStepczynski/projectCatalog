@@ -258,6 +258,8 @@ const ChangePassword = () => {
 
   const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
+  const user = getUser();
+
   const handleChangePassword = async () => {
     // Input Validation
     if (!oldPassword || !newPassword || !confirmNewPassword) {
@@ -282,6 +284,21 @@ const ChangePassword = () => {
       setPopupText({
         title: 'Error',
         description: 'New password must be at least 8 characters long.',
+      });
+      setPopupOpen(true);
+      return;
+    }
+
+    if (
+      !(
+        typeof user?.LastPasswordChange == 'number' &&
+        user.LastPasswordChange + 15 * 60 < Math.floor(Date.now() / 1000)
+      )
+    ) {
+      setPopupText({
+        title: 'Password Reset',
+        description:
+          'You have requested too many password changes. Please try later.',
       });
       setPopupOpen(true);
       return;
@@ -460,6 +477,8 @@ const EmailChange = () => {
 
   const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
+  const user = getUser();
+
   const handleChangeEmail = async () => {
     // Input Validation
     if (!currentPassword || !newEmail) {
@@ -477,6 +496,21 @@ const EmailChange = () => {
       setPopupText({
         title: 'Error',
         description: 'Please enter a valid email address.',
+      });
+      setPopupOpen(true);
+      return;
+    }
+
+    if (
+      !(
+        typeof user?.LastEmailChange == 'number' &&
+        user.LastEmailChange + 3 * 60 * 60 < Math.floor(Date.now() / 1000)
+      )
+    ) {
+      setPopupText({
+        title: 'Password Reset',
+        description:
+          'You have requested too many email changes. Please try later.',
       });
       setPopupOpen(true);
       return;
