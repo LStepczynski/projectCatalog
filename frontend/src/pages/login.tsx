@@ -56,7 +56,6 @@ export const Login = () => {
       method: 'POST',
       body: JSON.stringify(formData),
     }).then((data) => {
-      console.log(data);
       if (data.status != 200) {
         setErrorMessage(capitalize(data.response.message) + '.');
         return;

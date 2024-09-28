@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { Articles } from ':api/services/articles';
 import { S3 } from ':api/services/s3';
+import { RateLimiting } from ':api/services/rateLimiting';
 
 import dotenv from 'dotenv';
 
@@ -20,6 +21,7 @@ const router = Router();
 // All private
 router.get(
   '/private',
+  RateLimiting.generalAPI,
   UserManagment.authenticateToken,
   async (req: any, res: any) => {
     const sortBy = req.query.sortBy || 'highest';
@@ -59,6 +61,7 @@ router.get(
 // Delete
 router.delete(
   '/delete',
+  RateLimiting.articleEdit,
   UserManagment.authenticateToken,
   async (req: any, res: any) => {
     const articleId = req.query.id;
@@ -115,6 +118,7 @@ router.delete(
 // Publish
 router.post(
   '/publish',
+  RateLimiting.articleEdit,
   UserManagment.authenticateToken,
   async (req: any, res: any) => {
     const ID = req.query.id;
@@ -144,6 +148,7 @@ router.post(
 // Hide
 router.post(
   '/hide',
+  RateLimiting.articleEdit,
   UserManagment.authenticateToken,
   async (req: any, res: any) => {
     const ID = req.query.id;
@@ -183,6 +188,7 @@ router.post(
 // By id
 router.get(
   '/get',
+  RateLimiting.generalAPI,
   UserManagment.authTokenOptional,
   async (req: any, res: any) => {
     const articleId = req.query.id;
@@ -230,6 +236,7 @@ router.get(
 // By author
 router.get(
   '/author',
+  RateLimiting.generalAPI,
   UserManagment.authTokenOptional,
   async (req: any, res: any) => {
     const author = req.query.authorName;
@@ -299,6 +306,7 @@ router.get(
 // By title
 router.get(
   '/title',
+  RateLimiting.generalAPI,
   UserManagment.authTokenOptional,
   async (req: any, res: any) => {
     const title = req.query.title;
@@ -365,6 +373,7 @@ router.get(
 // By category
 router.get(
   '/:categoryName',
+  RateLimiting.generalAPI,
   UserManagment.authTokenOptional,
   async (req: any, res: any) => {
     const category = req.params.categoryName;
@@ -431,6 +440,7 @@ router.get(
 // By category/difficulty
 router.get(
   '/:category/:difficulty',
+  RateLimiting.generalAPI,
   UserManagment.authTokenOptional,
   async (req: any, res: any) => {
     const category = req.params.category;
@@ -472,6 +482,7 @@ router.get(
 // Post
 router.post(
   '/',
+  RateLimiting.articleCreationChange,
   UserManagment.authenticateToken,
   async (req: any, res: any) => {
     const body = req.body.body;
@@ -515,55 +526,60 @@ router.post(
 );
 
 // Edit
-router.put('/', UserManagment.authenticateToken, async (req: any, res: any) => {
-  const body = req.body.body;
-  const metadata = req.body.metadata;
-  const visibility = req.query.visibility || 'public';
-  const user = req.user;
+router.put(
+  '/', 
+  RateLimiting.articleCreationChange, 
+  UserManagment.authenticateToken, 
+  async (req: any, res: any) => {
+    const body = req.body.body;
+    const metadata = req.body.metadata;
+    const visibility = req.query.visibility || 'public';
+    const user = req.user;
 
-  // Validate the visibility parameter and choose a corresponding table
-  let tableName = Helper.visibilityToTable(visibility);
-  if (tableName == false) {
-    return res.status(400).send({
-      status: 400,
-      response: { message: 'invalid visibility parameter' },
-    });
-  }
+    // Validate the visibility parameter and choose a corresponding table
+    let tableName = Helper.visibilityToTable(visibility);
+    if (tableName == false) {
+      return res.status(400).send({
+        status: 400,
+        response: { message: 'invalid visibility parameter' },
+      });
+    }
 
-  // Check for the body and metadata parameters
-  if (body == undefined || metadata == undefined) {
-    res.status(400).send({
-      status: 400,
-      response: { message: 'invalid request - missing body or metadata' },
-    });
-    return;
-  }
+    // Check for the body and metadata parameters
+    if (body == undefined || metadata == undefined) {
+      res.status(400).send({
+        status: 400,
+        response: { message: 'invalid request - missing body or metadata' },
+      });
+      return;
+    }
 
-  // Fetch the article metadata
-  const articleRequest = await Articles.getArticleMetadata(
-    metadata.ID,
-    tableName
-  );
-  const article = articleRequest.response.return;
-  if (!article) {
-    return res.status(articleRequest.status).send(articleRequest);
-  }
+    // Fetch the article metadata
+    const articleRequest = await Articles.getArticleMetadata(
+      metadata.ID,
+      tableName
+    );
+    const article = articleRequest.response.return;
+    if (!article) {
+      return res.status(articleRequest.status).send(articleRequest);
+    }
 
-  // Check if the user has permission to edit
-  if (!UserManagment.checkUsername(article.Author, user)) {
-    return res.status(403).send({
-      status: 403,
-      response: { message: 'permission denied' },
-    });
-  }
+    // Check if the user has permission to edit
+    if (!UserManagment.checkUsername(article.Author, user)) {
+      return res.status(403).send({
+        status: 403,
+        response: { message: 'permission denied' },
+      });
+    }
 
-  // Fetch the result and return it
-  const result = await Articles.updateArticle(tableName, metadata, body);
-  return res.status(result.status).send(result);
+    // Fetch the result and return it
+    const result = await Articles.updateArticle(tableName, metadata, body);
+    return res.status(result.status).send(result);
 });
 
 router.patch(
   '/',
+  RateLimiting.articleCreationChange,
   UserManagment.authenticateToken,
   async (req: any, res: any) => {
     const key = req.body.key;
@@ -614,6 +630,7 @@ router.patch(
 // Image
 router.post(
   '/image',
+  RateLimiting.articleCreationChange,
   UserManagment.authenticateToken,
   upload.single('image'),
   async (req: any, res: any) => {
