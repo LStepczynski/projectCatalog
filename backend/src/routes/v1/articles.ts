@@ -22,7 +22,7 @@ const router = Router();
 router.get(
   '/private',
   RateLimiting.generalAPI,
-  UserManagment.authenticateToken,
+  UserManagment.authenticateToken(),
   async (req: any, res: any) => {
     const sortBy = req.query.sortBy || 'highest';
     const limit = Number(req.query.limit) || 10;
@@ -62,7 +62,7 @@ router.get(
 router.delete(
   '/delete',
   RateLimiting.articleEdit,
-  UserManagment.authenticateToken,
+  UserManagment.authenticateToken(),
   async (req: any, res: any) => {
     const articleId = req.query.id;
     const visibility = req.query.visibility || 'public';
@@ -119,7 +119,7 @@ router.delete(
 router.post(
   '/publish',
   RateLimiting.articleEdit,
-  UserManagment.authenticateToken,
+  UserManagment.authenticateToken(),
   async (req: any, res: any) => {
     const ID = req.query.id;
     const user = req.user;
@@ -149,7 +149,7 @@ router.post(
 router.post(
   '/hide',
   RateLimiting.articleEdit,
-  UserManagment.authenticateToken,
+  UserManagment.authenticateToken(),
   async (req: any, res: any) => {
     const ID = req.query.id;
     const user = req.user;
@@ -483,7 +483,7 @@ router.get(
 router.post(
   '/',
   RateLimiting.articleCreationChange,
-  UserManagment.authenticateToken,
+  UserManagment.authenticateToken(),
   async (req: any, res: any) => {
     const body = req.body.body;
     const metadata = req.body.metadata;
@@ -529,7 +529,7 @@ router.post(
 router.put(
   '/',
   RateLimiting.articleCreationChange,
-  UserManagment.authenticateToken,
+  UserManagment.authenticateToken(),
   async (req: any, res: any) => {
     const body = req.body.body;
     const metadata = req.body.metadata;
@@ -581,7 +581,7 @@ router.put(
 router.patch(
   '/',
   RateLimiting.articleCreationChange,
-  UserManagment.authenticateToken,
+  UserManagment.authenticateToken(),
   async (req: any, res: any) => {
     const key = req.body.key;
     const value = req.body.value;
@@ -632,7 +632,7 @@ router.patch(
 router.post(
   '/image',
   RateLimiting.articleCreationChange,
-  UserManagment.authenticateToken,
+  UserManagment.authenticateToken(),
   upload.single('image'),
   async (req: any, res: any) => {
     const ID = req.query.id;
