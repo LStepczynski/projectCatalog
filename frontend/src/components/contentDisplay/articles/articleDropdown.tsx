@@ -126,6 +126,39 @@ export const ArticleDropdown = ({ setHovering, article, visibility }: any) => {
     window.location.href = `/create?id=${article.ID}`;
   };
 
+  const dropdownItems = [
+    {
+      show: verified && articleOwner,
+      onSelect: handleDelete,
+      text: 'Delete',
+      icon: <TrashIcon size={20} />,
+    },
+    {
+      show: verified && user?.Admin && visibility == 'private',
+      onSelect: handlePublish,
+      text: 'Publish',
+      icon: <CheckIcon size={20} />,
+    },
+    {
+      show: article.Author == user?.Username && visibility == 'private',
+      onSelect: handleEdit,
+      text: 'Edit',
+      icon: <PencilIcon size={20} />,
+    },
+    {
+      show: verified && articleOwner && visibility == 'public',
+      onSelect: handleUnpublish,
+      text: 'Unpublish',
+      icon: <RepoDeletedIcon size={20} />,
+    },
+  ];
+
+  const counter = (acc: number, current: any) => {
+    if (current.show) acc += 1;
+    return acc;
+  };
+  if (dropdownItems.reduce(counter, 0) == 0) return null;
+
   return (
     <Box sx={{ position: 'relative' }}>
       <Box
@@ -156,7 +189,7 @@ export const ArticleDropdown = ({ setHovering, article, visibility }: any) => {
           </PortalWrapper>
           <Box
             sx={{
-              transform: 'translateX(-40%)',
+              transform: 'translateX(-70%)',
               backgroundColor: 'canvas.default',
               border: '1px solid',
               borderColor: 'ansi.black',
@@ -167,43 +200,23 @@ export const ArticleDropdown = ({ setHovering, article, visibility }: any) => {
             }}
           >
             <ActionList>
-              {verified && articleOwner && (
-                <ActionList.Item onSelect={handleDelete} sx={actionListStyle}>
-                  Delete
-                  <ActionList.LeadingVisual>
-                    <TrashIcon size={20} />
-                  </ActionList.LeadingVisual>
-                </ActionList.Item>
-              )}
-              {verified && user?.Admin && visibility == 'private' && (
-                <ActionList.Item onSelect={handlePublish} sx={actionListStyle}>
-                  Publish
-                  <ActionList.LeadingVisual>
-                    <CheckIcon size={20} />
-                  </ActionList.LeadingVisual>
-                </ActionList.Item>
-              )}
-              {verified &&
-                article.Author == user?.Username &&
-                visibility == 'private' && (
-                  <ActionList.Item onSelect={handleEdit} sx={actionListStyle}>
-                    Edit
-                    <ActionList.LeadingVisual>
-                      <PencilIcon size={20} />
-                    </ActionList.LeadingVisual>
-                  </ActionList.Item>
-                )}
-              {verified && articleOwner && visibility == 'public' && (
-                <ActionList.Item
-                  onSelect={handleUnpublish}
-                  sx={actionListStyle}
-                >
-                  Unpublish
-                  <ActionList.LeadingVisual>
-                    <RepoDeletedIcon size={20} />
-                  </ActionList.LeadingVisual>
-                </ActionList.Item>
-              )}
+              {dropdownItems.map((item, index) => {
+                if (item.show) {
+                  return (
+                    <ActionList.Item
+                      key={index}
+                      onSelect={item.onSelect}
+                      sx={actionListStyle}
+                    >
+                      {item.text}
+                      <ActionList.LeadingVisual>
+                        {item.icon}
+                      </ActionList.LeadingVisual>
+                    </ActionList.Item>
+                  );
+                }
+                return null;
+              })}
             </ActionList>
             <ConfirmationPopup
               title={popupDetails.title}
