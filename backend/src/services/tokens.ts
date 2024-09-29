@@ -5,6 +5,8 @@ import {
   UpdateItemCommand,
   DeleteItemCommand, // Import DeleteItemCommand
   AttributeValue,
+  BatchWriteItemCommand,
+  QueryCommand,
 } from '@aws-sdk/client-dynamodb';
 import { client } from './dynamodb'; // Import the DynamoDB client from a separate module
 
@@ -156,6 +158,87 @@ export class Tokens {
       return token;
     } catch (error: any) {
       throw new Error(`Failed to retrieve token: ${error.message}`);
+    }
+  }
+
+  /**
+   * Deletes all tokens associated with a specific username.
+   * @param username - The username whose tokens should be deleted.
+   * @returns A promise that resolves to true if deletion is successful, false otherwise.
+   */
+  public static async deleteUserTokens(username: string): Promise<boolean> {
+    if (!username || typeof username !== 'string') {
+      console.error('Invalid username provided');
+      return false;
+    }
+
+    // Step 1: Query all tokens for the given username using the GSI
+    const queryParams = {
+      TableName: this.tableName,
+      IndexName: 'UsernameIndex', // GSI to query by username
+      KeyConditionExpression: 'Username = :username',
+      ExpressionAttributeValues: {
+        ':username': { S: username },
+      },
+      ProjectionExpression: '#V', // Use alias for 'Value'
+      ExpressionAttributeNames: {
+        '#V': 'Value', // Alias '#V' maps to 'Value'
+      },
+    };
+
+    try {
+      const queryCommand = new QueryCommand(queryParams);
+      const queryResponse = await this.client.send(queryCommand);
+
+      const items = queryResponse.Items;
+
+      if (!items || items.length === 0) {
+        // No tokens to delete
+        console.log(`No tokens found for username: ${username}`);
+        return true;
+      }
+
+      // Step 2: Prepare batch delete operations using only the partition key 'Value'
+      const deleteRequests = items.map((item) => ({
+        DeleteRequest: {
+          Key: {
+            Value: { S: item['Value'].S }, // Use only 'Value' since it's the partition key
+          },
+        },
+      }));
+
+      // DynamoDB BatchWrite can handle up to 25 items per request
+      const BATCH_SIZE = 25;
+      for (let i = 0; i < deleteRequests.length; i += BATCH_SIZE) {
+        const batch = deleteRequests.slice(i, i + BATCH_SIZE);
+        const batchParams: any = {
+          RequestItems: {
+            [this.tableName]: batch,
+          },
+        };
+
+        const batchCommand = new BatchWriteItemCommand(batchParams);
+        const batchResponse = await this.client.send(batchCommand);
+
+        // Handle UnprocessedItems if any
+        if (
+          batchResponse.UnprocessedItems &&
+          Object.keys(batchResponse.UnprocessedItems).length > 0
+        ) {
+          console.warn(
+            'Some items were not processed in this batch:',
+            batchResponse.UnprocessedItems
+          );
+          // You might want to implement retry logic here
+          return false;
+        }
+      }
+
+      console.log(`Successfully deleted all tokens for username: ${username}`);
+      return true;
+    } catch (error) {
+      console.error('Error deleting user tokens:', error);
+      return false;
     }
   }
 

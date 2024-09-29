@@ -340,7 +340,7 @@ router.post(
 router.post(
   '/remove-account',
   RateLimiting.accountDataChange,
-  UserManagment.authenticateToken,
+  UserManagment.authenticateToken(false),
   async (req: any, res: any) => {
     const { password } = req.body;
     const user = req.user;
