@@ -4,7 +4,8 @@ import { Box, Heading, Text, Button, TextInput } from '@primer/react';
 
 import { ProfilePicture } from '../components/contentDisplay/profilePicture';
 import { ProfileUploadModal } from '../components/contentDisplay/profileUploadModal';
-import { InformationPopup } from '../components/contentDisplay/informationPopup';
+import { ShowInformationPopup } from '../components/contentDisplay/informationPopup';
+import { ShowConfirmationPopup } from '../components/contentDisplay/confirmationPopup';
 
 import { fetchWrapper, capitalize, getUser, logOut } from '@helper/helper';
 import { PortalWrapper } from '../components/core/portalWrapper';
@@ -14,11 +15,6 @@ import { useScreenWidth } from '../components/other/useScreenWidth';
 export const Account = () => {
   const [uploadModal, setUploadModal] = React.useState<any>(false);
   const [pfpHover, setpfpHover] = React.useState<any>(false);
-  const [open, setOpen] = React.useState(false);
-  const [popupText, setPopupText] = React.useState({
-    title: '',
-    description: '',
-  });
 
   const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
@@ -34,13 +30,10 @@ export const Account = () => {
         user.LastPasswordChange + 15 * 60 < Math.floor(Date.now() / 1000)
       )
     ) {
-      setPopupText({
-        title: 'Password Reset',
-        description: capitalize(
-          'you have requested too many password resets. Please try later.'
-        ),
-      });
-      setOpen(true);
+      ShowInformationPopup(
+        'Password Reset',
+        'You have requested too many password resets. Please try later.'
+      );
       return;
     }
 
@@ -48,11 +41,10 @@ export const Account = () => {
       method: 'POST',
     });
 
-    setPopupText({
-      title: 'Password Reset',
-      description: capitalize(response.response.message),
-    });
-    setOpen(true);
+    ShowInformationPopup(
+      'Password Reset',
+      capitalize(response.response.message)
+    );
   };
 
   const getContainerWidth = () => {
@@ -82,12 +74,6 @@ export const Account = () => {
         mt: '60px',
       }}
     >
-      <InformationPopup
-        isOpen={open}
-        closeFunc={() => setOpen(false)}
-        title={popupText.title}
-        description={popupText.description}
-      />
       <Box
         sx={{
           width: getContainerWidth(),
@@ -202,7 +188,18 @@ export const Account = () => {
               }}
             >
               <ChangePassword />
-              <Button onClick={handleResetPassword}>Reset Password</Button>
+              <Button
+                onClick={() => {
+                  ShowConfirmationPopup(
+                    'Password Reset',
+                    'Do you want to reset your password?',
+                    () => {},
+                    handleResetPassword
+                  );
+                }}
+              >
+                Reset Password
+              </Button>
             </Box>
           </Box>
           <Box sx={{ display: 'grid', gap: 2 }}>
@@ -244,12 +241,7 @@ export const Account = () => {
 const RemoveAccount = () => {
   // State variables
   const [open, setOpen] = React.useState(false); // Controls the visibility of the modal
-  const [popupOpen, setPopupOpen] = React.useState(false); // Controls the visibility of the information popup
   const [password, setPassword] = React.useState(''); // Stores the password input
-  const [popupText, setPopupText] = React.useState({
-    title: '',
-    description: '',
-  }); // Stores the popup message
   const [isSubmitting, setIsSubmitting] = React.useState(false); // Indicates if the request is being submitted
 
   // Backend URL from environment variables
@@ -261,11 +253,10 @@ const RemoveAccount = () => {
   const handleDeleteAccount = async () => {
     // Input Validation
     if (!password) {
-      setPopupText({
-        title: 'Error',
-        description: 'Password is required to delete your account.',
-      });
-      setPopupOpen(true);
+      ShowInformationPopup(
+        'Error',
+        'Password is required to delete your account.'
+      );
       return;
     }
 
@@ -279,9 +270,10 @@ const RemoveAccount = () => {
 
     setIsSubmitting(true);
 
+    let response;
     try {
       // Send POST request to delete the account
-      const response = await fetchWrapper(`${backendUrl}/user/remove-account`, {
+      response = await fetchWrapper(`${backendUrl}/user/remove-account`, {
         method: 'POST',
         body: JSON.stringify({
           password,
@@ -289,31 +281,26 @@ const RemoveAccount = () => {
       });
 
       if (response.status === 200) {
-        setPopupText({
-          title: 'Success',
-          description: 'Your account has been successfully deleted.',
-        });
+        ShowInformationPopup(
+          'Success',
+          'Your account has been successfully deleted.'
+        );
         logOut();
       } else {
         // Handle different error messages based on response
-        setPopupText({
-          title: 'Error',
-          description: capitalize(response.response.message),
-        });
+        ShowInformationPopup('Error', capitalize(response.response.message));
       }
     } catch (error) {
       console.error('Error deleting account:', error);
-      setPopupText({
-        title: 'Error',
-        description: 'An unexpected error occurred. Please try again later.',
-      });
+      ShowInformationPopup(
+        'Error',
+        'An unexpected error occurred. Please try again later.'
+      );
     } finally {
       setIsSubmitting(false);
-      setPopupOpen(true);
-      // Optionally, close the modal if the operation was successful
-      if (popupText.title === 'Success') {
+
+      if (response.status === 200) {
         setOpen(false);
-        // Additional cleanup or redirection can be done here
       }
     }
   };
@@ -433,28 +420,15 @@ const RemoveAccount = () => {
           </Box>
         </PortalWrapper>
       )}
-
-      {/* Information Popup */}
-      <InformationPopup
-        isOpen={popupOpen}
-        closeFunc={() => setPopupOpen(false)}
-        title={popupText.title}
-        description={popupText.description}
-      />
     </>
   );
 };
 
 const ChangePassword = () => {
   const [open, setOpen] = React.useState(false);
-  const [popupOpen, setPopupOpen] = React.useState(false);
   const [oldPassword, setOldPassword] = React.useState('');
   const [newPassword, setNewPassword] = React.useState('');
   const [confirmNewPassword, setConfirmNewPassword] = React.useState('');
-  const [popupText, setPopupText] = React.useState({
-    title: '',
-    description: '',
-  });
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
   const backendUrl = import.meta.env.VITE_BACKEND_URL;
@@ -464,29 +438,23 @@ const ChangePassword = () => {
   const handleChangePassword = async () => {
     // Input Validation
     if (!oldPassword || !newPassword || !confirmNewPassword) {
-      setPopupText({
-        title: 'Error',
-        description: 'All fields are required.',
-      });
-      setPopupOpen(true);
+      ShowInformationPopup('Error', 'All fields are required.');
       return;
     }
 
     if (newPassword !== confirmNewPassword) {
-      setPopupText({
-        title: 'Error',
-        description: 'New password and confirmation do not match.',
-      });
-      setPopupOpen(true);
+      ShowInformationPopup(
+        'Error',
+        'New password and confirmation do not match.'
+      );
       return;
     }
 
     if (newPassword.length < 8) {
-      setPopupText({
-        title: 'Error',
-        description: 'New password must be at least 8 characters long.',
-      });
-      setPopupOpen(true);
+      ShowInformationPopup(
+        'Error',
+        'New password must be at least 8 characters long.'
+      );
       return;
     }
 
@@ -496,54 +464,49 @@ const ChangePassword = () => {
         user.LastPasswordChange + 15 * 60 < Math.floor(Date.now() / 1000)
       )
     ) {
-      setPopupText({
-        title: 'Password Reset',
-        description:
-          'You have requested too many password changes. Please try later.',
-      });
-      setPopupOpen(true);
+      ShowInformationPopup(
+        'Password Reset',
+        'You have requested too many password changes. Please try later.'
+      );
       return;
     }
 
     setIsSubmitting(true);
 
+    let response;
     try {
-      const response = await fetchWrapper(
-        `${backendUrl}/user/change-password`,
-        {
-          method: 'POST',
-          body: JSON.stringify({
-            oldPassword,
-            newPassword,
-          }),
-        }
-      );
+      response = await fetchWrapper(`${backendUrl}/user/change-password`, {
+        method: 'POST',
+        body: JSON.stringify({
+          oldPassword,
+          newPassword,
+        }),
+      });
 
       if (response.status === 200) {
-        setPopupText({
-          title: 'Success',
-          description: 'Your password has been changed successfully.',
-        });
+        ShowInformationPopup(
+          'Success',
+          'Your password has been changed successfully.'
+        );
         // Optionally, you might want to reset the form fields
         setOldPassword('');
         setNewPassword('');
         setConfirmNewPassword('');
       } else {
         // Handle different error messages based on response
-        setPopupText({
-          title: 'Error',
-          description: capitalize(response.response.message),
-        });
+        ShowInformationPopup('Error', capitalize(response.response.message));
       }
     } catch (error) {
       console.error('Error changing password:', error);
-      setPopupText({
-        title: 'Error',
-        description: 'An unexpected error occurred. Please try again later.',
-      });
+      ShowInformationPopup(
+        'Error',
+        'An unexpected error occurred. Please try again later.'
+      );
     } finally {
       setIsSubmitting(false);
-      setPopupOpen(true);
+      if (response.status === 200) {
+        setOpen(false);
+      }
     }
   };
 
@@ -655,25 +618,14 @@ const ChangePassword = () => {
           </Box>
         </PortalWrapper>
       )}
-      <InformationPopup
-        isOpen={popupOpen}
-        closeFunc={() => setPopupOpen(false)}
-        title={popupText.title}
-        description={popupText.description}
-      />
     </>
   );
 };
 
 const EmailChange = () => {
   const [open, setOpen] = React.useState(false);
-  const [popupOpen, setPopupOpen] = React.useState(false);
   const [currentPassword, setCurrentPassword] = React.useState('');
   const [newEmail, setNewEmail] = React.useState('');
-  const [popupText, setPopupText] = React.useState({
-    title: '',
-    description: '',
-  });
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
   const backendUrl = import.meta.env.VITE_BACKEND_URL;
@@ -683,22 +635,17 @@ const EmailChange = () => {
   const handleChangeEmail = async () => {
     // Input Validation
     if (!currentPassword || !newEmail) {
-      setPopupText({
-        title: 'Error',
-        description: 'Current password and new email are required.',
-      });
-      setPopupOpen(true);
+      ShowInformationPopup(
+        'Error',
+        'Current password and new email are required.'
+      );
       return;
     }
 
     // Simple email format validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(newEmail)) {
-      setPopupText({
-        title: 'Error',
-        description: 'Please enter a valid email address.',
-      });
-      setPopupOpen(true);
+      ShowInformationPopup('Error', 'Please enter a valid email address.');
       return;
     }
 
@@ -708,19 +655,18 @@ const EmailChange = () => {
         user.LastEmailChange + 3 * 60 * 60 < Math.floor(Date.now() / 1000)
       )
     ) {
-      setPopupText({
-        title: 'Password Reset',
-        description:
-          'You have requested too many email changes. Please try later.',
-      });
-      setPopupOpen(true);
+      ShowInformationPopup(
+        'Password Reset',
+        'You have requested too many email changes. Please try later.'
+      );
       return;
     }
 
     setIsSubmitting(true);
 
+    let response;
     try {
-      const response = await fetchWrapper(`${backendUrl}/user/change-email`, {
+      response = await fetchWrapper(`${backendUrl}/user/change-email`, {
         method: 'POST',
         body: JSON.stringify({
           password: currentPassword,
@@ -729,30 +675,28 @@ const EmailChange = () => {
       });
 
       if (response.status === 200) {
-        setPopupText({
-          title: 'Success',
-          description: 'Verification email sent to your new email address.',
-        });
+        ShowInformationPopup(
+          'Success',
+          'Verification email sent to your new email address.'
+        );
         // Optionally, you might want to reset the form fields
         setCurrentPassword('');
         setNewEmail('');
       } else {
         // Handle different error messages based on response
-        setPopupText({
-          title: 'Error',
-          description: capitalize(response.response.message),
-        });
+        ShowInformationPopup('Error', capitalize(response.response.message));
       }
     } catch (error) {
       console.error('Error changing email:', error);
-      setPopupText({
-        title: 'Error',
-        description: 'An unexpected error occurred. Please try again later.',
-      });
+      ShowInformationPopup(
+        'Error',
+        'An unexpected error occurred. Please try again later.'
+      );
     } finally {
       setIsSubmitting(false);
-      setPopupOpen(true);
-      setOpen(false);
+      if (response.status === 200) {
+        setOpen(false);
+      }
     }
   };
 
@@ -857,12 +801,6 @@ const EmailChange = () => {
           </Box>
         </PortalWrapper>
       )}
-      <InformationPopup
-        isOpen={popupOpen}
-        closeFunc={() => setPopupOpen(false)}
-        title={popupText.title}
-        description={popupText.description}
-      />
     </>
   );
 };

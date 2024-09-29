@@ -9,18 +9,12 @@ import {
   PencilIcon,
 } from '@primer/octicons-react';
 import { PortalWrapper } from '../../core/portalWrapper';
-import { ConfirmationPopup } from '../confirmationPopup';
+import { ShowConfirmationPopup } from '../confirmationPopup';
 
 import { getUser, fetchWrapper } from '@helper/helper';
 
 export const ArticleDropdown = ({ setHovering, article, visibility }: any) => {
   const [dropdownState, setDropdownState] = React.useState(false);
-  const [popupState, setPopupState] = React.useState(false);
-  const [popupDetails, setPopupDetails] = React.useState<any>({
-    title: '',
-    description: '',
-    onAccept: null,
-  });
 
   const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
@@ -56,13 +50,12 @@ export const ArticleDropdown = ({ setHovering, article, visibility }: any) => {
         alert('There was a problem while trying to delete the article');
       }
     };
-    setPopupDetails({
-      title: 'Delete Article',
-      description:
-        'Are you sure you want to delete this article? This action cannot be reversed.',
-      onAccept: deleteArticle,
-    });
-    setPopupState(true);
+    ShowConfirmationPopup(
+      'Delete Article',
+      'Are you sure you want to delete this article? This action cannot be reversed.',
+      () => {},
+      deleteArticle
+    );
   };
 
   const handlePublish = () => {
@@ -85,12 +78,12 @@ export const ArticleDropdown = ({ setHovering, article, visibility }: any) => {
         alert('There was a problem while trying to publish the article');
       }
     };
-    setPopupDetails({
-      title: 'Publish Article',
-      description: 'Are you sure you want to publish this article?',
-      onAccept: publishArticle,
-    });
-    setPopupState(true);
+    ShowConfirmationPopup(
+      'Publish Article',
+      'Are you sure you want to publish this article?',
+      () => {},
+      publishArticle
+    );
   };
 
   const handleUnpublish = () => {
@@ -113,13 +106,12 @@ export const ArticleDropdown = ({ setHovering, article, visibility }: any) => {
         alert('There was a problem while trying to unpublish the article');
       }
     };
-    setPopupDetails({
-      title: 'Unpublish Article',
-      description:
-        'Are you sure you want to unpublish this article? You will loose all of your likes.',
-      onAccept: unpublishArticle,
-    });
-    setPopupState(true);
+    ShowConfirmationPopup(
+      'Unpublish Article',
+      'Are you sure you want to unpublish this article? You will lose all of your likes.',
+      () => {},
+      unpublishArticle
+    );
   };
 
   const handleEdit = () => {
@@ -218,15 +210,6 @@ export const ArticleDropdown = ({ setHovering, article, visibility }: any) => {
                 return null;
               })}
             </ActionList>
-            <ConfirmationPopup
-              title={popupDetails.title}
-              description={popupDetails.description}
-              onAccept={popupDetails.onAccept}
-              onDecline={() => {
-                setPopupState(false);
-              }}
-              isOpen={popupState}
-            />
           </Box>
         </>
       )}
