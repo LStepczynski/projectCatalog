@@ -16,6 +16,7 @@ import dotenv from 'dotenv';
 import { S3 } from './s3';
 import { v4 as uuidv4 } from 'uuid';
 import { Email } from './Email';
+import { Articles } from './articles';
 
 import { client } from './dynamodb';
 import { Tokens } from './tokens';
@@ -35,6 +36,13 @@ interface UserObject {
   ProfilePic: string;
   ProfilePicChange: any;
   AccountCreated: number;
+}
+
+interface ApiResponse {
+  status: number;
+  response: {
+    [key: string]: any;
+  };
 }
 
 export class UserManagment {
@@ -1069,6 +1077,79 @@ export class UserManagment {
       return {
         status: 500,
         response: { message: 'Server error. Please try again later.' },
+      };
+    }
+  }
+
+  /**
+   * Deletes a user account by first authenticating the user,
+   * then removing all their articles, and finally deleting the user from the database.
+   *
+   * @public
+   * @static
+   * @async
+   * @param {string} username - The username of the account to delete.
+   * @param {string} password - The password of the user for authentication.
+   * @returns {Promise<ApiResponse>} - API response indicating success or failure.
+   */
+  public static async deleteUserAccount(
+    username: string,
+    password: string
+  ): Promise<ApiResponse> {
+    try {
+      // Step 1: Authenticate the user
+      const user = await this.getUser(username);
+      if (!user) {
+        return {
+          status: 404,
+          response: { message: 'user not found.' },
+        };
+      }
+
+      const verified = await this.compareHash(password, user.Password);
+
+      if (!verified) {
+        return {
+          status: 403,
+          response: { message: 'invalid password.' },
+        };
+      }
+
+      // Step 2: Remove all user content
+      const id = user.ProfilePic.match(/images\/([^\/]+)\./)[1];
+      console.log(id);
+      if (id != 'pfp') {
+        const removeProfilePicRes = await S3.removeImageFromS3(id);
+
+        if (!removeProfilePicRes) {
+          return {
+            status: 500,
+            response: { message: 'server error' },
+          };
+        }
+      }
+
+      const removeArticlesResponse = await Articles.removeAllArticlesByUser(
+        username
+      );
+
+      if (removeArticlesResponse.status !== 200) {
+        // Failed to delete articles; return the error response
+        return removeArticlesResponse;
+      }
+
+      // Step 3: Delete the user account from the database
+      const deleteUserResponse = await this.deleteUser(username);
+
+      // Optionally, you can add additional steps here, such as logging the deletion or sending a confirmation email.
+
+      // Return the response from deleting the user
+      return deleteUserResponse;
+    } catch (error: any) {
+      console.error('Error deleting user account:', error);
+      return {
+        status: 500,
+        response: { message: 'Server error while deleting user account.' },
       };
     }
   }

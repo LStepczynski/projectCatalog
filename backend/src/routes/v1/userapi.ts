@@ -337,6 +337,22 @@ router.post(
   }
 );
 
+router.post(
+  '/remove-account',
+  RateLimiting.accountDataChange,
+  UserManagment.authenticateToken,
+  async (req: any, res: any) => {
+    const { password } = req.body;
+    const user = req.user;
+
+    const response = await UserManagment.deleteUserAccount(
+      user.Username,
+      password
+    );
+    return res.status(response.status).send(response);
+  }
+);
+
 router.post('/verify-email-change/:token', async (req: any, res: any) => {
   const { token } = req.params;
 

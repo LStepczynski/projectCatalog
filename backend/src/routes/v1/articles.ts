@@ -211,7 +211,7 @@ router.get(
         tableName
       );
       const metadata = metadataResult.response.return;
-      
+
       // If the article is private check for permissions
       if (
         visibility == 'private' &&
@@ -255,7 +255,7 @@ router.get(
           response: { message: 'permission denied' },
         });
       }
-      searchBy = 'date'
+      searchBy = 'date';
     }
 
     // Validate the visibility parameter and choose a corresponding table
@@ -527,9 +527,9 @@ router.post(
 
 // Edit
 router.put(
-  '/', 
-  RateLimiting.articleCreationChange, 
-  UserManagment.authenticateToken, 
+  '/',
+  RateLimiting.articleCreationChange,
+  UserManagment.authenticateToken,
   async (req: any, res: any) => {
     const body = req.body.body;
     const metadata = req.body.metadata;
@@ -575,7 +575,8 @@ router.put(
     // Fetch the result and return it
     const result = await Articles.updateArticle(tableName, metadata, body);
     return res.status(result.status).send(result);
-});
+  }
+);
 
 router.patch(
   '/',
@@ -656,13 +657,18 @@ router.post(
     }
 
     // Fetch the article metadata from the database
-    const metadataResp = await Articles.getArticleMetadata(ID, 'ArticlesUnpublished');
+    const metadataResp = await Articles.getArticleMetadata(
+      ID,
+      'ArticlesUnpublished'
+    );
     if (metadataResp.status != 200) {
       return res.status(metadataResp.status).send(metadataResp);
     }
 
     // Check if the user has permission to add the image
-    if (!UserManagment.checkUsername(metadataResp.response.return.Author, user)) {
+    if (
+      !UserManagment.checkUsername(metadataResp.response.return.Author, user)
+    ) {
       return res.status(403).send({
         status: 403,
         response: { message: 'invalid permisions' },
@@ -674,9 +680,12 @@ router.post(
     if (bodyResp.status != 200) {
       return res.status(bodyResp.status).send(bodyResp);
     }
- 
+
     // Combine the metadata from the database with the body from the S3 into a new object
-    const article = {body: bodyResp.response.return.body, metadata: metadataResp.response.return};
+    const article = {
+      body: bodyResp.response.return.body,
+      metadata: metadataResp.response.return,
+    };
 
     const imageId = uuidv4();
 
