@@ -2,12 +2,11 @@ import React from 'react';
 
 import { Box, Heading, Text, Button, TextInput } from '@primer/react';
 
-import { getUser } from '@helper/helper';
 import { ProfilePicture } from '../components/contentDisplay/profilePicture';
 import { ProfileUploadModal } from '../components/contentDisplay/profileUploadModal';
 import { InformationPopup } from '../components/contentDisplay/informationPopup';
 
-import { fetchWrapper, capitalize } from '@helper/helper';
+import { fetchWrapper, capitalize, getUser, logOut } from '@helper/helper';
 import { PortalWrapper } from '../components/core/portalWrapper';
 
 import { useScreenWidth } from '../components/other/useScreenWidth';
@@ -235,12 +234,214 @@ export const Account = () => {
             display: 'flex',
           }}
         >
-          <Button variant="danger" sx={{ fontSize: '16px', p: 3 }}>
-            Delete Account
-          </Button>
+          <RemoveAccount />
         </Box>
       </Box>
     </Box>
+  );
+};
+
+const RemoveAccount = () => {
+  // State variables
+  const [open, setOpen] = React.useState(false); // Controls the visibility of the modal
+  const [popupOpen, setPopupOpen] = React.useState(false); // Controls the visibility of the information popup
+  const [password, setPassword] = React.useState(''); // Stores the password input
+  const [popupText, setPopupText] = React.useState({
+    title: '',
+    description: '',
+  }); // Stores the popup message
+  const [isSubmitting, setIsSubmitting] = React.useState(false); // Indicates if the request is being submitted
+
+  // Backend URL from environment variables
+  const backendUrl = import.meta.env.VITE_BACKEND_URL;
+
+  /**
+   * Handles the account deletion process.
+   */
+  const handleDeleteAccount = async () => {
+    // Input Validation
+    if (!password) {
+      setPopupText({
+        title: 'Error',
+        description: 'Password is required to delete your account.',
+      });
+      setPopupOpen(true);
+      return;
+    }
+
+    // Optional: Add a confirmation step to prevent accidental deletions
+    const confirmDeletion = window.confirm(
+      'Are you sure you want to delete your account? This action cannot be undone.'
+    );
+    if (!confirmDeletion) {
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      // Send POST request to delete the account
+      const response = await fetchWrapper(`${backendUrl}/user/remove-account`, {
+        method: 'POST',
+        body: JSON.stringify({
+          password,
+        }),
+      });
+
+      if (response.status === 200) {
+        setPopupText({
+          title: 'Success',
+          description: 'Your account has been successfully deleted.',
+        });
+        logOut();
+      } else {
+        // Handle different error messages based on response
+        setPopupText({
+          title: 'Error',
+          description: capitalize(response.response.message),
+        });
+      }
+    } catch (error) {
+      console.error('Error deleting account:', error);
+      setPopupText({
+        title: 'Error',
+        description: 'An unexpected error occurred. Please try again later.',
+      });
+    } finally {
+      setIsSubmitting(false);
+      setPopupOpen(true);
+      // Optionally, close the modal if the operation was successful
+      if (popupText.title === 'Success') {
+        setOpen(false);
+        // Additional cleanup or redirection can be done here
+      }
+    }
+  };
+
+  /**
+   * Handles the form submission.
+   * @param {React.FormEvent} e - The form event.
+   */
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await handleDeleteAccount();
+  };
+
+  return (
+    <>
+      {/* Delete Account Button */}
+      <Button
+        variant="danger"
+        sx={{ fontSize: '16px', p: 3 }}
+        onClick={() => setOpen(true)}
+      >
+        Delete Account
+      </Button>
+
+      {/* Modal for Account Deletion */}
+      {open && (
+        <PortalWrapper>
+          <Box
+            sx={{
+              backgroundColor: 'rgba(0,0,0,0.5)',
+              justifyContent: 'center',
+              alignItems: 'center',
+              position: 'fixed',
+              display: 'flex',
+              height: '100vh',
+              width: '100vw',
+              zIndex: 1000,
+              left: 0,
+              top: 0,
+            }}
+          >
+            {/* Overlay to close the modal when clicked outside */}
+            <Box
+              onClick={() => setOpen(false)}
+              sx={{
+                backgroundColor: 'rgba(0,0,0,0.5)',
+                position: 'fixed',
+                height: '100vh',
+                width: '100vw',
+                zIndex: -1,
+                left: 0,
+                top: 0,
+              }}
+            ></Box>
+
+            {/* Modal Content */}
+            <Box
+              as="form"
+              onSubmit={handleSubmit}
+              sx={{
+                backgroundColor: 'canvas.default',
+                border: 'solid 1px',
+                borderColor: 'ansi.black',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'center',
+                borderRadius: '10px',
+                position: 'relative',
+                width: '330px',
+                px: 4,
+                gap: 2,
+                py: 3,
+              }}
+            >
+              <Text sx={{ fontSize: '22px', textAlign: 'center' }}>
+                Delete Account
+              </Text>
+              <Box
+                sx={{
+                  width: '100%',
+                  height: '1px',
+                  backgroundColor: 'ansi.black',
+                  px: 3,
+                  my: 2,
+                }}
+              ></Box>
+
+              {/* Password Input */}
+              <Text>Confirm Password:</Text>
+              <TextInput
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                placeholder="Enter your password"
+              />
+
+              {/* Submit Button */}
+              <Box
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'center',
+                  mt: 4,
+                  mb: 2,
+                }}
+              >
+                <Button
+                  type="submit"
+                  sx={{ width: '40%' }}
+                  variant="danger"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? 'Deleting...' : 'Delete Account'}
+                </Button>
+              </Box>
+            </Box>
+          </Box>
+        </PortalWrapper>
+      )}
+
+      {/* Information Popup */}
+      <InformationPopup
+        isOpen={popupOpen}
+        closeFunc={() => setPopupOpen(false)}
+        title={popupText.title}
+        description={popupText.description}
+      />
+    </>
   );
 };
 
