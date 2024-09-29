@@ -313,6 +313,43 @@ const CategorySelection = (props: FormProps) => {
     'exploration',
     'challenge',
     'hands on',
+    'brainstorming',
+    'problem-solving',
+    'iteration',
+    'conceptualization',
+    'imagination',
+    'construction',
+    'modeling',
+    'improvement',
+    'collaboration',
+    'curiosity',
+    'ideation',
+    'solution-driven',
+    'blueprinting',
+    'fabrication',
+    'customization',
+    'learning by doing',
+    'engineering',
+    'testing',
+    'creativity boost',
+    'innovation lab',
+    'craftsmanship',
+    'handcrafted',
+    'skill development',
+    'curiosity-driven',
+    'articulation',
+    'prototype testing',
+    'knowledge expansion',
+    'digital fabrication',
+    'adaptation',
+    'resourcefulness',
+    'open-ended projects',
+    'technical skills',
+    'exploratory learning',
+    'hands-on practice',
+    'skill mastery',
+    'manual work',
+    'analytical thinking',
   ];
 
   return (
@@ -353,7 +390,7 @@ const CategorySelection = (props: FormProps) => {
         maxSelected={3}
         items={items}
         open={open}
-        label=""
+        label="Pick Three Tags"
       />
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
         <Text sx={{ opacity: 0.6, fontSize: '14px' }}>Difficulty:</Text>

@@ -116,11 +116,39 @@ export const MultipleChoice = (props: Props) => {
           <Box
             sx={{
               display: 'flex',
+              justifyContent: 'space-between',
+              mt: 2,
+              mr: 3,
+              ml: 2,
+              mb: 3,
+            }}
+          >
+            <Text sx={{ fontFamily: 'inter tight', fontWeight: '600' }}>
+              {label}
+            </Text>
+            <Text
+              onClick={() => {
+                setOpen(false);
+              }}
+              sx={{
+                backgroundColor: '#eb2c1e',
+                pl: '10px',
+                pr: '11px',
+                pb: '4px',
+                borderRadius: '8px',
+                cursor: 'pointer',
+              }}
+            >
+              x
+            </Text>
+          </Box>
+          <Box
+            sx={{
+              display: 'flex',
               flexDirection: 'column',
               my: 2,
             }}
           >
-            <Text>{label}</Text>
             <TextInput trailingVisual={SearchIcon} onChange={onChange} />
           </Box>
           <div
