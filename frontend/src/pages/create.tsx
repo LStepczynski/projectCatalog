@@ -11,8 +11,11 @@ import {
 import React from 'react';
 import { useSearchParams } from 'react-router-dom';
 
+import { ShowConfirmationPopup } from '../components/contentDisplay/confirmationPopup';
+import { ShowInformationPopup } from '../components/contentDisplay/informationPopup';
+
 import { AnimatedImage } from '../components/animation/animatedImage';
-import { getUser, fetchWrapper } from '@helper/helper';
+import { getUser, fetchWrapper, capitalize } from '@helper/helper';
 import { BannerUploadModal } from '../components/contentDisplay/bannerUploadModal';
 import { useScreenWidth } from '../components/other/useScreenWidth';
 import { MultipleChoice } from '../components/core/multipleChoice';
@@ -51,7 +54,7 @@ export const Create = () => {
       `${backendUrl}/articles/get?id=${articleId}&visibility=private`,
       { signal },
       true,
-      60
+      60 * 10
     ).then((data) => {
       const article = data.response.return;
       setFormData({
@@ -434,12 +437,18 @@ const ArticleSubmit = (props: SubmitProps) => {
   const handleSubmit = async (status: string) => {
     for (const field of Object.keys(formData)) {
       if (field != 'S3Link' && formData[field].trim() == '') {
-        alert('Please fill out all of the fields in order to save');
+        ShowInformationPopup(
+          'Error',
+          'Please fill out all of the fields in order to save.'
+        );
         return;
       }
     }
     if (tags.length == 0) {
-      alert('Please fill out all of the fields in order to save');
+      ShowInformationPopup(
+        'Error',
+        'Please fill out all of the fields in order to save.'
+      );
       return;
     }
 
@@ -466,29 +475,56 @@ const ArticleSubmit = (props: SubmitProps) => {
         }
       );
 
+      if (articleData.status != 200)
+        throw new Error(articleData.response.message);
+
+      sessionStorage.removeItem(
+        `${backendUrl}/articles/get?id=${existingId}&visibility=private`
+      );
+
       sessionStorage.removeItem(
         `${backendUrl}/articles/author?authorName=${user.Username}&visibility=private`
       );
 
       if (bannerFile[0] == null) {
-        window.location.href = '/myArticles/1';
+        ShowInformationPopup(
+          'Success',
+          `Your article has been ${
+            status == 'private' ? 'saved' : 'submited for review'
+          }.`,
+          () => {
+            window.location.href = '/myArticles/1';
+          }
+        );
         return;
       }
       // Submit image data
       const imageData = new FormData();
       imageData.append('image', bannerFile[0]);
       const articleId = articleData.response.id;
-      await fetchWrapper(
+
+      const bannerData = await fetchWrapper(
         `${backendUrl}/articles/image?id=${articleId}&visibility=private`,
         {
           method: 'POST',
           body: imageData,
         }
       );
-    } catch (error) {
-      return alert('An error occurred. Please try again later.');
+
+      if (bannerData.status != 200)
+        throw new Error(bannerData.response.message);
+    } catch (error: any) {
+      return ShowInformationPopup('Error', capitalize(error.message));
     }
-    window.location.href = '/myArticles/1';
+    ShowInformationPopup(
+      'Success',
+      `Your article has been ${
+        status == 'private' ? 'saved' : 'submited for review'
+      }.`,
+      () => {
+        window.location.href = '/myArticles/1';
+      }
+    );
   };
 
   return (
@@ -510,7 +546,14 @@ const ArticleSubmit = (props: SubmitProps) => {
         </Button>
         <Button
           onClick={() => {
-            handleSubmit('review');
+            ShowConfirmationPopup(
+              'Publish Article?',
+              'Your article will have to be revised and approved before being published.',
+              () => {},
+              () => {
+                handleSubmit('review');
+              }
+            );
           }}
           sx={{ fontSize: '18px', p: 3, width: '100px' }}
         >

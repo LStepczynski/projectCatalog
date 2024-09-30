@@ -49,12 +49,12 @@ export class RateLimiting {
   });
 
   /**
-   * Article Creation/Change rate limiter: 16 requests per 25 minutes per IP.
+   * Article Creation/Change rate limiter: 20 requests per 15 minutes per IP.
    * For adding new articles or editing their content
    */
   public static articleCreationChange: RateLimitRequestHandler = rateLimit({
-    windowMs: 25 * 60 * 1000, // 25 minutes
-    max: 16,
+    windowMs: 15 * 60 * 1000,
+    max: 20,
     message: {
       status: 429,
       response: {
