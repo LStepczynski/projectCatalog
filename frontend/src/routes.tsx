@@ -12,12 +12,17 @@ import { AdminView } from './pages/adminView';
 import { EmailVerification } from './pages/emailVerification';
 import { PasswordReset } from './pages/passwordReset';
 import { VerifyEmailChange } from './pages/verifyEmailChange';
+import { Faq } from './pages/faq';
 
 export const Routes = () => {
   const router = createBrowserRouter([
     {
       path: '/',
       element: <Index />,
+    },
+    {
+      path: '/faq',
+      element: <Faq />,
     },
     {
       path: '/categories',
