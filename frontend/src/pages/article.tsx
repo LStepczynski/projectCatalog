@@ -14,7 +14,7 @@ export const Article = () => {
   const { id } = useParams<{
     id: string;
   }>();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
   const visibility = searchParams.get('visibility') || 'public';
 
   const defaultImage =

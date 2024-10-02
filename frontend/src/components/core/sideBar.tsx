@@ -1,4 +1,3 @@
-import { useEffect, useState } from 'react';
 import { Box, ActionList, Text } from '@primer/react';
 import {
   CodeIcon,
@@ -14,7 +13,6 @@ import {
   PencilIcon,
   ChecklistIcon,
 } from '@primer/octicons-react';
-import { debounce } from 'lodash';
 import { getUser } from '@helper/helper';
 
 interface Props {
@@ -101,19 +99,7 @@ if (user && user.Admin == 'true') {
 }
 
 export const SideBar = (props: Props) => {
-  const [screenWidth, setScreenWidth] = useState(window.innerWidth);
   const { state } = props;
-
-  const handleResize = debounce(() => {
-    setScreenWidth(window.innerWidth);
-  }, 300);
-
-  useEffect(() => {
-    window.addEventListener('resize', handleResize);
-    return () => {
-      window.removeEventListener('resize', handleResize);
-    };
-  }, [handleResize]);
 
   return (
     <Box
