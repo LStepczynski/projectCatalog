@@ -4,7 +4,7 @@ import { createRoot } from 'react-dom/client';
 
 interface Props {
   title: string;
-  description: string;
+  description: string | any;
   closeFunc: any;
 }
 
@@ -62,7 +62,11 @@ const InformationPopup = (props: Props) => {
                 my: 2,
               }}
             ></Box>
-            <Text>{description}</Text>
+            {typeof description == 'string' ? (
+              <Text>{description}</Text>
+            ) : (
+              description
+            )}
             <Box
               sx={{
                 display: 'flex',
@@ -88,7 +92,7 @@ const InformationPopup = (props: Props) => {
 
 export const ShowInformationPopup = (
   title: string,
-  description: string,
+  description: string | any,
   closeFunc: any = null
 ) => {
   const modalRoot = document.getElementById('modal-root');

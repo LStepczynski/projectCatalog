@@ -4,7 +4,7 @@ import { createRoot } from 'react-dom/client';
 
 interface Props {
   title: string;
-  description: string;
+  description: string | any;
   onAccept: any;
   onDecline: any;
 }
@@ -63,7 +63,11 @@ const ConfirmationPopup = (props: Props) => {
                 my: 2,
               }}
             ></Box>
-            <Text>{description}</Text>
+            {typeof description == 'string' ? (
+              <Text>{description}</Text>
+            ) : (
+              description
+            )}
             <Box
               sx={{
                 display: 'flex',
@@ -96,7 +100,7 @@ const ConfirmationPopup = (props: Props) => {
 
 export const ShowConfirmationPopup = (
   title: string,
-  description: string,
+  description: string | any,
   onDecline: any,
   onAccept: any
 ) => {
