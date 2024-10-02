@@ -6,6 +6,7 @@ import {
   Text,
   Button,
   Select,
+  Link,
 } from '@primer/react';
 
 import React from 'react';
@@ -22,7 +23,8 @@ import { MultipleChoice } from '../components/core/multipleChoice';
 
 export const Create = () => {
   const [bannerFile, setBannerFile] = React.useState<any>([null, null]); // file, link
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [saved, setSaved] = React.useState(false);
+  const [searchParams] = useSearchParams();
   const articleId = searchParams.get('id');
   const screenWidth = useScreenWidth();
   const [tags, setTags] = React.useState([]);
@@ -40,6 +42,22 @@ export const Create = () => {
   if (user && !(user.CanPost == 'true' || user.Admin == 'true')) {
     return (window.location.href = '/');
   }
+
+  React.useEffect(() => {
+    const handleBeforeUnload = (event: any) => {
+      if (!saved) {
+        event.preventDefault();
+        event.returnValue = ''; // This is necessary for some browsers to show the prompt.
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    // Cleanup function to remove the event listener when the component unmounts
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [saved]);
 
   React.useEffect(() => {
     const controller = new AbortController();
@@ -111,6 +129,7 @@ export const Create = () => {
         formData={formData}
         bannerFile={bannerFile}
         tags={tags}
+        setSaved={setSaved}
       />
     </Box>
   );
@@ -424,14 +443,15 @@ interface SubmitProps {
   user: any;
   bannerFile: any;
   tags: string[];
+  setSaved: any;
 }
 
 const ArticleSubmit = (props: SubmitProps) => {
   const backendUrl = import.meta.env.VITE_BACKEND_URL;
-  const { formData, user, bannerFile, tags } = props;
+  const { formData, user, bannerFile, tags, setSaved } = props;
 
   // existingId specifies which article is being edited
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
   const existingId = searchParams.get('id') || '';
 
   const handleSubmit = async (status: string) => {
@@ -493,7 +513,8 @@ const ArticleSubmit = (props: SubmitProps) => {
             status == 'private' ? 'saved' : 'submited for review'
           }.`,
           () => {
-            window.location.href = '/myArticles/1';
+            setSaved(true);
+            setTimeout(() => (window.location.href = '/myArticles/1'), 500);
           }
         );
         return;
@@ -522,7 +543,8 @@ const ArticleSubmit = (props: SubmitProps) => {
         status == 'private' ? 'saved' : 'submited for review'
       }.`,
       () => {
-        window.location.href = '/myArticles/1';
+        setSaved(true);
+        setTimeout(() => (window.location.href = '/myArticles/1'), 500);
       }
     );
   };
@@ -548,7 +570,16 @@ const ArticleSubmit = (props: SubmitProps) => {
           onClick={() => {
             ShowConfirmationPopup(
               'Publish Article?',
-              'Your article will have to be revised and approved before being published.',
+              <Text>
+                Your article will have to be revised and approved before being
+                published. <br></br>
+                <br></br>
+                Visit our{' '}
+                <Link href="/faq" target="_blank">
+                  FAQ page
+                </Link>{' '}
+                to see if this article meets our standards.
+              </Text>,
               () => {},
               () => {
                 handleSubmit('review');
