@@ -378,12 +378,21 @@ const CategorySelection = (props: FormProps) => {
     <Box
       sx={{
         display: 'flex',
+        flexDirection: screenWidth < 768 ? 'column' : 'row',
+        gap: 5,
         justifyContent: 'space-around',
         alignItems: 'center',
         width: screenWidth < 768 ? '85%' : '75%',
       }}
     >
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+      <Box
+        sx={{
+          display: 'flex',
+          flexDirection: screenWidth < 768 ? 'row' : 'column',
+          alignItems: screenWidth < 768 ? 'center' : 'left',
+          gap: screenWidth < 768 ? 3 : 1,
+        }}
+      >
         <Text sx={{ opacity: 0.6, fontSize: '14px' }}>Category:</Text>
         <Select
           value={formData.PrimaryCategory}
@@ -414,7 +423,14 @@ const CategorySelection = (props: FormProps) => {
         open={open}
         label="Pick Three Tags"
       />
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+      <Box
+        sx={{
+          display: 'flex',
+          flexDirection: screenWidth < 768 ? 'row' : 'column',
+          alignItems: screenWidth < 768 ? 'center' : 'left',
+          gap: screenWidth < 768 ? 3 : 1,
+        }}
+      >
         <Text sx={{ opacity: 0.6, fontSize: '14px' }}>Difficulty:</Text>
         <Select
           value={formData.Difficulty}
