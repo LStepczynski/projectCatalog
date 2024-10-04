@@ -210,6 +210,9 @@ router.get(
         articleId,
         tableName
       );
+      if (metadataResult.status != 200) {
+        return res.status(metadataResult.status).send(metadataResult);
+      }
       const metadata = metadataResult.response.return;
 
       // If the article is private check for permissions
