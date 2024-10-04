@@ -13,6 +13,7 @@ import { EmailVerification } from './pages/emailVerification';
 import { PasswordReset } from './pages/passwordReset';
 import { VerifyEmailChange } from './pages/verifyEmailChange';
 import { Faq } from './pages/faq';
+import { NotFound } from './pages/notFound';
 
 export const Routes = () => {
   const router = createBrowserRouter([
@@ -71,6 +72,10 @@ export const Routes = () => {
     {
       path: '/:id',
       element: <Article />,
+    },
+    {
+      path: '*',
+      element: <NotFound />,
     },
   ]);
 

@@ -153,7 +153,11 @@ export const ArticleDropdown = ({ setHovering, article, visibility }: any) => {
 
   const dropdownItems = [
     {
-      show: verified && user?.Admin && visibility == 'private',
+      show:
+        verified &&
+        user?.Admin &&
+        visibility == 'private' &&
+        article.Status == 'review',
       onSelect: handlePublish,
       text:
         window.location.pathname.split('/')[1] == 'adminView'
@@ -166,7 +170,8 @@ export const ArticleDropdown = ({ setHovering, article, visibility }: any) => {
         verified &&
         user?.Admin &&
         visibility == 'private' &&
-        window.location.pathname.split('/')[1] == 'adminView',
+        window.location.pathname.split('/')[1] == 'adminView' &&
+        article.Status == 'review',
       onSelect: handleDecline,
       text: 'Decline',
       icon: <CircleSlashIcon size={20} />,
