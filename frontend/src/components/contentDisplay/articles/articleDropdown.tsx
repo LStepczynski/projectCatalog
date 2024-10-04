@@ -6,6 +6,7 @@ import {
   RepoDeletedIcon,
   TrashIcon,
   CheckIcon,
+  CircleSlashIcon,
   PencilIcon,
 } from '@primer/octicons-react';
 import { PortalWrapper } from '../../core/portalWrapper';
@@ -114,22 +115,67 @@ export const ArticleDropdown = ({ setHovering, article, visibility }: any) => {
     );
   };
 
+  const handleDecline = () => {
+    const unpublishArticle = async () => {
+      try {
+        const hideData = await fetchWrapper(
+          `${backendUrl}/articles/?id=${article.ID}&visibility=private`,
+          {
+            method: 'PATCH',
+            body: JSON.stringify({
+              key: 'Status',
+              value: 'private',
+            }),
+          }
+        );
+
+        if (hideData.status == 200) {
+          sessionStorage.clear();
+          location.reload();
+        } else {
+          alert('There was a problem while trying to decline the article');
+        }
+      } catch {
+        alert('There was a problem while trying to decline the article');
+      }
+    };
+    ShowConfirmationPopup(
+      'Decline Request',
+      'Are you sure you want to decline this article?',
+      () => {},
+      unpublishArticle
+    );
+  };
+
   const handleEdit = () => {
     window.location.href = `/create?id=${article.ID}`;
   };
 
   const dropdownItems = [
     {
+      show: verified && user?.Admin && visibility == 'private',
+      onSelect: handlePublish,
+      text:
+        window.location.pathname.split('/')[1] == 'adminView'
+          ? 'Accept'
+          : 'Publish',
+      icon: <CheckIcon size={20} />,
+    },
+    {
+      show:
+        verified &&
+        user?.Admin &&
+        visibility == 'private' &&
+        window.location.pathname.split('/')[1] == 'adminView',
+      onSelect: handleDecline,
+      text: 'Decline',
+      icon: <CircleSlashIcon size={20} />,
+    },
+    {
       show: verified && articleOwner,
       onSelect: handleDelete,
       text: 'Delete',
       icon: <TrashIcon size={20} />,
-    },
-    {
-      show: verified && user?.Admin && visibility == 'private',
-      onSelect: handlePublish,
-      text: 'Publish',
-      icon: <CheckIcon size={20} />,
     },
     {
       show: article.Author == user?.Username && visibility == 'private',
