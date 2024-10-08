@@ -10,18 +10,19 @@ import { capitalize, fetchWrapper } from '@helper/helper';
 import { useScreenWidth } from '../components/other/useScreenWidth';
 import { SkeletonCategoriesPanel } from '../components/core/skeletons/skeletonCategoriesPanel';
 
+import { categories } from '../components/other/categories';
+
 export const Categories = () => {
-  const [articles, setArticles] = React.useState<any>({
-    programming: null,
-    '3d-modeling': null,
-    electronics: null,
-    woodworking: null,
-    chemistry: null,
-    cybersecurity: null,
-    physics: null,
+  const [articles, setArticles] = React.useState(() => {
+    const initialArticles = categories.reduce((acc: any, category) => {
+      acc[category.value] = null;
+      return acc;
+    }, {});
+
+    return initialArticles;
   });
   const screenWidth = useScreenWidth();
-
+  console.log(articles);
   const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
   React.useEffect(() => {

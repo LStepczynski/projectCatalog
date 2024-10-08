@@ -12,6 +12,8 @@ import {
 import React from 'react';
 import { useSearchParams } from 'react-router-dom';
 
+import { categories } from '../components/other/categories';
+
 import { ShowConfirmationPopup } from '../components/contentDisplay/confirmationPopup';
 import { ShowInformationPopup } from '../components/contentDisplay/informationPopup';
 
@@ -403,13 +405,13 @@ const CategorySelection = (props: FormProps) => {
             }));
           }}
         >
-          <Select.Option value="programming">Programming</Select.Option>
-          <Select.Option value="3d-modeling">3D Modeling</Select.Option>
-          <Select.Option value="electronics">Electronics</Select.Option>
-          <Select.Option value="woodworking">Woodworking</Select.Option>
-          <Select.Option value="chemistry">Chemistry</Select.Option>
-          <Select.Option value="cybersecurity">Cybersecurity</Select.Option>
-          <Select.Option value="physics">Physics</Select.Option>
+          {categories.map((item: any) => {
+            return (
+              <Select.Option key={item.name} value={item.value}>
+                {item.name}
+              </Select.Option>
+            );
+          })}
         </Select>
       </Box>
 
