@@ -4,37 +4,46 @@ import { useParams } from 'react-router-dom';
 import { Box, Select, Text, Heading, Pagination } from '@primer/react';
 
 import { ArticlePrivate } from '../components/contentDisplay/articles/articlePrivate';
-import { getUserFromJWT } from '@helper/helper';
+import { getUser, fetchWrapper } from '@helper/helper';
 import { useScreenWidth } from '../components/other/useScreenWidth';
+import { SkeletonCategoryPanel } from '../components/core/skeletons/skeletonCategoryPanel';
 
 export const AdminView = () => {
-  const [articles, setArticles] = React.useState([]);
+  const [articles, setArticles] = React.useState<any>(null);
   const [status, setStatus] = React.useState('review');
   const screenWidth = useScreenWidth();
   const { page } = useParams();
 
   const backendUrl = import.meta.env.VITE_BACKEND_URL;
-  const user = getUserFromJWT();
+  const user = getUser();
   if (user && user.Admin != 'true') {
     return (window.location.href = '/');
   }
 
   React.useEffect(() => {
-    fetch(`${backendUrl}/articles/private?status=${status}&page=${page}`, {
-      headers: {
-        Authorization: `Bearer ${
-          localStorage.getItem('verificationToken') || ''
-        }`,
-      },
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        setArticles(data.response.return);
-      })
-      .catch((error) => {
-        console.error('Error:', error);
-      });
-  }, [status]);
+    if (user?.Verified != 'true') {
+      alert(
+        'Your account is not verified. Please verify your email to review articles.'
+      );
+      window.location.href = '/account';
+      return;
+    }
+
+    const controller = new AbortController();
+    const signal = controller.signal;
+
+    fetchWrapper(
+      `${backendUrl}/articles/private?status=${status}&page=${page}`,
+      { signal },
+      true
+    ).then((data) => {
+      setArticles(data.response.return);
+    });
+
+    return () => {
+      controller.abort();
+    };
+  }, [status, page]);
 
   return (
     <Box
@@ -81,6 +90,7 @@ export const AdminView = () => {
           </Text>
           <Select
             onChange={(event) => {
+              setArticles(null);
               setStatus(event?.target.value);
             }}
           >
@@ -100,9 +110,15 @@ export const AdminView = () => {
           mt: 4,
         }}
       >
-        {articles.map((item: any, index: any) => (
-          <ArticlePrivate key={index} article={item} />
-        ))}
+        {articles ? (
+          <>
+            {articles.map((item: any, index: any) => (
+              <ArticlePrivate key={index} article={item} />
+            ))}
+          </>
+        ) : (
+          <SkeletonCategoryPanel bigArticles={false} />
+        )}
       </Box>
       <Pagination
         currentPage={Number(page) || 1}

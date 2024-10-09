@@ -35,6 +35,7 @@ export const AnimatedImage = ({ url, alt }: Props) => {
         style={{
           transform: 'translate(-50%, -50%)',
           width: hovering ? '101.5%' : '100%',
+          aspectRatio: 16 / 9,
           position: 'absolute',
           top: '50%',
           left: '50%',

@@ -9,12 +9,21 @@ import { Article } from './pages/article';
 import { Create } from './pages/create';
 import { MyArticles } from './pages/myArticles';
 import { AdminView } from './pages/adminView';
+import { EmailVerification } from './pages/emailVerification';
+import { PasswordReset } from './pages/passwordReset';
+import { VerifyEmailChange } from './pages/verifyEmailChange';
+import { Faq } from './pages/faq';
+import { NotFound } from './pages/notFound';
 
 export const Routes = () => {
   const router = createBrowserRouter([
     {
       path: '/',
       element: <Index />,
+    },
+    {
+      path: '/faq',
+      element: <Faq />,
     },
     {
       path: '/categories',
@@ -37,6 +46,18 @@ export const Routes = () => {
       element: <Create />,
     },
     {
+      path: '/verify-email-change/:code',
+      element: <VerifyEmailChange />,
+    },
+    {
+      path: '/email-verification/:code',
+      element: <EmailVerification />,
+    },
+    {
+      path: '/password-reset/:code',
+      element: <PasswordReset />,
+    },
+    {
       path: '/adminView/:page',
       element: <AdminView />,
     },
@@ -51,6 +72,10 @@ export const Routes = () => {
     {
       path: '/:id',
       element: <Article />,
+    },
+    {
+      path: '*',
+      element: <NotFound />,
     },
   ]);
 

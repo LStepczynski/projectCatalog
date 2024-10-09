@@ -1,4 +1,4 @@
-import { getUserFromJWT } from '@helper/helper';
+import { getUser } from '@helper/helper';
 import { Box, ActionList, Text } from '@primer/react';
 
 import {
@@ -15,9 +15,9 @@ interface Props {
 
 export const ProfilePictureModal = (props: Props) => {
   const { state } = props;
-  const user = getUserFromJWT();
+  const user = getUser();
 
-  if (!state || !user) {
+  if (!user) {
     return <></>;
   }
 
@@ -25,13 +25,18 @@ export const ProfilePictureModal = (props: Props) => {
     <Box
       sx={{
         backgroundColor: 'canvas.default',
-        position: 'absolute',
+        position: 'fixed',
         borderRadius: '10px',
+        borderTopLeftRadius: '0',
+        borderTopRightRadius: '0',
+        borderBottomRightRadius: '0',
         border: '1px solid',
         borderColor: 'ansi.black',
-        left: '-380%',
-        width: '500%',
-        top: '120%',
+        right: '0',
+        width: '230px',
+        top: '100%',
+        transform: `translateX(${state ? 0 : 100}%)`,
+        transition: '0.25s',
         p: 2,
       }}
     >

@@ -6,64 +6,81 @@ import { ArticleMedium } from '../components/contentDisplay/articles/articleMedi
 import { ArticleSmall } from '../components/contentDisplay/articles/articleSmall';
 import * as styles from '../componentStyles';
 import { useScreenWidth } from '../components/other/useScreenWidth';
+import { fetchWrapper } from '@helper/helper';
+
+import { SkeletonCategoryPanel } from '../components/core/skeletons/skeletonCategoryPanel';
 
 export const Category: React.FC = () => {
   const { categoryName, page } = useParams<{
     categoryName: string;
     page: string;
   }>();
-  const [articles, setArticles] = React.useState([]);
+  const [articles, setArticles] = React.useState<any>(null);
   const screenWidth = useScreenWidth();
 
   const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
   React.useEffect(() => {
+    const controller = new AbortController();
+    const signal = controller.signal;
+
     if (categoryName && page) {
-      fetch(`${backendUrl}/articles/${categoryName}?page=${page}`)
-        .then((response) => {
-          if (!response.ok) {
-            throw new Error(
-              'Network response was not ok ' + response.statusText
-            );
-          }
-          return response.json();
-        })
-        .then((data) => {
-          setArticles(data.response.return);
-        })
-        .catch((error) => {
-          console.error(
-            'There has been a problem with calling the API:',
-            error
-          );
-        });
+      fetchWrapper(
+        `${backendUrl}/articles/${categoryName}?page=${page}`,
+        {
+          signal,
+        },
+        true,
+        60 * 60
+      ).then((data) => {
+        setArticles(data.response.return);
+      });
     }
+
+    return () => {
+      controller.abort();
+    };
   }, [categoryName, page]);
 
   const getArticlesToRender = () => {
+    if (!articles) return null;
     if (screenWidth < 430) {
-      return articles.map((item, index) => (
+      return articles.map((item: any, index: any) => (
         <ArticleSmall key={index} article={item} />
       ));
     }
 
     if (screenWidth < 1280) {
-      return articles.map((item, index) => (
+      return articles.map((item: any, index: any) => (
         <ArticleMedium key={index} article={item} />
       ));
     }
 
     return (
       <>
-        {articles.slice(0, 2).map((item, index) => (
+        {articles.slice(0, 2).map((item: any, index: any) => (
           <ArticleLarge key={index} article={item} />
         ))}
-        {articles.slice(2).map((item, index) => (
+        {articles.slice(2).map((item: any, index: any) => (
           <ArticleMedium key={index} article={item} />
         ))}
       </>
     );
   };
+
+  if (!articles) {
+    return (
+      <Box
+        sx={{
+          display: 'grid',
+          justifyContent: 'center',
+          gap: 4,
+        }}
+      >
+        <SkeletonCategoryPanel />
+      </Box>
+    );
+  }
 
   if (articles.length == 0) {
     return (

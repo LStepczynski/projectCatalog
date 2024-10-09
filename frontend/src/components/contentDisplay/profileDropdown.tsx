@@ -3,7 +3,7 @@ import React from 'react';
 import { ProfilePictureModal } from '../contentDisplay/profilePictureModal';
 import { ProfilePicture } from '../contentDisplay/profilePicture';
 
-import { getUserFromJWT } from '@helper/helper';
+import { getUser } from '@helper/helper';
 import { Box } from '@primer/react';
 
 interface Props {
@@ -15,12 +15,11 @@ export const ProfileDropdown = (props: Props) => {
 
   const { state } = props;
 
-  const user = getUserFromJWT();
+  const user = getUser() || {};
   return (
     <Box
       sx={{
         height: '100%',
-        position: 'relative',
       }}
     >
       <Box
@@ -29,7 +28,7 @@ export const ProfileDropdown = (props: Props) => {
       >
         <ProfilePicture src={user.ProfilePic && user.ProfilePic} />
       </Box>
-      {state && <ProfilePictureModal state={dropdownVis} />}
+      <ProfilePictureModal state={dropdownVis && state} />
     </Box>
   );
 };

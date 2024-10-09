@@ -1,20 +1,30 @@
 import React from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 
-import { Box, Heading, Text, Avatar, Label, LabelGroup } from '@primer/react';
+import {
+  Box,
+  Heading,
+  Text,
+  Avatar,
+  Label,
+  Link,
+  LabelGroup,
+} from '@primer/react';
 
 import { useScreenWidth } from '../components/other/useScreenWidth';
-import { getRelativeDate, capitalize } from '@helper/helper';
+import { getRelativeDate, capitalize, fetchWrapper } from '@helper/helper';
 import { AnimatedImage } from '../components/animation/animatedImage';
 import { ArticleDifficultyLabel } from '../components/contentDisplay/articles/articleDifficultyLabel';
 import { Like } from '../components/contentDisplay/like';
+import Loading from '../components/contentDisplay/loading';
 
 export const Article = () => {
   const [article, setArticle] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(true);
   const { id } = useParams<{
     id: string;
   }>();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
   const visibility = searchParams.get('visibility') || 'public';
 
   const defaultImage =
@@ -22,35 +32,56 @@ export const Article = () => {
   const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
   React.useEffect(() => {
+    const controller = new AbortController();
+    const signal = controller.signal;
+
     if (id) {
-      fetch(`${backendUrl}/articles/get?id=${id}&visibility=${visibility}`, {
-        headers: {
-          Authorization: `Bearer ${
-            localStorage.getItem('verificationToken') || ''
-          }`,
-        },
-      })
-        .then((response) => {
-          if (!response.ok) {
-            throw new Error(
-              'Network response was not ok ' + response.statusText
-            );
-          }
-          return response.json();
-        })
-        .then((data) => {
+      fetchWrapper(
+        `${backendUrl}/articles/get?id=${id}&visibility=${visibility}`,
+        { signal },
+        true,
+        60 * 60
+      ).then((data) => {
+        if (data.status == 200) {
           setArticle(data.response.return);
-        })
-        .catch((error) => {
-          console.error('There has been a problem with calling the API:');
-        });
+        }
+        setLoading(false);
+      });
     }
+
+    return () => {
+      controller.abort();
+    };
   }, [id]);
 
   const screenWidth = useScreenWidth();
 
+  if (loading) {
+    return <Loading />;
+  }
+
   if (article == null) {
-    return <p>Error 404. Article not found</p>;
+    return (
+      <Box
+        sx={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'center',
+          width: '100vw',
+          height: '50vh',
+        }}
+      >
+        <Heading>Article Not Found</Heading>
+        <Text>Sorry, we could not find this article in our database.</Text>
+        <Link sx={{ mt: '15px' }} href="/">
+          Go to home
+        </Link>
+      </Box>
+    );
   }
 
   return (
@@ -119,23 +150,26 @@ const ArticleDetails = (props: DetailsProps) => {
   const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
   React.useEffect(() => {
-    const fetchIsLiked = async () => {
-      const isLikedReq = await fetch(`${backendUrl}/user/isLiked`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${
-            localStorage.getItem('verificationToken') || ''
-          }`,
-        },
-        body: JSON.stringify({ articleId: article.metadata.ID }),
+    const controller = new AbortController();
+    const signal = controller.signal;
+
+    const fetchIsLiked = () => {
+      fetchWrapper(
+        `${backendUrl}/user/isLiked?articleId=${article.metadata.ID}`,
+        { signal },
+        true,
+        60 * 60
+      ).then((data) => {
+        setIsLiked(data.response.result || false);
       });
-      const isLikedRes = await isLikedReq.json();
-      setIsLiked(isLikedRes.response.result || false);
     };
-    if (visibility == 'public') {
+    if (visibility == 'public' && article.metadata.Rating != 0) {
       fetchIsLiked();
     }
+
+    return () => {
+      controller.abort();
+    };
   }, []);
 
   return (

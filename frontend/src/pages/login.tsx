@@ -1,6 +1,8 @@
 import React from 'react';
 import { Box, TextInput, Button, Text, Heading, Link } from '@primer/react';
 
+import { ShowInformationPopup } from '../components/contentDisplay/informationPopup';
+
 import {
   PersonIcon,
   LockIcon,
@@ -8,7 +10,7 @@ import {
   EyeClosedIcon,
 } from '@primer/octicons-react';
 
-import { capitalize } from '@helper/helper';
+import { capitalize, fetchWrapper } from '@helper/helper';
 
 export const Login = () => {
   const [passwordIcon, setPasswordIcon] = React.useState<any>(EyeIcon);
@@ -50,29 +52,17 @@ export const Login = () => {
     }
 
     const backendUrl = import.meta.env.VITE_BACKEND_URL;
-    fetch(`${backendUrl}/user/sign-in`, {
+    fetchWrapper(`${backendUrl}/user/sign-in`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
       body: JSON.stringify(formData),
-    })
-      .then((response) => {
-        return response.json();
-      })
-      .then((data) => {
-        console.log(data);
-        if (data.status != 200) {
-          setErrorMessage(capitalize(data.response.message) + '.');
-          return;
-        }
-        localStorage.setItem('verificationToken', data.response.accessToken);
-        window.location.href = '/';
-      })
-      .catch((error) => {
-        console.error(error);
+    }).then((data) => {
+      if (data.status != 200) {
+        setErrorMessage(capitalize(data.response.message) + '.');
         return;
-      });
+      }
+
+      window.location.href = '/';
+    });
   };
 
   const inputStyle = {
@@ -141,9 +131,13 @@ export const Login = () => {
           />
         </Box>
 
-        <Text sx={{ textAlign: 'center' }}>
-          Don't have an account? • <Link href="/sign-up">Sign Up</Link>
-        </Text>
+        <Box sx={{ display: 'flex', justifyContent: 'space-around' }}>
+          <Link sx={{ width: '40%', textAlign: 'center' }} href="/sign-up">
+            Sign Up
+          </Link>
+
+          <PasswordReset username={formData.username} />
+        </Box>
 
         {errorMessage && (
           <Text sx={{ color: 'red', fontSize: '14px', textAlign: 'center' }}>
@@ -162,5 +156,28 @@ export const Login = () => {
         </Button>
       </Box>
     </Box>
+  );
+};
+
+const PasswordReset = ({ username }: any) => {
+  const backendUrl = import.meta.env.VITE_BACKEND_URL;
+
+  const handleClick = async () => {
+    if (username == '') return;
+
+    const response = await fetchWrapper(`${backendUrl}/user/forgot-password`, {
+      method: 'POST',
+      body: JSON.stringify({ username: username }),
+    });
+
+    ShowInformationPopup('Forgot Password', response.response.message);
+  };
+
+  return (
+    <>
+      <Link onClick={handleClick} sx={{ cursor: 'pointer', width: '40%' }}>
+        Forgot Password
+      </Link>
+    </>
   );
 };

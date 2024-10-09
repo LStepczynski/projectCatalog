@@ -1,12 +1,14 @@
 import { Router } from 'express';
 import { Articles } from ':api/services/articles';
 import { S3 } from ':api/services/s3';
+import { RateLimiting } from ':api/services/rateLimiting';
 
 import dotenv from 'dotenv';
 
 import { v4 as uuidv4 } from 'uuid';
 import multer from 'multer';
 import { Helper } from ':api/services/helper';
+import { categories } from 'src/categories';
 
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
@@ -20,7 +22,8 @@ const router = Router();
 // All private
 router.get(
   '/private',
-  UserManagment.authTokenOptional,
+  RateLimiting.generalAPI,
+  UserManagment.authenticateToken(),
   async (req: any, res: any) => {
     const sortBy = req.query.sortBy || 'highest';
     const limit = Number(req.query.limit) || 10;
@@ -59,7 +62,8 @@ router.get(
 // Delete
 router.delete(
   '/delete',
-  UserManagment.authenticateToken,
+  RateLimiting.articleEdit,
+  UserManagment.authenticateToken(),
   async (req: any, res: any) => {
     const articleId = req.query.id;
     const visibility = req.query.visibility || 'public';
@@ -115,7 +119,8 @@ router.delete(
 // Publish
 router.post(
   '/publish',
-  UserManagment.authenticateToken,
+  RateLimiting.articleEdit,
+  UserManagment.authenticateToken(),
   async (req: any, res: any) => {
     const ID = req.query.id;
     const user = req.user;
@@ -144,7 +149,8 @@ router.post(
 // Hide
 router.post(
   '/hide',
-  UserManagment.authenticateToken,
+  RateLimiting.articleEdit,
+  UserManagment.authenticateToken(),
   async (req: any, res: any) => {
     const ID = req.query.id;
     const user = req.user;
@@ -183,6 +189,7 @@ router.post(
 // By id
 router.get(
   '/get',
+  RateLimiting.generalAPI,
   UserManagment.authTokenOptional,
   async (req: any, res: any) => {
     const articleId = req.query.id;
@@ -204,8 +211,11 @@ router.get(
         articleId,
         tableName
       );
+      if (metadataResult.status != 200) {
+        return res.status(metadataResult.status).send(metadataResult);
+      }
       const metadata = metadataResult.response.return;
-      
+
       // If the article is private check for permissions
       if (
         visibility == 'private' &&
@@ -230,10 +240,11 @@ router.get(
 // By author
 router.get(
   '/author',
+  RateLimiting.generalAPI,
   UserManagment.authTokenOptional,
   async (req: any, res: any) => {
     const author = req.query.authorName;
-    const searchBy = req.query.searchBy || 'rating';
+    let searchBy = req.query.searchBy || 'rating';
     const sortBy = req.query.sortBy || 'highest';
     const limit = Number(req.query.limit) || 10;
     const page = Number(req.query.page) || 1;
@@ -241,11 +252,14 @@ router.get(
     const user = req.user;
 
     // Check for permissions
-    if (visibility == 'private' && !UserManagment.checkUsername(author, user)) {
-      return res.status(403).send({
-        status: 403,
-        response: { message: 'permission denied' },
-      });
+    if (visibility == 'private') {
+      if (!UserManagment.checkUsername(author, user)) {
+        return res.status(403).send({
+          status: 403,
+          response: { message: 'permission denied' },
+        });
+      }
+      searchBy = 'date';
     }
 
     // Validate the visibility parameter and choose a corresponding table
@@ -296,6 +310,7 @@ router.get(
 // By title
 router.get(
   '/title',
+  RateLimiting.generalAPI,
   UserManagment.authTokenOptional,
   async (req: any, res: any) => {
     const title = req.query.title;
@@ -362,6 +377,7 @@ router.get(
 // By category
 router.get(
   '/:categoryName',
+  RateLimiting.generalAPI,
   UserManagment.authTokenOptional,
   async (req: any, res: any) => {
     const category = req.params.categoryName;
@@ -371,6 +387,13 @@ router.get(
     const page = Number(req.query.page) || 1;
     const visibility = req.query.visibility || 'public';
     const user = req.user;
+
+    if (!categories.includes(category)) {
+      return res.status(400).send({
+        status: 400,
+        response: { message: 'invalid category' },
+      });
+    }
 
     // Check for permissions
     if (visibility == 'private' && !UserManagment.checkAdmin(user)) {
@@ -428,6 +451,7 @@ router.get(
 // By category/difficulty
 router.get(
   '/:category/:difficulty',
+  RateLimiting.generalAPI,
   UserManagment.authTokenOptional,
   async (req: any, res: any) => {
     const category = req.params.category;
@@ -436,6 +460,13 @@ router.get(
     const page = Number(req.query.page) || 1;
     const visibility = req.query.visibility || 'public';
     const user = req.user;
+
+    if (!categories.includes(category)) {
+      return res.status(400).send({
+        status: 400,
+        response: { message: 'invalid category' },
+      });
+    }
 
     // Check for permissions
     if (visibility == 'private' && !UserManagment.checkAdmin(user)) {
@@ -469,7 +500,8 @@ router.get(
 // Post
 router.post(
   '/',
-  UserManagment.authenticateToken,
+  RateLimiting.articleCreationChange,
+  UserManagment.authenticateToken(),
   async (req: any, res: any) => {
     const body = req.body.body;
     const metadata = req.body.metadata;
@@ -484,12 +516,19 @@ router.post(
       });
     }
 
-    // if (metadata.Image != undefined) {
-    //   return res.status(400).send({
-    //     status: 400,
-    //     response: { message: 'invalid metadata format' },
-    //   });
-    // }
+    if (
+      !(
+        metadata.PrimaryCategory &&
+        categories.includes(metadata.PrimaryCategory)
+      )
+    ) {
+      return res.status(400).send({
+        status: 400,
+        response: {
+          message: 'invalid request - invalid PrimaryCategory value',
+        },
+      });
+    }
 
     // Check for permissions
     if (!UserManagment.checkCanPost(user)) {
@@ -512,56 +551,76 @@ router.post(
 );
 
 // Edit
-router.put('/', UserManagment.authenticateToken, async (req: any, res: any) => {
-  const body = req.body.body;
-  const metadata = req.body.metadata;
-  const visibility = req.query.visibility || 'public';
-  const user = req.user;
+router.put(
+  '/',
+  RateLimiting.articleCreationChange,
+  UserManagment.authenticateToken(),
+  async (req: any, res: any) => {
+    const body = req.body.body;
+    const metadata = req.body.metadata;
+    const visibility = req.query.visibility || 'public';
+    const user = req.user;
 
-  // Validate the visibility parameter and choose a corresponding table
-  let tableName = Helper.visibilityToTable(visibility);
-  if (tableName == false) {
-    return res.status(400).send({
-      status: 400,
-      response: { message: 'invalid visibility parameter' },
-    });
+    // Validate the visibility parameter and choose a corresponding table
+    let tableName = Helper.visibilityToTable(visibility);
+    if (tableName == false) {
+      return res.status(400).send({
+        status: 400,
+        response: { message: 'invalid visibility parameter' },
+      });
+    }
+
+    // Check for the body and metadata parameters
+    if (body == undefined || metadata == undefined) {
+      res.status(400).send({
+        status: 400,
+        response: { message: 'invalid request - missing body or metadata' },
+      });
+      return;
+    }
+
+    if (
+      !(
+        metadata.PrimaryCategory &&
+        categories.includes(metadata.PrimaryCategory)
+      )
+    ) {
+      return res.status(400).send({
+        status: 400,
+        response: {
+          message: 'invalid request - invalid PrimaryCategory value',
+        },
+      });
+    }
+
+    // Fetch the article metadata
+    const articleRequest = await Articles.getArticleMetadata(
+      metadata.ID,
+      tableName
+    );
+    const article = articleRequest.response.return;
+    if (!article) {
+      return res.status(articleRequest.status).send(articleRequest);
+    }
+
+    // Check if the user has permission to edit
+    if (!UserManagment.checkUsername(article.Author, user)) {
+      return res.status(403).send({
+        status: 403,
+        response: { message: 'permission denied' },
+      });
+    }
+
+    // Fetch the result and return it
+    const result = await Articles.updateArticle(tableName, metadata, body);
+    return res.status(result.status).send(result);
   }
-
-  // Check for the body and metadata parameters
-  if (body == undefined || metadata == undefined) {
-    res.status(400).send({
-      status: 400,
-      response: { message: 'invalid request - missing body or metadata' },
-    });
-    return;
-  }
-
-  // Fetch the article metadata
-  const articleRequest = await Articles.getArticleMetadata(
-    metadata.ID,
-    tableName
-  );
-  const article = articleRequest.response.return;
-  if (!article) {
-    return res.status(articleRequest.status).send(articleRequest);
-  }
-
-  // Check if the user has permission to edit
-  if (!UserManagment.checkUsername(article.Author, user)) {
-    return res.status(403).send({
-      status: 403,
-      response: { message: 'permission denied' },
-    });
-  }
-
-  // Fetch the result and return it
-  const result = await Articles.updateArticle(tableName, metadata, body);
-  return res.status(result.status).send(result);
-});
+);
 
 router.patch(
   '/',
-  UserManagment.authenticateToken,
+  RateLimiting.articleCreationChange,
+  UserManagment.authenticateToken(),
   async (req: any, res: any) => {
     const key = req.body.key;
     const value = req.body.value;
@@ -583,6 +642,16 @@ router.patch(
       res.status(400).send({
         status: 400,
         response: { message: 'invalid request - missing id, key or value' },
+      });
+      return;
+    }
+
+    if (key == 'PrimaryCategory' && !categories.includes(value)) {
+      res.status(400).send({
+        status: 400,
+        response: {
+          message: 'invalid request - invalid PrimaryCategory value',
+        },
       });
       return;
     }
@@ -611,7 +680,8 @@ router.patch(
 // Image
 router.post(
   '/image',
-  UserManagment.authenticateToken,
+  RateLimiting.articleCreationChange,
+  UserManagment.authenticateToken(),
   upload.single('image'),
   async (req: any, res: any) => {
     const ID = req.query.id;
@@ -635,20 +705,36 @@ router.post(
       });
     }
 
-    // Fetch an article
-    let articleRequest = await Articles.getArticle(ID, tableName);
-    if (articleRequest.status != 200) {
-      return res.status(articleRequest.status).send(articleRequest);
+    // Fetch the article metadata from the database
+    const metadataResp = await Articles.getArticleMetadata(
+      ID,
+      'ArticlesUnpublished'
+    );
+    if (metadataResp.status != 200) {
+      return res.status(metadataResp.status).send(metadataResp);
     }
 
-    const article = articleRequest.response.return;
     // Check if the user has permission to add the image
-    if (!UserManagment.checkUsername(article.metadata.Author, user)) {
+    if (
+      !UserManagment.checkUsername(metadataResp.response.return.Author, user)
+    ) {
       return res.status(403).send({
         status: 403,
-        response: { message: 'permission denied' },
+        response: { message: 'invalid permisions' },
       });
     }
+
+    // Fetch the whole article from the S3
+    const bodyResp = await Articles.getArticle(ID, 'ArticlesUnpublished');
+    if (bodyResp.status != 200) {
+      return res.status(bodyResp.status).send(bodyResp);
+    }
+
+    // Combine the metadata from the database with the body from the S3 into a new object
+    const article = {
+      body: bodyResp.response.return.body,
+      metadata: metadataResp.response.return,
+    };
 
     const imageId = uuidv4();
 
@@ -689,6 +775,7 @@ router.post(
       article.metadata,
       article.body
     );
+
     return res.status(result.status).send(result);
   }
 );

@@ -186,6 +186,7 @@ function Head({ screenWidth, keyframeStyles }: any) {
         alt="home-hero"
         style={{
           borderRadius: '25px',
+          aspectRatio: 1920 / 1348,
           zIndex: -1,
           opacity: screenWidth > 767 ? 1 : 0.6,
           width: screenWidth > 767 ? '70%' : '100%',
@@ -296,10 +297,12 @@ function About({ screenWidth }: any) {
       </Box>
 
       <img
+        loading="lazy"
         src="images/home-side.webp"
         alt="home side"
         style={{
           width: screenWidth > 767 ? '50%' : '70%',
+          aspectRatio: 1920 / 2879,
           marginTop: screenWidth > 767 ? '' : '40px',
           borderRadius: '25px',
         }}
@@ -398,10 +401,12 @@ function Categories() {
         }}
       >
         <img
+          loading="lazy"
           src="images/home-category.webp"
           alt="WoodWorking"
           style={{
             width: '100%',
+            aspectRatio: 1920 / 2397,
             borderRadius: '25px',
           }}
         />
@@ -566,9 +571,9 @@ const AnimatedWave = () => {
         anime({
           targets: path,
           d: [
-            { value: svgs[1][index] },
-            { value: svgs[0][index] },
             { value: svgs[2][index] },
+            { value: svgs[0][index] },
+            { value: svgs[1][index] },
           ],
           easing: 'easeInOutSine',
           duration: 18000,

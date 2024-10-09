@@ -359,5 +359,28 @@
       "ReadCapacityUnits": 10,
       "WriteCapacityUnits": 10
     }
+  },
+  {
+    "TableName": "Tokens",
+    "AttributeDefinitions": [
+      { "AttributeName": "Value", "AttributeType": "S" },
+      { "AttributeName": "Username", "AttributeType": "S" }
+    ],
+    "KeySchema": [{ "AttributeName": "Value", "KeyType": "HASH" }],
+    "GlobalSecondaryIndexes": [
+      {
+        "IndexName": "UsernameIndex",
+        "KeySchema": [{ "AttributeName": "Username", "KeyType": "HASH" }],
+        "Projection": { "ProjectionType": "ALL" },
+        "ProvisionedThroughput": {
+          "ReadCapacityUnits": 5,
+          "WriteCapacityUnits": 5
+        }
+      }
+    ],
+    "ProvisionedThroughput": {
+      "ReadCapacityUnits": 10,
+      "WriteCapacityUnits": 10
+    }
   }
 ]

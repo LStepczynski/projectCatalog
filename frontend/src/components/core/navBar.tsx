@@ -3,7 +3,7 @@ import { Box, Button } from '@primer/react';
 import { debounce } from 'lodash';
 import { ThreeBarsIcon } from '@primer/octicons-react';
 import { SideBar } from './sideBar';
-import { getUserFromJWT } from '@helper/helper';
+import { getUser } from '@helper/helper';
 import { ProfileDropdown } from '../contentDisplay/profileDropdown';
 
 export const NavBar = () => {
@@ -13,7 +13,7 @@ export const NavBar = () => {
     localStorage.getItem('sidebarVis') || 'false'
   );
 
-  const user = getUserFromJWT();
+  const user = getUser();
 
   const handleScroll = debounce(() => {
     const currentScrollPos = window.pageYOffset;
@@ -43,7 +43,7 @@ export const NavBar = () => {
       <Box
         sx={{
           transform: navbarVis ? 'translateY(0)' : 'translateY(-100%)',
-          transition: 'transform 0.2s ease',
+          transition: 'transform 0.25s',
           backgroundColor: 'canvas.default',
           justifyContent: 'space-between',
           borderBottom: '1px solid',

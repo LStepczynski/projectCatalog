@@ -3,6 +3,7 @@ import {
   PutObjectCommand,
   GetObjectCommand,
   DeleteObjectCommand,
+  DeleteObjectsCommand,
 } from '@aws-sdk/client-s3';
 
 import dotenv from 'dotenv';
@@ -52,7 +53,7 @@ export class S3 {
         'utf8'
       );
 
-      // Add the object to the S3 
+      // Add the object to the S3
       const params = {
         Bucket: bucketName,
         Key: objectKey,
@@ -139,7 +140,7 @@ export class S3 {
 
   /**
    * Reads an article from S3 and returns it
-   * TEMPORARY - for development purposes this 
+   * TEMPORARY - for development purposes this
    * function reads from the hard drive
    *
    * @public
@@ -163,6 +164,59 @@ export class S3 {
     } catch (error) {
       console.error('Error reading file:', error);
       return undefined;
+    }
+  }
+
+  /**
+   * Deletes multiple files from S3 in a single batch operation.
+   *
+   * @public
+   * @static
+   * @async
+   * @param {string[]} keys - Array of S3 object keys to delete.
+   * @returns {Promise<boolean>} - Returns true if all deletions succeeded, otherwise false.
+   */
+  public static async deleteMultipleFiles(keys: string[]): Promise<boolean> {
+    if (keys.length === 0) {
+      return true;
+    }
+
+    // Temporary for local import purposes
+    for (const key of keys) {
+      if (key.startsWith('images')) continue;
+      fs.unlink(`src/assets/${key}`, (err) => {
+        if (err) {
+          console.log('Error while removing file from local directory');
+          return false;
+        }
+      });
+    }
+
+    try {
+      const params = {
+        Bucket: process.env.AWS_S3_BUCKET_NAME!,
+        Delete: {
+          Objects: keys.map((key) => ({ Key: key })),
+          Quiet: true,
+        },
+      };
+
+      const command = new DeleteObjectsCommand(params);
+      const response = await s3Client.send(command);
+
+      if (response.Errors && response.Errors.length > 0) {
+        console.error(
+          'Errors occurred while deleting some files:',
+          response.Errors
+        );
+        return false;
+      }
+
+      console.log(`Successfully deleted ${keys.length} files from S3.`);
+      return true;
+    } catch (err: any) {
+      console.error('Error deleting multiple files from S3:', err);
+      return false;
     }
   }
 

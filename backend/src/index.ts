@@ -3,17 +3,22 @@ import serverless from 'serverless-http';
 import cors from 'cors';
 
 import routes from './routes/index';
-import fs from 'fs/promises';
-import path from 'path';
+import cookieParser from 'cookie-parser'
+
+import dotenv from 'dotenv';
+dotenv.config();
+
 const app = express();
 
 app.use(express.json());
+app.use(cookieParser())
 
 app.use(
   cors({
-    origin: '*',
-    methods: '*',
-    allowedHeaders: '*',
+    origin: process.env.FRONTEND_URL,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'], 
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true,
   })
 );
 

@@ -6,6 +6,8 @@ import {
   UpdateItemCommand,
   UpdateItemCommandInput,
   QueryCommandInput,
+  BatchWriteItemCommandInput,
+  BatchWriteItemCommand,
   QueryCommand,
   ReturnValue,
 } from '@aws-sdk/client-dynamodb';
@@ -47,11 +49,11 @@ export class Articles {
         AuthorProfilePic: { value: '', required: true },
         PrimaryCategory: { value: '', required: true },
         SecondaryCategories: { value: [], required: true },
-        Rating: { value: 0, required: true },
+        Rating: { value: 0, required: false },
         CreatedAt: { value: 0, required: true },
+        Difficulty: { value: '', required: true },
         UpdatedAt: { value: 0, required: false },
         PublishedAt: { value: 0, required: false },
-        Difficulty: { value: '', required: true },
         Image: { value: '', required: false },
       },
     },
@@ -64,10 +66,9 @@ export class Articles {
         AuthorProfilePic: { value: '', required: true },
         PrimaryCategory: { value: '', required: true },
         SecondaryCategories: { value: [], required: true },
-        Rating: { value: 0, required: false },
+        Difficulty: { value: '', required: true },
         CreatedAt: { value: 0, required: false },
         UpdatedAt: { value: 0, required: false },
-        Difficulty: { value: '', required: true },
         Image: { value: '', required: false },
         Status: { value: '', required: false },
       },
@@ -102,7 +103,10 @@ export class Articles {
    * @param {Dictionary} model - shema
    * @returns {boolean} - result
    */
-  public static validateArticle(article: Dictionary, model: Dictionary): boolean {
+  public static validateArticle(
+    article: Dictionary,
+    model: Dictionary
+  ): boolean {
     const articleModelFields = Object.keys(model);
 
     // Check if all fields in ARTICLE_MODEL are present and not empty in the article
@@ -298,6 +302,10 @@ export class Articles {
     if (metadata.UpdatedAt == undefined) {
       metadata.UpdatedAt = null;
     }
+    if (metadata.AuthorProfilePic == undefined) {
+      metadata.AuthorProfilePic =
+        'https://project-catalog-storage.s3.us-east-2.amazonaws.com/images/pfp.png';
+    }
     if (metadata.Image == '' || metadata.Image == undefined) {
       metadata.Image = null;
     }
@@ -314,7 +322,7 @@ export class Articles {
 
       // Remove fields that are not meant to be added to S3
       delete metadata.rating;
-      delete metadata.AuthorProfilePic
+      delete metadata.AuthorProfilePic;
 
       // Add the whole article to the S3
       if (!(await S3.addToS3(tableName, metadata, body))) {
@@ -348,7 +356,10 @@ export class Articles {
     }
 
     // Fetch the article metadata from the database
-    const metadataResp = await this.getArticleMetadata(id, 'ArticlesUnpublished');
+    const metadataResp = await this.getArticleMetadata(
+      id,
+      'ArticlesUnpublished'
+    );
     if (metadataResp.status != 200) {
       return metadataResp;
     }
@@ -360,7 +371,10 @@ export class Articles {
     }
 
     // Combine the metadata from the database with the body from the S3 into a new object
-    const getRespItems = {body: bodyResp.response.return.body, metadata: metadataResp.response.return};
+    const getRespItems = {
+      body: bodyResp.response.return.body,
+      metadata: metadataResp.response.return,
+    };
 
     // Remove fields that are not needed
     delete getRespItems.metadata.ID;
@@ -421,11 +435,15 @@ export class Articles {
     }
 
     // Combine the metadata from the database with the body from the S3 into a new object
-    const getRespItems = {body: bodyResp.response.return.body, metadata: metadataResp.response.return};
+    const getRespItems = {
+      body: bodyResp.response.return.body,
+      metadata: metadataResp.response.return,
+    };
 
     // Remove fields that are not needed
     delete getRespItems.metadata.ID;
     delete getRespItems.metadata.PublishedAt;
+    delete getRespItems.metadata.Rating;
 
     // Create the article in the ArticlesUnpublished table
     const addResponse = await this.createArticle(
@@ -558,7 +576,7 @@ export class Articles {
 
     // Extract the id from the article and test it against the schema
     const { ID, ...article } = metadata;
-    if (! this.validateArticle(article, tableInfo.item)) {
+    if (!this.validateArticle(article, tableInfo.item)) {
       return { status: 400, response: { message: 'invalid metadata format' } };
     }
 
@@ -609,8 +627,8 @@ export class Articles {
     }
 
     // Check if the key to change is stored only in the database
-    const dbOnlyKeys = ['Rating', 'AuthorProfilePic']
-    const isDbOnly = dbOnlyKeys.includes(itemKey)
+    const dbOnlyKeys = ['Rating', 'AuthorProfilePic'];
+    const isDbOnly = dbOnlyKeys.includes(itemKey);
 
     const params: UpdateItemCommandInput = {
       TableName: tableName,
@@ -629,7 +647,7 @@ export class Articles {
     };
 
     try {
-      // Update the article in the database 
+      // Update the article in the database
       if (itemKey != 'body') {
         const data = await client.send(new UpdateItemCommand(params));
 
@@ -671,7 +689,7 @@ export class Articles {
   }
 
   /**
-   * Function that fetches items from a table using pagination from the 
+   * Function that fetches items from a table using pagination from the
    * inputed params
    *
    * @public
@@ -737,7 +755,7 @@ export class Articles {
    * @param {string} status - status value
    * @param {number} page - page
    * @param {number} limit - articles per page
-   * @param {boolean} forward - query articles in normal or reversed order 
+   * @param {boolean} forward - query articles in normal or reversed order
    * @returns {Promise<ApiResponse>} - api response
    */
   public static async getStatusCreated(
@@ -777,7 +795,7 @@ export class Articles {
    * @param {string} category - category of the articles
    * @param {number} page - page
    * @param {number} limit - articles per page
-   * @param {boolean} forward - query articles in normal or reversed order 
+   * @param {boolean} forward - query articles in normal or reversed order
    * @returns {Promise<ApiResponse>} - api response
    */
   public static async getCategoryCreated(
@@ -849,7 +867,7 @@ export class Articles {
    * @param {string} category - category of the articles
    * @param {number} page - page
    * @param {number} limit - articles per page
-   * @param {boolean} forward - query articles in normal or reversed order 
+   * @param {boolean} forward - query articles in normal or reversed order
    * @returns {Promise<ApiResponse>} - api response
    */
   public static async getCategoryRating(
@@ -882,7 +900,7 @@ export class Articles {
    * @param {string} author - author of the articles
    * @param {number} page - page
    * @param {number} limit - articles per page
-   * @param {boolean} forward - query articles in normal or reversed order 
+   * @param {boolean} forward - query articles in normal or reversed order
    * @returns {Promise<ApiResponse>} - api response
    */
   public static async getAuthorCreated(
@@ -920,7 +938,7 @@ export class Articles {
    * @param {string} author - author of the articles
    * @param {number} page - page
    * @param {number} limit - articles per page
-   * @param {boolean} forward - query articles in normal or reversed order 
+   * @param {boolean} forward - query articles in normal or reversed order
    * @returns {Promise<ApiResponse>} - api response
    */
   public static async getAuthorRating(
@@ -958,7 +976,7 @@ export class Articles {
    * @param {string} title - title of the articles
    * @param {number} page - page
    * @param {number} limit - articles per page
-   * @param {boolean} forward - query articles in normal or reversed order 
+   * @param {boolean} forward - query articles in normal or reversed order
    * @returns {Promise<ApiResponse>} - api response
    */
   public static async getTitleRating(
@@ -996,7 +1014,7 @@ export class Articles {
    * @param {string} title - title of the articles
    * @param {number} page - page
    * @param {number} limit - articles per page
-   * @param {boolean} forward - query articles in normal or reversed order 
+   * @param {boolean} forward - query articles in normal or reversed order
    * @returns {Promise<ApiResponse>} - api response
    */
   public static async getTitleCreated(
@@ -1102,6 +1120,159 @@ export class Articles {
       return {
         status: 500,
         response: { message: 'server error' },
+      };
+    }
+  }
+
+  /**
+   * Removes all articles owned by a specific user from both DynamoDB and S3.
+   *
+   * @public
+   * @static
+   * @async
+   * @param {string} username - The username of the article owner.
+   * @returns {Promise<ApiResponse>} - API response indicating success or failure.
+   */
+  public static async removeAllArticlesByUser(
+    username: string
+  ): Promise<ApiResponse> {
+    try {
+      const tables = ['ArticlesPublished', 'ArticlesUnpublished'];
+      const allArticleIds: { tableName: string; id: string }[] = [];
+      const allS3Keys: string[] = [];
+
+      // Step 1: Fetch all articles authored by the user from both tables
+      for (const tableName of tables) {
+        let ExclusiveStartKey: any = undefined;
+        do {
+          const params: QueryCommandInput = {
+            TableName: tableName,
+            IndexName: 'AuthorPrimaryCategory',
+            KeyConditionExpression: '#author = :author',
+            ExpressionAttributeNames: {
+              '#author': 'Author',
+            },
+            ExpressionAttributeValues: {
+              ':author': { S: username },
+            },
+            ProjectionExpression: 'ID, Image', // Fetch only necessary attributes
+            ExclusiveStartKey,
+          };
+
+          const queryCommand = new QueryCommand(params);
+          const queryResult = await client.send(queryCommand);
+
+          if (queryResult.Items) {
+            for (const item of queryResult.Items) {
+              const unmarshalled = unmarshall(item);
+              if (unmarshalled.ID) {
+                allArticleIds.push({ tableName, id: unmarshalled.ID });
+                // Add the article markdown file key
+                allS3Keys.push(`${tableName}/${unmarshalled.ID}.md`);
+              }
+              if (unmarshalled.Image) {
+                // Assuming Image is a URL, extract the S3 key
+                const imageUrl: string = unmarshalled.Image;
+                const urlParts = imageUrl.split('.com/');
+                if (urlParts.length > 1) {
+                  const imageKey = urlParts[1]; // Adjust based on your S3 URL structure
+                  allS3Keys.push(imageKey);
+                }
+              }
+            }
+          }
+
+          ExclusiveStartKey = queryResult.LastEvaluatedKey;
+        } while (ExclusiveStartKey);
+      }
+
+      if (allArticleIds.length === 0) {
+        return {
+          status: 200,
+          response: { message: 'No articles found for the user.' },
+        };
+      }
+
+      console.log('Dynamo items: ', allArticleIds);
+      console.log('S3 items: ', allS3Keys);
+      // Step 2: Batch delete articles from DynamoDB
+      // DynamoDB BatchWriteItem allows up to 25 delete requests per batch
+      const MAX_BATCH_SIZE = 25;
+
+      // Group delete requests by table name
+      const groupedByTable: { [key: string]: any[] } = {};
+      allArticleIds.forEach(({ tableName, id }) => {
+        if (!groupedByTable[tableName]) {
+          groupedByTable[tableName] = [];
+        }
+        groupedByTable[tableName].push({
+          DeleteRequest: {
+            Key: marshall({ ID: id }),
+          },
+        });
+      });
+
+      // Process each table's delete requests in batches of 25
+      for (const [tableName, deleteRequests] of Object.entries(
+        groupedByTable
+      )) {
+        for (let i = 0; i < deleteRequests.length; i += MAX_BATCH_SIZE) {
+          const batch = deleteRequests.slice(i, i + MAX_BATCH_SIZE);
+          const batchWriteParams: BatchWriteItemCommandInput = {
+            RequestItems: {
+              [tableName]: batch,
+            },
+          };
+
+          try {
+            const response = await client.send(
+              new BatchWriteItemCommand(batchWriteParams)
+            );
+
+            if (
+              response.UnprocessedItems &&
+              Object.keys(response.UnprocessedItems).length > 0
+            ) {
+              console.error(
+                'Some items were not processed. Consider retrying:',
+                response.UnprocessedItems
+              );
+              // Optionally implement retry logic here
+            } else {
+              console.log(
+                `Successfully deleted batch of ${batch.length} items from ${tableName}.`
+              );
+            }
+          } catch (error) {
+            console.error(`Error deleting items from ${tableName}:`, error);
+            // Depending on requirements, decide whether to continue or halt
+          }
+        }
+      }
+
+      // Step 3: Batch delete S3 objects using the new deleteMultipleFiles method
+      // S3 DeleteObjectsCommand allows up to 1000 objects per request
+      const S3_BATCH_DELETE_SIZE = 1000;
+      for (let i = 0; i < allS3Keys.length; i += S3_BATCH_DELETE_SIZE) {
+        const batch = allS3Keys.slice(i, i + S3_BATCH_DELETE_SIZE);
+        const deleteSuccess = await S3.deleteMultipleFiles(batch);
+        if (!deleteSuccess) {
+          console.error('Failed to delete some S3 objects.');
+          // Optionally implement retry logic or log detailed errors
+        }
+      }
+
+      return {
+        status: 200,
+        response: {
+          message: `Successfully deleted ${allArticleIds.length} articles and associated S3 objects.`,
+        },
+      };
+    } catch (error: any) {
+      console.error('Error removing all articles by user:', error);
+      return {
+        status: 500,
+        response: { message: 'Server error while removing articles.' },
       };
     }
   }

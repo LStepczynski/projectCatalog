@@ -6,49 +6,48 @@ import { ArticleLarge } from '../components/contentDisplay/articles/articleLarge
 import { ArticleMedium } from '../components/contentDisplay/articles/articleMedium';
 import { ArticleSmall } from '../components/contentDisplay/articles/articleSmall';
 
-import { capitalize } from '@helper/helper';
+import { capitalize, fetchWrapper } from '@helper/helper';
 import { useScreenWidth } from '../components/other/useScreenWidth';
+import { SkeletonCategoriesPanel } from '../components/core/skeletons/skeletonCategoriesPanel';
+
+import { categories } from '../components/other/categories';
 
 export const Categories = () => {
-  const [articles, setArticles] = React.useState<any>({
-    programming: [],
-    '3d-modeling': [],
-    electronics: [],
-    woodworking: [],
-    chemistry: [],
-    cybersecurity: [],
-    physics: [],
+  const [articles, setArticles] = React.useState(() => {
+    const initialArticles = categories.reduce((acc: any, category) => {
+      acc[category.value] = null;
+      return acc;
+    }, {});
+
+    return initialArticles;
   });
   const screenWidth = useScreenWidth();
-
+  console.log(articles);
   const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
   React.useEffect(() => {
+    const controller = new AbortController();
+    const signal = controller.signal;
+
     const fetchArticles = async () => {
       const newArticles: any = {};
       for (const category of Object.keys(articles)) {
-        try {
-          const response = await fetch(
-            `${backendUrl}/articles/${category}?limit=5`
-          );
-          if (!response.ok) {
-            throw new Error(
-              'Network response was not ok ' + response.statusText
-            );
-          }
-          const data = await response.json();
-          newArticles[category] = data.response.return;
-        } catch (error) {
-          console.error(
-            'There has been a problem with calling the API:',
-            error
-          );
-        }
+        const data = await fetchWrapper(
+          `${backendUrl}/articles/${category}?limit=5`,
+          { signal },
+          true,
+          60 * 60 * 5
+        );
+        newArticles[category] = data.response.return;
       }
       setArticles(newArticles);
     };
 
     fetchArticles();
+
+    return () => {
+      controller.abort();
+    };
   }, []);
 
   const getArticlesToRender = (keyName: string) => {
@@ -95,8 +94,16 @@ export const Categories = () => {
   return (
     <Box>
       {Object.keys(articles).map((keyName: string) => {
+        if (!articles[keyName]) {
+          return (
+            <SkeletonCategoriesPanel
+              headerWidth={getHeaderWidth()}
+              key={keyName}
+            />
+          );
+        }
         if (articles[keyName].length == 0) {
-          return <></>;
+          return null;
         }
 
         return (
