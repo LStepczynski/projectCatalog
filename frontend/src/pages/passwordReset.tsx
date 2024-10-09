@@ -1,7 +1,7 @@
 import { fetchWrapper, logOut } from '@helper/helper';
 import { useParams } from 'react-router-dom';
 
-import { InformationPopup } from '../components/contentDisplay/informationPopup';
+import { ShowInformationPopup } from '../components/contentDisplay/informationPopup';
 
 import React from 'react';
 
@@ -29,49 +29,41 @@ export const PasswordReset = () => {
   if (!response) {
     return null;
   } else if (response.status == 200) {
-    return (
-      <InformationPopup
-        isOpen={true}
-        closeFunc={() => {
-          logOut();
-          window.location.href = '/sign-in';
-        }}
-        title="Password Reset"
-        description="Your password has been reset. Check your inbox to view your new password."
-      />
+    ShowInformationPopup(
+      'Password Reset',
+      'Your password has been reset. Check your inbox to view your new password.',
+      () => {
+        logOut();
+        window.location.href = '/sign-in';
+      }
     );
+    return null;
   } else if (response.status == 404) {
-    return (
-      <InformationPopup
-        isOpen={true}
-        closeFunc={() => {
-          window.location.href = '/';
-        }}
-        title="Password Reset"
-        description="This verification link is invalid. Please try a different one."
-      />
+    ShowInformationPopup(
+      'Password Reset',
+      'This verification link is invalid. Please try a different one.',
+      () => {
+        window.location.href = '/';
+      }
     );
+    return null;
   } else if (response.status == 410) {
-    return (
-      <InformationPopup
-        isOpen={true}
-        closeFunc={() => {
-          window.location.href = '/';
-        }}
-        title="Password Reset"
-        description="This verification link is invalid. Please request a new one."
-      />
+    ShowInformationPopup(
+      'Password Reset',
+      'This verification link is invalid. Please request a new one.',
+      () => {
+        window.location.href = '/';
+      }
     );
+    return null;
   } else if (response.status == 500) {
-    return (
-      <InformationPopup
-        isOpen={true}
-        closeFunc={() => {
-          window.location.href = '/';
-        }}
-        title="Password Reset"
-        description="There was a problem the password reset. Please try again later."
-      />
+    ShowInformationPopup(
+      'Password Reset',
+      'There was a problem the password reset. Please try again later.',
+      () => {
+        window.location.href = '/';
+      }
     );
+    return null;
   }
 };

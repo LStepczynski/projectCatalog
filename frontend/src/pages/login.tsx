@@ -1,7 +1,7 @@
 import React from 'react';
 import { Box, TextInput, Button, Text, Heading, Link } from '@primer/react';
 
-import { InformationPopup } from '../components/contentDisplay/informationPopup';
+import { ShowInformationPopup } from '../components/contentDisplay/informationPopup';
 
 import {
   PersonIcon,
@@ -160,9 +160,6 @@ export const Login = () => {
 };
 
 const PasswordReset = ({ username }: any) => {
-  const [open, setOpen] = React.useState(false);
-  const [text, setText] = React.useState('');
-
   const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
   const handleClick = async () => {
@@ -173,8 +170,7 @@ const PasswordReset = ({ username }: any) => {
       body: JSON.stringify({ username: username }),
     });
 
-    setText(response.response.message);
-    setOpen(true);
+    ShowInformationPopup('Forgot Password', response.response.message);
   };
 
   return (
@@ -182,12 +178,6 @@ const PasswordReset = ({ username }: any) => {
       <Link onClick={handleClick} sx={{ cursor: 'pointer', width: '40%' }}>
         Forgot Password
       </Link>
-      <InformationPopup
-        isOpen={open}
-        closeFunc={() => setOpen(false)}
-        title="Forgot Password"
-        description={text}
-      />
     </>
   );
 };

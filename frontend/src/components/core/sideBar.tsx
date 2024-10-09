@@ -1,4 +1,3 @@
-import { useEffect, useState } from 'react';
 import { Box, ActionList, Text } from '@primer/react';
 import {
   CodeIcon,
@@ -14,8 +13,8 @@ import {
   PencilIcon,
   ChecklistIcon,
 } from '@primer/octicons-react';
-import { debounce } from 'lodash';
 import { getUser } from '@helper/helper';
+import { categories } from '../other/categories';
 
 interface Props {
   state: boolean;
@@ -44,43 +43,7 @@ const items = [
   },
   {
     title: 'Popular',
-    items: [
-      {
-        name: 'Programming',
-        icon: <CodeIcon size={iconSize} />,
-        action: '/categories/programming/1',
-      },
-      {
-        name: '3D Modeling',
-        icon: <PackageIcon size={iconSize} />,
-        action: '/categories/3d-modeling/1',
-      },
-      {
-        name: 'Electronics',
-        icon: <PlugIcon size={iconSize} />,
-        action: '/categories/electronics/1',
-      },
-      {
-        name: 'Woodworking',
-        icon: <ScreenFullIcon size={iconSize} />,
-        action: '/categories/woodworking/1',
-      },
-      {
-        name: 'Chemistry',
-        icon: <BeakerIcon size={iconSize} />,
-        action: '/categories/chemistry/1',
-      },
-      {
-        name: 'Cybersecurity',
-        icon: <UnlockIcon size={iconSize} />,
-        action: '/categories/cybersecurity/1',
-      },
-      {
-        name: 'Physics',
-        icon: <BookIcon size={iconSize} />,
-        action: '/categories/physics/1',
-      },
-    ],
+    items: categories.slice(0, 5),
   },
 ];
 
@@ -88,6 +51,7 @@ const user = getUser();
 if (user && (user.CanPost == 'true' || user.Admin == 'true')) {
   items[0].items.push({
     name: 'My Articles',
+    value: '',
     icon: <PencilIcon size={iconSize} />,
     action: '/myArticles/1',
   });
@@ -95,25 +59,14 @@ if (user && (user.CanPost == 'true' || user.Admin == 'true')) {
 if (user && user.Admin == 'true') {
   items[0].items.push({
     name: 'Admin View',
+    value: '',
     icon: <ChecklistIcon size={iconSize} />,
     action: '/adminView/1',
   });
 }
 
 export const SideBar = (props: Props) => {
-  const [screenWidth, setScreenWidth] = useState(window.innerWidth);
   const { state } = props;
-
-  const handleResize = debounce(() => {
-    setScreenWidth(window.innerWidth);
-  }, 300);
-
-  useEffect(() => {
-    window.addEventListener('resize', handleResize);
-    return () => {
-      window.removeEventListener('resize', handleResize);
-    };
-  }, [handleResize]);
 
   return (
     <Box

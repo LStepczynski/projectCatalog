@@ -1,20 +1,30 @@
 import React from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 
-import { Box, Heading, Text, Avatar, Label, LabelGroup } from '@primer/react';
+import {
+  Box,
+  Heading,
+  Text,
+  Avatar,
+  Label,
+  Link,
+  LabelGroup,
+} from '@primer/react';
 
 import { useScreenWidth } from '../components/other/useScreenWidth';
 import { getRelativeDate, capitalize, fetchWrapper } from '@helper/helper';
 import { AnimatedImage } from '../components/animation/animatedImage';
 import { ArticleDifficultyLabel } from '../components/contentDisplay/articles/articleDifficultyLabel';
 import { Like } from '../components/contentDisplay/like';
+import Loading from '../components/contentDisplay/loading';
 
 export const Article = () => {
   const [article, setArticle] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(true);
   const { id } = useParams<{
     id: string;
   }>();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
   const visibility = searchParams.get('visibility') || 'public';
 
   const defaultImage =
@@ -24,6 +34,7 @@ export const Article = () => {
   React.useEffect(() => {
     const controller = new AbortController();
     const signal = controller.signal;
+
     if (id) {
       fetchWrapper(
         `${backendUrl}/articles/get?id=${id}&visibility=${visibility}`,
@@ -31,7 +42,10 @@ export const Article = () => {
         true,
         60 * 60
       ).then((data) => {
-        setArticle(data.response.return);
+        if (data.status == 200) {
+          setArticle(data.response.return);
+        }
+        setLoading(false);
       });
     }
 
@@ -42,8 +56,32 @@ export const Article = () => {
 
   const screenWidth = useScreenWidth();
 
+  if (loading) {
+    return <Loading />;
+  }
+
   if (article == null) {
-    return <p>Error 404. Article not found</p>;
+    return (
+      <Box
+        sx={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'center',
+          width: '100vw',
+          height: '50vh',
+        }}
+      >
+        <Heading>Article Not Found</Heading>
+        <Text>Sorry, we could not find this article in our database.</Text>
+        <Link sx={{ mt: '15px' }} href="/">
+          Go to home
+        </Link>
+      </Box>
+    );
   }
 
   return (

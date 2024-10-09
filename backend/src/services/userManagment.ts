@@ -1117,7 +1117,7 @@ export class UserManagment {
 
       // Step 2: Remove all user content
       const id = user.ProfilePic.match(/images\/([^\/]+)\./)[1];
-      console.log(id);
+
       if (id != 'pfp') {
         const removeProfilePicRes = await S3.removeImageFromS3(id);
 
@@ -1127,6 +1127,14 @@ export class UserManagment {
             response: { message: 'server error' },
           };
         }
+      }
+
+      const tokenResponse = await Tokens.deleteUserTokens(username);
+      if (!tokenResponse) {
+        return {
+          status: 500,
+          response: { message: 'server error' },
+        };
       }
 
       const removeArticlesResponse = await Articles.removeAllArticlesByUser(
@@ -1154,43 +1162,45 @@ export class UserManagment {
     }
   }
 
-  public static authenticateToken(req: any, res: any, next: any) {
-    const token = req.cookies.token;
-    if (token == null) {
-      return res.status(400).send({
-        status: 400,
-        response: { message: 'missing authentication token' },
-      });
-    }
+  public static authenticateToken(requireVerified: boolean = true) {
+    return (req: any, res: any, next: any) => {
+      const token = req.cookies.token;
+      if (token == null) {
+        return res.status(400).send({
+          status: 400,
+          response: { message: 'missing authentication token' },
+        });
+      }
 
-    jwt.verify(
-      token,
-      process.env.JWT_KEY || 'default',
-      (err: any, user: any) => {
-        if (err) {
-          if (err.name === 'TokenExpiredError') {
-            return res.status(401).send({
-              status: 401,
-              response: { message: 'token expired' },
+      jwt.verify(
+        token,
+        process.env.JWT_KEY || 'default',
+        (err: any, user: any) => {
+          if (err) {
+            if (err.name === 'TokenExpiredError') {
+              return res.status(401).send({
+                status: 401,
+                response: { message: 'token expired' },
+              });
+            }
+            return res.status(403).send({
+              status: 403,
+              response: { message: 'invalid token' },
             });
           }
-          return res.status(403).send({
-            status: 403,
-            response: { message: 'invalid token' },
-          });
-        }
 
-        if (user.Verified == 'false') {
-          return res.status(403).send({
-            status: 403,
-            response: { message: 'account not verified' },
-          });
-        }
+          if (requireVerified && user.Verified == 'false') {
+            return res.status(403).send({
+              status: 403,
+              response: { message: 'account not verified' },
+            });
+          }
 
-        req.user = user;
-        next();
-      }
-    );
+          req.user = user;
+          next();
+        }
+      );
+    };
   }
 
   public static authTokenOptional(req: any, res: any, next: any) {

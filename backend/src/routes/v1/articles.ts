@@ -8,6 +8,7 @@ import dotenv from 'dotenv';
 import { v4 as uuidv4 } from 'uuid';
 import multer from 'multer';
 import { Helper } from ':api/services/helper';
+import { categories } from 'src/categories';
 
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
@@ -22,7 +23,7 @@ const router = Router();
 router.get(
   '/private',
   RateLimiting.generalAPI,
-  UserManagment.authenticateToken,
+  UserManagment.authenticateToken(),
   async (req: any, res: any) => {
     const sortBy = req.query.sortBy || 'highest';
     const limit = Number(req.query.limit) || 10;
@@ -62,7 +63,7 @@ router.get(
 router.delete(
   '/delete',
   RateLimiting.articleEdit,
-  UserManagment.authenticateToken,
+  UserManagment.authenticateToken(),
   async (req: any, res: any) => {
     const articleId = req.query.id;
     const visibility = req.query.visibility || 'public';
@@ -119,7 +120,7 @@ router.delete(
 router.post(
   '/publish',
   RateLimiting.articleEdit,
-  UserManagment.authenticateToken,
+  UserManagment.authenticateToken(),
   async (req: any, res: any) => {
     const ID = req.query.id;
     const user = req.user;
@@ -149,7 +150,7 @@ router.post(
 router.post(
   '/hide',
   RateLimiting.articleEdit,
-  UserManagment.authenticateToken,
+  UserManagment.authenticateToken(),
   async (req: any, res: any) => {
     const ID = req.query.id;
     const user = req.user;
@@ -210,6 +211,9 @@ router.get(
         articleId,
         tableName
       );
+      if (metadataResult.status != 200) {
+        return res.status(metadataResult.status).send(metadataResult);
+      }
       const metadata = metadataResult.response.return;
 
       // If the article is private check for permissions
@@ -384,6 +388,13 @@ router.get(
     const visibility = req.query.visibility || 'public';
     const user = req.user;
 
+    if (!categories.includes(category)) {
+      return res.status(400).send({
+        status: 400,
+        response: { message: 'invalid category' },
+      });
+    }
+
     // Check for permissions
     if (visibility == 'private' && !UserManagment.checkAdmin(user)) {
       return res.status(403).send({
@@ -450,6 +461,13 @@ router.get(
     const visibility = req.query.visibility || 'public';
     const user = req.user;
 
+    if (!categories.includes(category)) {
+      return res.status(400).send({
+        status: 400,
+        response: { message: 'invalid category' },
+      });
+    }
+
     // Check for permissions
     if (visibility == 'private' && !UserManagment.checkAdmin(user)) {
       return res.status(403).send({
@@ -483,7 +501,7 @@ router.get(
 router.post(
   '/',
   RateLimiting.articleCreationChange,
-  UserManagment.authenticateToken,
+  UserManagment.authenticateToken(),
   async (req: any, res: any) => {
     const body = req.body.body;
     const metadata = req.body.metadata;
@@ -498,12 +516,19 @@ router.post(
       });
     }
 
-    // if (metadata.Image != undefined) {
-    //   return res.status(400).send({
-    //     status: 400,
-    //     response: { message: 'invalid metadata format' },
-    //   });
-    // }
+    if (
+      !(
+        metadata.PrimaryCategory &&
+        categories.includes(metadata.PrimaryCategory)
+      )
+    ) {
+      return res.status(400).send({
+        status: 400,
+        response: {
+          message: 'invalid request - invalid PrimaryCategory value',
+        },
+      });
+    }
 
     // Check for permissions
     if (!UserManagment.checkCanPost(user)) {
@@ -529,7 +554,7 @@ router.post(
 router.put(
   '/',
   RateLimiting.articleCreationChange,
-  UserManagment.authenticateToken,
+  UserManagment.authenticateToken(),
   async (req: any, res: any) => {
     const body = req.body.body;
     const metadata = req.body.metadata;
@@ -552,6 +577,20 @@ router.put(
         response: { message: 'invalid request - missing body or metadata' },
       });
       return;
+    }
+
+    if (
+      !(
+        metadata.PrimaryCategory &&
+        categories.includes(metadata.PrimaryCategory)
+      )
+    ) {
+      return res.status(400).send({
+        status: 400,
+        response: {
+          message: 'invalid request - invalid PrimaryCategory value',
+        },
+      });
     }
 
     // Fetch the article metadata
@@ -581,7 +620,7 @@ router.put(
 router.patch(
   '/',
   RateLimiting.articleCreationChange,
-  UserManagment.authenticateToken,
+  UserManagment.authenticateToken(),
   async (req: any, res: any) => {
     const key = req.body.key;
     const value = req.body.value;
@@ -603,6 +642,16 @@ router.patch(
       res.status(400).send({
         status: 400,
         response: { message: 'invalid request - missing id, key or value' },
+      });
+      return;
+    }
+
+    if (key == 'PrimaryCategory' && !categories.includes(value)) {
+      res.status(400).send({
+        status: 400,
+        response: {
+          message: 'invalid request - invalid PrimaryCategory value',
+        },
       });
       return;
     }
@@ -632,7 +681,7 @@ router.patch(
 router.post(
   '/image',
   RateLimiting.articleCreationChange,
-  UserManagment.authenticateToken,
+  UserManagment.authenticateToken(),
   upload.single('image'),
   async (req: any, res: any) => {
     const ID = req.query.id;

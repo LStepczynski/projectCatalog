@@ -18,7 +18,7 @@ export const Like = (props: Props) => {
   const [likeCount, setLikeCount] = React.useState(count);
   const [isButtonDisabled, setIsButtonDisabled] = React.useState(false);
 
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
   const visibility = searchParams.get('visibility') || 'public';
 
   const cooldownTime = 2000;

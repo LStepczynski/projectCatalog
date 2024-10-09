@@ -62,7 +62,7 @@ router.post('/sign-in', RateLimiting.login, async (req, res) => {
 router.post(
   '/image',
   RateLimiting.profileChange,
-  UserManagment.authenticateToken,
+  UserManagment.authenticateToken(),
   upload.single('image'),
   async (req: any, res: any) => {
     const Username = req.query.username;
@@ -159,7 +159,7 @@ router.get(
 router.post(
   '/like',
   RateLimiting.like,
-  UserManagment.authenticateToken,
+  UserManagment.authenticateToken(),
   async (req: any, res: any) => {
     const articleId = req.body.articleId;
     const user = req.user;
@@ -203,7 +203,7 @@ router.post(
 router.get(
   '/isLiked',
   RateLimiting.generalAPI,
-  UserManagment.authenticateToken,
+  UserManagment.authenticateToken(),
   async (req: any, res: any) => {
     const articleId = req.query.articleId;
     const user = req.user;
@@ -222,7 +222,7 @@ router.get(
 router.post(
   '/change-password',
   RateLimiting.accountDataChange,
-  UserManagment.authenticateToken,
+  UserManagment.authenticateToken(),
   async (req: any, res: any) => {
     const { oldPassword, newPassword } = req.body;
     const username = req.user.Username;
@@ -248,7 +248,7 @@ router.post(
 router.post(
   '/password-reset',
   RateLimiting.accountDataChange,
-  UserManagment.authenticateToken,
+  UserManagment.authenticateToken(),
   async (req: any, res: any) => {
     const user = req.user;
 
@@ -309,7 +309,7 @@ router.post(
 router.post(
   '/change-email',
   RateLimiting.accountDataChange,
-  UserManagment.authenticateToken,
+  UserManagment.authenticateToken(),
   async (req: any, res: any) => {
     const { password, newEmail } = req.body;
     const user = req.user;
@@ -340,7 +340,7 @@ router.post(
 router.post(
   '/remove-account',
   RateLimiting.accountDataChange,
-  UserManagment.authenticateToken,
+  UserManagment.authenticateToken(false),
   async (req: any, res: any) => {
     const { password } = req.body;
     const user = req.user;

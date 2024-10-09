@@ -16,11 +16,11 @@ export class RateLimiting {
   });
 
   /**
-   * Forgot Password rate limiter: 1 requests per 10 minutes per IP.
+   * Forgot Password rate limiter: 1 requests per 5 minutes per IP.
    */
   public static forgotPassword: RateLimitRequestHandler = rateLimit({
-    windowMs: 10 * 60 * 1000, // 20 minutes
-    max: 1, // Limit each IP to 1 requests per windowMs
+    windowMs: 5 * 60 * 1000,
+    max: 1,
     message: {
       status: 429,
       response: {
@@ -36,7 +36,7 @@ export class RateLimiting {
    */
   public static accountDataChange: RateLimitRequestHandler = rateLimit({
     windowMs: 10 * 60 * 1000, // 10 minutes
-    max: 25, // Limit each IP to 25 requests per windowMs
+    max: 25,
     message: {
       status: 429,
       response: {
@@ -49,12 +49,12 @@ export class RateLimiting {
   });
 
   /**
-   * Article Creation/Change rate limiter: 16 requests per 25 minutes per IP.
+   * Article Creation/Change rate limiter: 20 requests per 15 minutes per IP.
    * For adding new articles or editing their content
    */
   public static articleCreationChange: RateLimitRequestHandler = rateLimit({
-    windowMs: 25 * 60 * 1000, // 25 minutes
-    max: 16, // Limit each IP to 16 requests per windowMs
+    windowMs: 15 * 60 * 1000,
+    max: 20,
     message: {
       status: 429,
       response: {
@@ -71,7 +71,7 @@ export class RateLimiting {
    */
   public static articleEdit: RateLimitRequestHandler = rateLimit({
     windowMs: 10 * 60 * 1000, // 10 minutes
-    max: 20, // Limit each IP to 20 requests per windowMs
+    max: 20,
     message: {
       status: 429,
       response: {
@@ -87,7 +87,7 @@ export class RateLimiting {
    */
   public static login: RateLimitRequestHandler = rateLimit({
     windowMs: 5 * 60 * 1000, // 5 minutes
-    max: 15, // Limit each IP to 15 requests per windowMs
+    max: 15,
     message: {
       status: 429,
       response: { message: 'Too many login attempts. Please try again later.' },
@@ -97,11 +97,11 @@ export class RateLimiting {
   });
 
   /**
-   * Register rate limiter: 3 requests per 30 minutes per IP.
+   * Register rate limiter: 5 requests per 30 minutes per IP.
    */
   public static register: RateLimitRequestHandler = rateLimit({
     windowMs: 30 * 60 * 1000, // 30 minutes
-    max: 3, // Limit each IP to 3 requests per windowMs
+    max: 5,
     message: {
       status: 429,
       response: {
@@ -113,11 +113,11 @@ export class RateLimiting {
   });
 
   /**
-   * Register rate limiter: 1 request per 60 minutes per IP.
+   * Profile change rate limiter: 5 requests per 60 minutes per IP.
    */
   public static profileChange: RateLimitRequestHandler = rateLimit({
     windowMs: 60 * 60 * 1000, // 60 minutes
-    max: 1, // Limit each IP to 1 request per windowMs
+    max: 5,
     message: {
       status: 429,
       response: {
@@ -134,7 +134,7 @@ export class RateLimiting {
    */
   public static tokenRefresh: RateLimitRequestHandler = rateLimit({
     windowMs: 30 * 60 * 1000, // 60 minutes
-    max: 10, // Limit each IP to 10 requests per windowMs
+    max: 10,
     message: {
       status: 429,
       response: {
@@ -146,11 +146,11 @@ export class RateLimiting {
   });
 
   /**
-   * Register rate limiter: 40 requests per 5 minutes per IP.
+   * Like rate limiter: 40 requests per 5 minutes per IP.
    */
   public static like: RateLimitRequestHandler = rateLimit({
     windowMs: 5 * 60 * 1000, // 60 minutes
-    max: 40, // Limit each IP to 40 requests per windowMs
+    max: 40,
     message: {
       status: 429,
       response: {

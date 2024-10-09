@@ -20,7 +20,6 @@ export const ProfileDropdown = (props: Props) => {
     <Box
       sx={{
         height: '100%',
-        position: 'relative',
       }}
     >
       <Box
@@ -29,7 +28,7 @@ export const ProfileDropdown = (props: Props) => {
       >
         <ProfilePicture src={user.ProfilePic && user.ProfilePic} />
       </Box>
-      {state && <ProfilePictureModal state={dropdownVis} />}
+      <ProfilePictureModal state={dropdownVis && state} />
     </Box>
   );
 };

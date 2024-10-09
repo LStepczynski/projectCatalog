@@ -1,7 +1,7 @@
 import { fetchWrapper, logOut } from '@helper/helper';
 import { useParams } from 'react-router-dom';
 
-import { InformationPopup } from '../components/contentDisplay/informationPopup';
+import { ShowInformationPopup } from '../components/contentDisplay/informationPopup';
 
 import React from 'react';
 
@@ -29,49 +29,41 @@ export const EmailVerification = () => {
   if (!response) {
     return null;
   } else if (response.status == 200) {
-    return (
-      <InformationPopup
-        isOpen={true}
-        closeFunc={() => {
-          logOut();
-          window.location.href = '/sign-in';
-        }}
-        title="Email Verification"
-        description="Your account has been verified. Please log into your account to view changes."
-      />
+    ShowInformationPopup(
+      'Email Verification',
+      'Your account has been verified. Please log into your account to view changes.',
+      () => {
+        logOut();
+        window.location.href = '/sign-in';
+      }
     );
+    return null;
   } else if (response.status == 404) {
-    return (
-      <InformationPopup
-        isOpen={true}
-        closeFunc={() => {
-          window.location.href = '/';
-        }}
-        title="Email Verification"
-        description="This verification link is invalid. Please try a different one."
-      />
+    ShowInformationPopup(
+      'Email Verification',
+      'This verification link is invalid. Please try a different one.',
+      () => {
+        window.location.href = '/';
+      }
     );
+    return null;
   } else if (response.status == 410) {
-    return (
-      <InformationPopup
-        isOpen={true}
-        closeFunc={() => {
-          window.location.href = '/';
-        }}
-        title="Email Verification"
-        description="This verification link is invalid. Your account is already verified."
-      />
+    ShowInformationPopup(
+      'Email Verification',
+      'This verification link is invalid. Your account is already verified.',
+      () => {
+        window.location.href = '/';
+      }
     );
+    return null;
   } else if (response.status == 500) {
-    return (
-      <InformationPopup
-        isOpen={true}
-        closeFunc={() => {
-          window.location.href = '/';
-        }}
-        title="Email Verification"
-        description="There was a problem with verification. Please try again later."
-      />
+    ShowInformationPopup(
+      'Email Verification',
+      'There was a problem with verification. Please try again later.',
+      () => {
+        window.location.href = '/';
+      }
     );
+    return null;
   }
 };

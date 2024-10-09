@@ -43,7 +43,7 @@ export const NavBar = () => {
       <Box
         sx={{
           transform: navbarVis ? 'translateY(0)' : 'translateY(-100%)',
-          transition: 'transform 0.2s ease',
+          transition: 'transform 0.25s',
           backgroundColor: 'canvas.default',
           justifyContent: 'space-between',
           borderBottom: '1px solid',

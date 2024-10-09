@@ -6,20 +6,27 @@ import {
   Text,
   Button,
   Select,
+  Link,
 } from '@primer/react';
 
 import React from 'react';
 import { useSearchParams } from 'react-router-dom';
 
+import { categories } from '../components/other/categories';
+
+import { ShowConfirmationPopup } from '../components/contentDisplay/confirmationPopup';
+import { ShowInformationPopup } from '../components/contentDisplay/informationPopup';
+
 import { AnimatedImage } from '../components/animation/animatedImage';
-import { getUser, fetchWrapper } from '@helper/helper';
+import { getUser, fetchWrapper, capitalize } from '@helper/helper';
 import { BannerUploadModal } from '../components/contentDisplay/bannerUploadModal';
 import { useScreenWidth } from '../components/other/useScreenWidth';
 import { MultipleChoice } from '../components/core/multipleChoice';
 
 export const Create = () => {
   const [bannerFile, setBannerFile] = React.useState<any>([null, null]); // file, link
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [saved, setSaved] = React.useState(false);
+  const [searchParams] = useSearchParams();
   const articleId = searchParams.get('id');
   const screenWidth = useScreenWidth();
   const [tags, setTags] = React.useState([]);
@@ -39,6 +46,22 @@ export const Create = () => {
   }
 
   React.useEffect(() => {
+    const handleBeforeUnload = (event: any) => {
+      if (!saved) {
+        event.preventDefault();
+        event.returnValue = ''; // This is necessary for some browsers to show the prompt.
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    // Cleanup function to remove the event listener when the component unmounts
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [saved]);
+
+  React.useEffect(() => {
     const controller = new AbortController();
     const signal = controller.signal;
 
@@ -51,7 +74,7 @@ export const Create = () => {
       `${backendUrl}/articles/get?id=${articleId}&visibility=private`,
       { signal },
       true,
-      60
+      60 * 10
     ).then((data) => {
       const article = data.response.return;
       setFormData({
@@ -108,6 +131,7 @@ export const Create = () => {
         formData={formData}
         bannerFile={bannerFile}
         tags={tags}
+        setSaved={setSaved}
       />
     </Box>
   );
@@ -191,7 +215,7 @@ const ArticleCreationForm = (props: FormProps) => {
   const { formData, setFormData, tags, setTags } = props;
   const screenWidth = useScreenWidth();
 
-  const maxBodyLength = 4000;
+  const maxBodyLength = 10000;
   const handleBodyChange = (event: any) => {
     let newData = formData;
     newData.Body = event.target.value;
@@ -313,18 +337,64 @@ const CategorySelection = (props: FormProps) => {
     'exploration',
     'challenge',
     'hands on',
+    'brainstorming',
+    'problem-solving',
+    'iteration',
+    'conceptualization',
+    'imagination',
+    'construction',
+    'modeling',
+    'improvement',
+    'collaboration',
+    'curiosity',
+    'ideation',
+    'solution-driven',
+    'blueprinting',
+    'fabrication',
+    'customization',
+    'learning by doing',
+    'engineering',
+    'testing',
+    'creativity boost',
+    'innovation lab',
+    'craftsmanship',
+    'handcrafted',
+    'skill development',
+    'curiosity-driven',
+    'articulation',
+    'prototype testing',
+    'knowledge expansion',
+    'digital fabrication',
+    'adaptation',
+    'resourcefulness',
+    'open-ended projects',
+    'technical skills',
+    'exploratory learning',
+    'hands-on practice',
+    'skill mastery',
+    'manual work',
+    'analytical thinking',
   ];
 
   return (
     <Box
       sx={{
         display: 'flex',
+        flexDirection: screenWidth < 768 ? 'column' : 'row',
+        gap: 5,
         justifyContent: 'space-around',
         alignItems: 'center',
         width: screenWidth < 768 ? '85%' : '75%',
       }}
     >
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+      <Box
+        sx={{
+          display: 'flex',
+          flexDirection: screenWidth < 768 ? 'row' : 'column',
+          alignItems: screenWidth < 768 ? 'center' : 'left',
+          gap: screenWidth < 768 ? 3 : 1,
+        }}
+      >
         <Text sx={{ opacity: 0.6, fontSize: '14px' }}>Category:</Text>
         <Select
           value={formData.PrimaryCategory}
@@ -335,13 +405,13 @@ const CategorySelection = (props: FormProps) => {
             }));
           }}
         >
-          <Select.Option value="programming">Programming</Select.Option>
-          <Select.Option value="3d-modeling">3D Modeling</Select.Option>
-          <Select.Option value="electronics">Electronics</Select.Option>
-          <Select.Option value="woodworking">Woodworking</Select.Option>
-          <Select.Option value="chemistry">Chemistry</Select.Option>
-          <Select.Option value="cybersecurity">Cybersecurity</Select.Option>
-          <Select.Option value="physics">Physics</Select.Option>
+          {categories.map((item: any) => {
+            return (
+              <Select.Option key={item.name} value={item.value}>
+                {item.name}
+              </Select.Option>
+            );
+          })}
         </Select>
       </Box>
 
@@ -353,9 +423,16 @@ const CategorySelection = (props: FormProps) => {
         maxSelected={3}
         items={items}
         open={open}
-        label=""
+        label="Pick Three Tags"
       />
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+      <Box
+        sx={{
+          display: 'flex',
+          flexDirection: screenWidth < 768 ? 'row' : 'column',
+          alignItems: screenWidth < 768 ? 'center' : 'left',
+          gap: screenWidth < 768 ? 3 : 1,
+        }}
+      >
         <Text sx={{ opacity: 0.6, fontSize: '14px' }}>Difficulty:</Text>
         <Select
           value={formData.Difficulty}
@@ -384,25 +461,32 @@ interface SubmitProps {
   user: any;
   bannerFile: any;
   tags: string[];
+  setSaved: any;
 }
 
 const ArticleSubmit = (props: SubmitProps) => {
   const backendUrl = import.meta.env.VITE_BACKEND_URL;
-  const { formData, user, bannerFile, tags } = props;
+  const { formData, user, bannerFile, tags, setSaved } = props;
 
   // existingId specifies which article is being edited
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
   const existingId = searchParams.get('id') || '';
 
   const handleSubmit = async (status: string) => {
     for (const field of Object.keys(formData)) {
       if (field != 'S3Link' && formData[field].trim() == '') {
-        alert('Please fill out all of the fields in order to save');
+        ShowInformationPopup(
+          'Error',
+          'Please fill out all of the fields in order to save.'
+        );
         return;
       }
     }
     if (tags.length == 0) {
-      alert('Please fill out all of the fields in order to save');
+      ShowInformationPopup(
+        'Error',
+        'Please fill out all of the fields in order to save.'
+      );
       return;
     }
 
@@ -429,29 +513,58 @@ const ArticleSubmit = (props: SubmitProps) => {
         }
       );
 
+      if (articleData.status != 200)
+        throw new Error(articleData.response.message);
+
+      sessionStorage.removeItem(
+        `${backendUrl}/articles/get?id=${existingId}&visibility=private`
+      );
+
       sessionStorage.removeItem(
         `${backendUrl}/articles/author?authorName=${user.Username}&visibility=private`
       );
 
       if (bannerFile[0] == null) {
-        window.location.href = '/myArticles/1';
+        ShowInformationPopup(
+          'Success',
+          `Your article has been ${
+            status == 'private' ? 'saved' : 'submited for review'
+          }.`,
+          () => {
+            setSaved(true);
+            setTimeout(() => (window.location.href = '/myArticles/1'), 500);
+          }
+        );
         return;
       }
       // Submit image data
       const imageData = new FormData();
       imageData.append('image', bannerFile[0]);
       const articleId = articleData.response.id;
-      await fetchWrapper(
+
+      const bannerData = await fetchWrapper(
         `${backendUrl}/articles/image?id=${articleId}&visibility=private`,
         {
           method: 'POST',
           body: imageData,
         }
       );
-    } catch (error) {
-      return alert('An error occurred. Please try again later.');
+
+      if (bannerData.status != 200)
+        throw new Error(bannerData.response.message);
+    } catch (error: any) {
+      return ShowInformationPopup('Error', capitalize(error.message));
     }
-    window.location.href = '/myArticles/1';
+    ShowInformationPopup(
+      'Success',
+      `Your article has been ${
+        status == 'private' ? 'saved' : 'submited for review'
+      }.`,
+      () => {
+        setSaved(true);
+        setTimeout(() => (window.location.href = '/myArticles/1'), 500);
+      }
+    );
   };
 
   return (
@@ -473,7 +586,23 @@ const ArticleSubmit = (props: SubmitProps) => {
         </Button>
         <Button
           onClick={() => {
-            handleSubmit('review');
+            ShowConfirmationPopup(
+              'Publish Article?',
+              <Text>
+                Your article will have to be revised and approved before being
+                published. <br></br>
+                <br></br>
+                Visit our{' '}
+                <Link href="/faq" target="_blank">
+                  FAQ page
+                </Link>{' '}
+                to see if this article meets our standards.
+              </Text>,
+              () => {},
+              () => {
+                handleSubmit('review');
+              }
+            );
           }}
           sx={{ fontSize: '18px', p: 3, width: '100px' }}
         >

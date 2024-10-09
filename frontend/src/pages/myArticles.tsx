@@ -128,7 +128,7 @@ export const MyArticles = () => {
                 }}
               >
                 <PencilIcon size={80} />
-                <Heading>Create</Heading>
+                <Heading sx={{ cursor: 'default' }}>Create</Heading>
               </Box>
             </Box>
           </>
