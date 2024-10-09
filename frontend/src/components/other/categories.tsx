@@ -36,12 +36,6 @@ export const categories = [
     action: '/categories/woodworking/1',
   },
   {
-    name: 'Woodworking',
-    value: 'woodworking2',
-    icon: <ScreenFullIcon size={iconSize} />,
-    action: '/categories/woodworking/1',
-  },
-  {
     name: 'Chemistry',
     value: 'chemistry',
     icon: <BeakerIcon size={iconSize} />,
