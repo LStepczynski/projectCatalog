@@ -215,7 +215,7 @@ const ArticleCreationForm = (props: FormProps) => {
   const { formData, setFormData, tags, setTags } = props;
   const screenWidth = useScreenWidth();
 
-  const maxBodyLength = 4000;
+  const maxBodyLength = 10000;
   const handleBodyChange = (event: any) => {
     let newData = formData;
     newData.Body = event.target.value;
