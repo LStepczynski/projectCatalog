@@ -6,12 +6,8 @@ import { RateLimiting } from ':api/services/rateLimiting';
 import dotenv from 'dotenv';
 
 import { v4 as uuidv4 } from 'uuid';
-import multer from 'multer';
 import { Helper } from ':api/services/helper';
 import { categories } from 'src/categories';
-
-const storage = multer.memoryStorage();
-const upload = multer({ storage: storage });
 
 import { UserManagment } from ':api/services/userManagment';
 
@@ -682,10 +678,10 @@ router.post(
   '/image',
   RateLimiting.articleCreationChange,
   UserManagment.authenticateToken(),
-  upload.single('image'),
   async (req: any, res: any) => {
     const ID = req.query.id;
     const visibility = req.query.visibility || 'public';
+    const image = req.body.image;
     const user = req.user;
 
     // Validate the visibility parameter and choose a corresponding table
@@ -698,7 +694,7 @@ router.post(
     }
 
     // Check for file
-    if (!req.file) {
+    if (!image) {
       return res.status(400).send({
         status: 400,
         response: { message: 'missing image' },
@@ -758,7 +754,7 @@ router.post(
 
     // Add the image to the S3
     try {
-      const response = await S3.saveImage(imageId, req.file);
+      const response = await S3.saveImage(imageId, image);
       if (!response) {
         throw new Error('S3 error');
       }

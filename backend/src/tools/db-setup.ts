@@ -60,7 +60,7 @@ const importItems = async () => {
           const { data, content } = matter(markdownContent);
 
           data.ID = String(data.ID);
-          data.Rating = 0
+          data.Rating = 0;
 
           const params = {
             TableName: directory,
@@ -69,7 +69,7 @@ const importItems = async () => {
 
           // Put item into DynamoDB table
           try {
-            await client.send(new PutItemCommand(params))
+            await client.send(new PutItemCommand(params));
             console.log(`${directory}: Item added - `, data);
           } catch (err: any) {
             console.error('Error adding item to DynamoDB:', err);
@@ -82,7 +82,7 @@ const importItems = async () => {
 
 const main = async () => {
   await createTables();
-  await importItems();
+  // await importItems();
 };
 
 main();

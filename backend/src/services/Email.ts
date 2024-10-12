@@ -7,11 +7,11 @@ export class Email {
   private static EMAIL_PASSWORD = process.env.MAIL_PASSWORD;
   private static EMAIL_ADDRESS = process.env.MAIL_ADDRESS;
 
-  public static sendEmail(
+  public static async sendEmail(
     recipient: string,
     subject: string,
     body: string
-  ): boolean {
+  ): Promise<boolean> {
     const transporter = nodemailer.createTransport({
       service: 'gmail',
       auth: {
@@ -28,60 +28,57 @@ export class Email {
       text: body,
     };
 
-    // Send the email
-    transporter.sendMail(mailOptions, (error, info) => {
-      if (error) {
-        console.error('Error sending email:', error);
-        return false;
-      }
-      console.log('Email sent:', info.response);
+    try {
+      const info = await transporter.sendMail(mailOptions);
       return true;
-    });
-    return false;
+    } catch (error) {
+      console.log('Error sending email:', error);
+      return false;
+    }
   }
 
-  public static sendAccountVerificationEmail(
+  public static async sendAccountVerificationEmail(
     email: string,
     username: string,
     code: string
-  ) {
-    return this.sendEmail(
+  ): Promise<boolean> {
+    return await this.sendEmail(
       email,
       'Account Verification',
       `Hello ${username}.\nPlease verify your Project Catalog account by clicking this link: ${process.env.FRONTEND_URL}/email-verification/${code}`
     );
   }
 
-  public static sendPasswordResetEmail(
+  public static async sendPasswordResetEmail(
     email: string,
     username: string,
     code: string
-  ): boolean {
-    return this.sendEmail(
+  ): Promise<boolean> {
+    return await this.sendEmail(
       email,
       'Password Reset Request',
       `Hello ${username},\n\nYou can reset your password by clicking this link: ${process.env.FRONTEND_URL}/password-reset/${code}\n\nThis link will expire in 6 hours.\n\nIf you did not request a password reset, please ignore this email.`
     );
   }
 
-  public static sendNewPasswordEmail(
+  public static async sendNewPasswordEmail(
     email: string,
     username: string,
     newPassword: string
-  ): boolean {
-    return this.sendEmail(
+  ): Promise<boolean> {
+    return await this.sendEmail(
       email,
       'Your New Password',
       `Hello ${username},\n\nYour password has been reset. Your new password is: ${newPassword}\n\nPlease log in and change your password immediately to ensure your account's security.\n\nIf you did not request a password reset, please contact our support team immediately.`
     );
   }
 
-  public static sendEmailChangeVerificationEmail(
+  public static async sendEmailChangeVerificationEmail(
     newEmail: string,
     username: string,
     verificationTokenValue: string
-  ): boolean {
-    return this.sendEmail(
+  ): Promise<boolean> {
+    return await this.sendEmail(
       newEmail,
       'Verify Your New Email Address',
       `Hello ${username},\n\nYou have requested to change your email address. Please verify your new email by clicking this link: ${process.env.FRONTEND_URL}/verify-email-change/${verificationTokenValue}\n\nThis link will expire in 6 hours.\n\nIf you did not request this change, please contact our support team immediately.`
