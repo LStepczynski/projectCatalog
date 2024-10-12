@@ -3,21 +3,21 @@ import serverless from 'serverless-http';
 import cors from 'cors';
 
 import routes from './routes/index';
-import cookieParser from 'cookie-parser'
+import cookieParser from 'cookie-parser';
 
 import dotenv from 'dotenv';
 dotenv.config();
 
 const app = express();
 
-app.use(express.json());
-app.use(cookieParser())
+app.use(express.json({ limit: '3mb' }));
+app.use(cookieParser());
 
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'], 
-    allowedHeaders: ['Content-Type', 'Authorization'],
+    origin: process.env.FRONTEND_URL || '',
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Set-Cookie'],
     credentials: true,
   })
 );

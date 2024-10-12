@@ -8,10 +8,6 @@ import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
 dotenv.config();
 
-import multer from 'multer';
-const storage = multer.memoryStorage();
-const upload = multer({ storage: storage });
-
 const router = Router();
 
 router.post('/sign-up', RateLimiting.register, async (req, res) => {
@@ -45,13 +41,17 @@ router.post('/sign-in', RateLimiting.login, async (req, res) => {
   // Send the token as a cookie and return the user object
   res.cookie('refresh', response.response.refreshToken, {
     httpOnly: true,
-    secure: process.env.STATE === 'PRODUCTION',
+    sameSite: 'None',
+    secure: process.env.STATE == 'PRODUCTION',
+    domain: '.projectcatalog.click',
     maxAge: 3 * 24 * 60 * 60 * 1000,
   });
   delete response.response.refreshToken;
   res.cookie('token', response.response.accessToken, {
     httpOnly: true,
-    secure: process.env.STATE === 'PRODUCTION',
+    sameSite: 'None',
+    secure: process.env.STATE == 'PRODUCTION',
+    domain: '.projectcatalog.click',
     maxAge: 30 * 60 * 1000,
   });
   delete response.response.accessToken;
@@ -63,10 +63,9 @@ router.post(
   '/image',
   RateLimiting.profileChange,
   UserManagment.authenticateToken(),
-  upload.single('image'),
   async (req: any, res: any) => {
     const Username = req.query.username;
-
+    const image = req.body.image;
     if (!Username) {
       return res.status(400).send({
         status: 400,
@@ -81,19 +80,20 @@ router.post(
       });
     }
 
-    if (!req.file) {
+    if (!image) {
       return res.status(400).send({
         status: 400,
         response: { message: 'missing image' },
       });
     }
-
-    const response = await UserManagment.changeProfilePic(Username, req.file);
+    const response = await UserManagment.changeProfilePic(Username, image);
 
     // Send the token as a cookie and return the user object
     res.cookie('token', response.response.accessToken, {
       httpOnly: true,
-      secure: process.env.STATE === 'PRODUCTION',
+      sameSite: 'None',
+      secure: process.env.STATE == 'PRODUCTION',
+      domain: '.projectcatalog.click',
       maxAge: 30 * 60 * 1000,
     });
     delete response.response.accessToken;
@@ -143,7 +143,9 @@ router.get(
         // Return the cookie and the new user object
         res.cookie('token', token, {
           httpOnly: true,
-          secure: process.env.STATE === 'PRODUCTION',
+          sameSite: 'None',
+          secure: process.env.STATE == 'PRODUCTION',
+          domain: '.projectcatalog.click',
           maxAge: 30 * 60 * 1000,
         });
 
@@ -257,7 +259,9 @@ router.post(
     if (result.response.accessToken) {
       res.cookie('token', result.response.accessToken, {
         httpOnly: true,
-        secure: process.env.STATE === 'PRODUCTION',
+        sameSite: 'None',
+        secure: process.env.STATE == 'PRODUCTION',
+        domain: '.projectcatalog.click',
         maxAge: 30 * 60 * 1000,
       });
     }
