@@ -9,9 +9,45 @@ plugins:
 provider:
   name: aws
   runtime: nodejs18.x
+  region: us-east-2
+  iamRoleStatements:
+    - Effect: 'Allow'
+      Action:
+        - 's3:*' # Allows all S3 actions
+      Resource: 'arn:aws:s3:::project-catalog-storage/*' # All objects in this bucket
+    - Effect: 'Allow'
+      Action:
+        - 'dynamodb:*' # Allows all DynamoDB actions
+      Resource:
+        - 'arn:aws:dynamodb:us-east-2:228073560233:table/ArticlesPublished'
+        - 'arn:aws:dynamodb:us-east-2:228073560233:table/ArticlesPublished/index/*'
+        - 'arn:aws:dynamodb:us-east-2:228073560233:table/ArticlesUnpublished'
+        - 'arn:aws:dynamodb:us-east-2:228073560233:table/ArticlesUnpublished/index/*'
+        - 'arn:aws:dynamodb:us-east-2:228073560233:table/Users'
+        - 'arn:aws:dynamodb:us-east-2:228073560233:table/Users/index/*'
+        - 'arn:aws:dynamodb:us-east-2:228073560233:table/Tokens'
+        - 'arn:aws:dynamodb:us-east-2:228073560233:table/Tokens/index/*'
 
 functions:
   api:
     handler: src/index.handler
     events:
-      - httpApi: '*'
+      - http:
+          path: /{proxy+}
+          method: any
+
+custom:
+  dotenv:
+    path: ${opt:stage, 'dev'}.env
+  esbuild:
+    minify: true
+    bundle: true
+    target: 'node18'
+    sourcemap: false
+    packagerOptions:
+      scripts:
+        - npm install --os=linux --cpu=x64 sharp
+    external:
+      - sharp
+    exclude:
+      - aws-sdk
