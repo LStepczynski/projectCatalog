@@ -1,9 +1,11 @@
 import { DynamoDB } from '@aws-sdk/client-dynamodb';
+import dotenv from 'dotenv';
+dotenv.config();
 
 export const client = new DynamoDB({
-  region: 'local',
-  credentials: {
-    accessKeyId: 'ABC',
-    secretAccessKey: 'XYZ123',
-  },
+  region: 'us-east-2',
+  // credentials: {
+  //   accessKeyId: process.env.AWS_ACCESS_KEY_ID || '',
+  //   secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || '',
+  // },
 });

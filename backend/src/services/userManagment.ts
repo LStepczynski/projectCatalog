@@ -303,7 +303,11 @@ export class UserManagment {
       await Tokens.createToken(token);
 
       // Send verification email
-      Email.sendAccountVerificationEmail(email, username, verificationCode);
+      await Email.sendAccountVerificationEmail(
+        email,
+        username,
+        verificationCode
+      );
 
       return {
         status: 200,
@@ -664,7 +668,7 @@ export class UserManagment {
       /images\/([a-f0-9-]+)\.(?:png|jpg|jpeg|gif)$/
     );
     if (oldImageId) {
-      S3.removeImageFromS3(oldImageId[1]);
+      await S3.removeImageFromS3(oldImageId[1]);
     }
 
     // Create the url for the new picture
@@ -743,7 +747,6 @@ export class UserManagment {
       'ProfilePic',
       user.ProfilePic
     );
-
     // Modify the response from the updateUser function by adding in the new JWT
     // Token and return it
     const resultWithToken: any = result;
@@ -903,7 +906,7 @@ export class UserManagment {
       };
 
       await Tokens.createToken(token);
-      Email.sendEmailChangeVerificationEmail(
+      await Email.sendEmailChangeVerificationEmail(
         newEmail,
         username,
         verificationTokenValue
@@ -976,7 +979,7 @@ export class UserManagment {
     await Tokens.createToken(resetToken);
 
     // Send password reset email
-    Email.sendPasswordResetEmail(user.Email, username, resetTokenValue);
+    await Email.sendPasswordResetEmail(user.Email, username, resetTokenValue);
 
     await this.updateUser(user.Username, 'LastPasswordChange', currentTime);
 
@@ -1039,7 +1042,7 @@ export class UserManagment {
             await Tokens.deleteToken(verificationCode);
 
             // Send email to user with the new password
-            const emailSent = Email.sendNewPasswordEmail(
+            const emailSent = await Email.sendNewPasswordEmail(
               user.Email,
               username,
               newPassword

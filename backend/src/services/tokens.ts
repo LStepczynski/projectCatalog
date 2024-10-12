@@ -113,7 +113,6 @@ export class Tokens {
     try {
       const command = new PutItemCommand(params);
       await this.client.send(command);
-      console.log('Token created successfully.');
     } catch (error: any) {
       if (error.name === 'ConditionalCheckFailedException') {
         throw new Error('Token with this value already exists.');

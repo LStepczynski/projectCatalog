@@ -16,10 +16,6 @@ dotenv.config();
 
 const s3Client = new S3Client({
   region: process.env.AWS_S3_REGION,
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
-  },
 });
 
 export class S3 {
@@ -47,11 +43,11 @@ export class S3 {
       const objectKey = `${tableName}/${metadata.ID}.md`;
 
       // Temporary for local import purposes
-      fs.writeFileSync(
-        `src/assets/${tableName}/${metadata.ID}.md`,
-        markdownString,
-        'utf8'
-      );
+      // fs.writeFileSync(
+      //   `src/assets/${tableName}/${metadata.ID}.md`,
+      //   markdownString,
+      //   'utf8'
+      // );
 
       // Add the object to the S3
       const params = {
@@ -92,12 +88,12 @@ export class S3 {
       await s3Client.send(new DeleteObjectCommand(params));
 
       // Temporary for local import purposes
-      fs.unlink(`src/assets/${tableName}/${id}.md`, (err) => {
-        if (err) {
-          console.log('Error while removing file from local directory');
-          return false;
-        }
-      });
+      // fs.unlink(`src/assets/${tableName}/${id}.md`, (err) => {
+      //   if (err) {
+      //     console.log('Error while removing file from local directory');
+      //     return false;
+      //   }
+      // });
 
       return true;
     } catch (err) {
@@ -138,34 +134,34 @@ export class S3 {
     }
   }
 
-  /**
-   * Reads an article from S3 and returns it
-   * TEMPORARY - for development purposes this
-   * function reads from the hard drive
-   *
-   * @public
-   * @static
-   * @param {string} tableName - table name the article is in
-   * @param {string} id - article id
-   * @returns {{ body: any; metadata: any; }} - Fetched article
-   */
-  public static readFromS3(tableName: string, id: string) {
-    const filePath = `src/assets/${tableName}/${id}.md`;
+  // /**
+  //  * Reads an article from S3 and returns it
+  //  * TEMPORARY - for development purposes this
+  //  * function reads from the hard drive
+  //  *
+  //  * @public
+  //  * @static
+  //  * @param {string} tableName - table name the article is in
+  //  * @param {string} id - article id
+  //  * @returns {{ body: any; metadata: any; }} - Fetched article
+  //  */
+  // public static readFromS3(tableName: string, id: string) {
+  //   const filePath = `src/assets/${tableName}/${id}.md`;
 
-    try {
-      const fileContents = fs.readFileSync(filePath, 'utf8');
+  //   try {
+  //     const fileContents = fs.readFileSync(filePath, 'utf8');
 
-      const parsed = matter(fileContents);
+  //     const parsed = matter(fileContents);
 
-      return {
-        body: parsed.content,
-        metadata: parsed.data,
-      };
-    } catch (error) {
-      console.error('Error reading file:', error);
-      return undefined;
-    }
-  }
+  //     return {
+  //       body: parsed.content,
+  //       metadata: parsed.data,
+  //     };
+  //   } catch (error) {
+  //     console.error('Error reading file:', error);
+  //     return undefined;
+  //   }
+  // }
 
   /**
    * Deletes multiple files from S3 in a single batch operation.
@@ -182,15 +178,15 @@ export class S3 {
     }
 
     // Temporary for local import purposes
-    for (const key of keys) {
-      if (key.startsWith('images')) continue;
-      fs.unlink(`src/assets/${key}`, (err) => {
-        if (err) {
-          console.log('Error while removing file from local directory');
-          return false;
-        }
-      });
-    }
+    // for (const key of keys) {
+    //   if (key.startsWith('images')) continue;
+    //   fs.unlink(`src/assets/${key}`, (err) => {
+    //     if (err) {
+    //       console.log('Error while removing file from local directory');
+    //       return false;
+    //     }
+    //   });
+    // }
 
     try {
       const params = {
@@ -220,46 +216,46 @@ export class S3 {
     }
   }
 
-  // /**
-  //  * Reads an article from S3
-  //  *
-  //  * @public
-  //  * @static
-  //  * @async
-  //  * @param {string} tableName - table name the article is in
-  //  * @param {string} id - article id
-  //  * @returns {{ body: any; metadata: any; }} - Fetched article
-  //  */
-  // public static async readFromS3(tableName: string, id: string) {
-  //   try {
-  //     const objectKey = `${tableName}/${id}.md`;
-  //     const bucketName = process.env.AWS_S3_BUCKET_NAME;
+  /**
+   * Reads an article from S3
+   *
+   * @public
+   * @static
+   * @async
+   * @param {string} tableName - table name the article is in
+   * @param {string} id - article id
+   * @returns {{ body: any; metadata: any; }} - Fetched article
+   */
+  public static async readFromS3(tableName: string, id: string) {
+    try {
+      const objectKey = `${tableName}/${id}.md`;
+      const bucketName = process.env.AWS_S3_BUCKET_NAME;
 
-  //     const params = {
-  //       Bucket: bucketName,
-  //       Key: objectKey,
-  //     };
+      const params = {
+        Bucket: bucketName,
+        Key: objectKey,
+      };
 
-  //     const command = new GetObjectCommand(params);
-  //     const response = await s3Client.send(command);
+      const command = new GetObjectCommand(params);
+      const response = await s3Client.send(command);
 
-  //     const fileContents = await response.Body?.transformToString();
+      const fileContents = await response.Body?.transformToString();
 
-  //     if (fileContents == undefined) {
-  //       throw new Error('file undefined');
-  //     }
+      if (fileContents == undefined) {
+        throw new Error('file undefined');
+      }
 
-  //     const parsed = matter(fileContents);
+      const parsed = matter(fileContents);
 
-  //     return {
-  //       body: parsed.content,
-  //       metadata: parsed.data,
-  //     };
-  //   } catch (error: any) {
-  //     console.error('Error reading file from S3:', error);
-  //     return undefined;
-  //   }
-  // }
+      return {
+        body: parsed.content,
+        metadata: parsed.data,
+      };
+    } catch (error: any) {
+      console.error('Error reading file from S3:', error);
+      return undefined;
+    }
+  }
 
   // public static readImage(id: string) {
   //   try {
@@ -292,7 +288,9 @@ export class S3 {
   ) {
     try {
       // Resizes an image
-      image = await sharp(image.buffer)
+      const base64Data = image.replace(/^data:image\/\w+;base64,/, '');
+      const imageBuffer = Buffer.from(base64Data, 'base64');
+      image = await sharp(imageBuffer)
         .resize({ width: imgWidth, height: imgHeight, fit: 'cover' })
         .png()
         .toBuffer();
