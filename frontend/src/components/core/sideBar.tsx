@@ -1,15 +1,8 @@
 import { Box, ActionList, Text } from '@primer/react';
 import {
-  CodeIcon,
-  PackageIcon,
-  PlugIcon,
-  ScreenFullIcon,
   PersonIcon,
   HomeIcon,
-  BeakerIcon,
   TelescopeIcon,
-  UnlockIcon,
-  BookIcon,
   PencilIcon,
   ChecklistIcon,
 } from '@primer/octicons-react';
