@@ -538,15 +538,15 @@ const ArticleSubmit = (props: SubmitProps) => {
         return;
       }
       // Submit image data
-      const imageData = new FormData();
-      imageData.append('image', bannerFile[0]);
       const articleId = articleData.response.id;
 
       const bannerData = await fetchWrapper(
         `${backendUrl}/articles/image?id=${articleId}&visibility=private`,
         {
           method: 'POST',
-          body: imageData,
+          body: JSON.stringify({
+            image: bannerFile[1],
+          }),
         }
       );
 

@@ -38,19 +38,29 @@ export const ProfileUploadModal = ({ endpoint, isOpen, closeFunc }: any) => {
   const handleFileChange = async (event: any) => {
     const file = event.target.files[0];
     if (file) {
+      // Validate that the file is an image
       if (!file.type.startsWith('image/')) {
         ShowInformationPopup('Error', 'Please select a valid image file.');
         return;
       }
 
+      // Validate file size (max 2MB)
       const maxSize = 2 * 1024 * 1024;
       if (file.size > maxSize) {
         ShowInformationPopup('Error', 'File size exceeds 2MB.');
         return;
       }
 
+      // Convert the file to a Base64 string
+      const base64String = await convertToBase64(file);
+
+      // Close the modal or any related UI
       closeFunc();
-      const result = await sendImage(file);
+
+      // Send the Base64 string to the server
+      const result = await sendImage(base64String);
+
+      // Handle response
       if (result.status != 200) {
         ShowInformationPopup(
           'Error',
@@ -58,17 +68,28 @@ export const ProfileUploadModal = ({ endpoint, isOpen, closeFunc }: any) => {
         );
       }
 
+      // Reload the page to reflect changes
       location.reload();
     }
   };
 
-  const sendImage = async (file: any) => {
-    const formData = new FormData();
-    formData.append('image', file);
+  // Helper function to convert file to Base64
+  const convertToBase64 = (file: any): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file); // Reads the file as a Data URL (Base64 encoded)
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = (error) => reject(error);
+    });
+  };
 
+  // Function to send the Base64 image string
+  const sendImage = async (base64String: string) => {
     return await fetchWrapper(endpoint, {
       method: 'POST',
-      body: formData,
+      body: JSON.stringify({
+        image: base64String, // Send the Base64 string
+      }),
     });
   };
 
