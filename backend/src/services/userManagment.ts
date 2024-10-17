@@ -234,7 +234,7 @@ export class UserManagment {
     username: string,
     password: string,
     email: string,
-    canPost: string = 'false',
+    canPost: string = 'true',
     admin: string = 'false'
   ) {
     // Validate the parameters
