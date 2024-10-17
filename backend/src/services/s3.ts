@@ -42,13 +42,6 @@ export class S3 {
       const bucketName = process.env.AWS_S3_BUCKET_NAME;
       const objectKey = `${tableName}/${metadata.ID}.md`;
 
-      // Temporary for local import purposes
-      // fs.writeFileSync(
-      //   `src/assets/${tableName}/${metadata.ID}.md`,
-      //   markdownString,
-      //   'utf8'
-      // );
-
       // Add the object to the S3
       const params = {
         Bucket: bucketName,
@@ -87,14 +80,6 @@ export class S3 {
 
       await s3Client.send(new DeleteObjectCommand(params));
 
-      // Temporary for local import purposes
-      // fs.unlink(`src/assets/${tableName}/${id}.md`, (err) => {
-      //   if (err) {
-      //     console.log('Error while removing file from local directory');
-      //     return false;
-      //   }
-      // });
-
       return true;
     } catch (err) {
       console.log(err);
@@ -120,48 +105,12 @@ export class S3 {
 
       await s3Client.send(new DeleteObjectCommand(params));
 
-      // fs.unlink(`src/images/${id}.png`, (err) => {
-      //   if (err) {
-      //     console.log('Error while removing file from local directory');
-      //     return false;
-      //   }
-      // });
-
       return true;
     } catch (err) {
       console.log(err);
       return false;
     }
   }
-
-  // /**
-  //  * Reads an article from S3 and returns it
-  //  * TEMPORARY - for development purposes this
-  //  * function reads from the hard drive
-  //  *
-  //  * @public
-  //  * @static
-  //  * @param {string} tableName - table name the article is in
-  //  * @param {string} id - article id
-  //  * @returns {{ body: any; metadata: any; }} - Fetched article
-  //  */
-  // public static readFromS3(tableName: string, id: string) {
-  //   const filePath = `src/assets/${tableName}/${id}.md`;
-
-  //   try {
-  //     const fileContents = fs.readFileSync(filePath, 'utf8');
-
-  //     const parsed = matter(fileContents);
-
-  //     return {
-  //       body: parsed.content,
-  //       metadata: parsed.data,
-  //     };
-  //   } catch (error) {
-  //     console.error('Error reading file:', error);
-  //     return undefined;
-  //   }
-  // }
 
   /**
    * Deletes multiple files from S3 in a single batch operation.
@@ -176,17 +125,6 @@ export class S3 {
     if (keys.length === 0) {
       return true;
     }
-
-    // Temporary for local import purposes
-    // for (const key of keys) {
-    //   if (key.startsWith('images')) continue;
-    //   fs.unlink(`src/assets/${key}`, (err) => {
-    //     if (err) {
-    //       console.log('Error while removing file from local directory');
-    //       return false;
-    //     }
-    //   });
-    // }
 
     try {
       const params = {
@@ -257,17 +195,6 @@ export class S3 {
     }
   }
 
-  // public static readImage(id: string) {
-  //   try {
-  //     const imagePath = `src/images/${id}.png`;
-  //     const data = fs.readFileSync(imagePath);
-  //     return data;
-  //   } catch (err) {
-  //     console.error('Error reading image:', err);
-  //     return undefined;
-  //   }
-  // }
-
   /**
    * Resizes an image, changes it to png and saves it to S3
    *
@@ -298,9 +225,6 @@ export class S3 {
       // Get the bucket name and generate image key
       const bucketName = process.env.AWS_S3_BUCKET_NAME;
       const objectKey = `images/${id}.png`;
-
-      // // Temporary for local import purposes
-      // fs.writeFileSync(`src/images/${id}.png`, image);
 
       const params = {
         Bucket: bucketName,
