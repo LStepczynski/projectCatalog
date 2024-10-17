@@ -38,7 +38,7 @@ functions:
 
 custom:
   dotenv:
-    path: ${opt:stage, 'dev'}.env
+    path: .env.${opt:stage, 'dev'}
   esbuild:
     minify: true
     bundle: true

@@ -4,6 +4,7 @@
   "description": "",
   "scripts": {
     "dev": "serverless offline",
+    "deploy": "sls deploy --stage production",
     "build": "tsc && copyfiles -u 1 src/**/*.md dist",
     "docker": "docker-compose up",
     "db-populate": "ts-node src/tools/db-setup.ts",
