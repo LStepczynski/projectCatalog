@@ -4,5 +4,5 @@ node_modules
 /src/plans
 /.esbuild
 /docker
-*.env
+.env.*
 src/test.ts
