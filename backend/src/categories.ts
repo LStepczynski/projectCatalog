@@ -5,5 +5,6 @@ export const categories = [
   'woodworking',
   'chemistry',
   'cybersecurity',
+  'business',
   'physics',
 ];

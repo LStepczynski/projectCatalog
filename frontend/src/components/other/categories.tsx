@@ -5,6 +5,7 @@ import {
   ScreenFullIcon,
   BeakerIcon,
   UnlockIcon,
+  RepoIcon,
   BookIcon,
 } from '@primer/octicons-react';
 
@@ -28,6 +29,12 @@ export const categories = [
     value: 'electronics',
     icon: <PlugIcon size={iconSize} />,
     action: '/categories/electronics/1',
+  },
+  {
+    name: 'Business',
+    value: 'business',
+    icon: <RepoIcon size={iconSize} />,
+    action: '/categories/business/1',
   },
   {
     name: 'Woodworking',
