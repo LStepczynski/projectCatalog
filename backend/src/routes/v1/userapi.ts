@@ -38,23 +38,25 @@ router.post('/sign-in', RateLimiting.login, async (req, res) => {
   }
   const response = await UserManagment.verifyUser(username, password);
   if (response.status != 200) {
-    res.status(response.status).send(response);
+    return res.status(response.status).send(response);
   }
 
   // Send the token as a cookie and return the user object
   res.cookie('refresh', response.response.refreshToken!, {
     httpOnly: true,
-    sameSite: 'none',
-    secure: process.env.STATE == 'PRODUCTION',
-    domain: '.projectcatalog.click',
+    sameSite: process.env.STATE === 'PRODUCTION' ? 'none' : 'lax',
+    secure: process.env.STATE === 'PRODUCTION',
+    domain:
+      process.env.STATE === 'PRODUCTION' ? '.projectcatalog.click' : undefined,
     maxAge: 3 * 24 * 60 * 60 * 1000,
   });
   delete response.response.refreshToken;
   res.cookie('token', response.response.accessToken!, {
     httpOnly: true,
-    sameSite: 'none',
-    secure: process.env.STATE == 'PRODUCTION',
-    domain: '.projectcatalog.click',
+    sameSite: process.env.STATE === 'PRODUCTION' ? 'none' : 'lax',
+    secure: process.env.STATE === 'PRODUCTION',
+    domain:
+      process.env.STATE === 'PRODUCTION' ? '.projectcatalog.click' : undefined,
     maxAge: 30 * 60 * 1000,
   });
   delete response.response.accessToken;
@@ -94,9 +96,12 @@ router.post(
     // Send the token as a cookie and return the user object
     res.cookie('token', response.response.accessToken, {
       httpOnly: true,
-      sameSite: 'none',
-      secure: process.env.STATE == 'PRODUCTION',
-      domain: '.projectcatalog.click',
+      sameSite: process.env.STATE === 'PRODUCTION' ? 'none' : 'lax',
+      secure: process.env.STATE === 'PRODUCTION',
+      domain:
+        process.env.STATE === 'PRODUCTION'
+          ? '.projectcatalog.click'
+          : undefined,
       maxAge: 30 * 60 * 1000,
     });
     delete response.response.accessToken;
@@ -146,9 +151,12 @@ router.get(
         // Return the cookie and the new user object
         res.cookie('token', token, {
           httpOnly: true,
-          sameSite: 'none',
-          secure: process.env.STATE == 'PRODUCTION',
-          domain: '.projectcatalog.click',
+          sameSite: process.env.STATE === 'PRODUCTION' ? 'none' : 'lax',
+          secure: process.env.STATE === 'PRODUCTION',
+          domain:
+            process.env.STATE === 'PRODUCTION'
+              ? '.projectcatalog.click'
+              : undefined,
           maxAge: 30 * 60 * 1000,
         });
 
@@ -262,9 +270,12 @@ router.post(
     if (result.response.accessToken) {
       res.cookie('token', result.response.accessToken, {
         httpOnly: true,
-        sameSite: 'none',
-        secure: process.env.STATE == 'PRODUCTION',
-        domain: '.projectcatalog.click',
+        sameSite: process.env.STATE === 'PRODUCTION' ? 'none' : 'lax',
+        secure: process.env.STATE === 'PRODUCTION',
+        domain:
+          process.env.STATE === 'PRODUCTION'
+            ? '.projectcatalog.click'
+            : undefined,
         maxAge: 30 * 60 * 1000,
       });
     }

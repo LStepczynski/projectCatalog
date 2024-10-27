@@ -28,7 +28,7 @@ router.get(
     const user = req.user;
 
     // Check for permissions
-    if (!UserManagment.checkAdmin(user)) {
+    if (!UserManagment.isAdmin(user)) {
       return res
         .status(403)
         .send({ status: 403, message: 'permission denied' });
@@ -129,7 +129,7 @@ router.post(
     }
 
     // Check for permissions
-    if (!UserManagment.checkAdmin(user)) {
+    if (!UserManagment.isAdmin(user)) {
       return res.status(403).send({
         status: 403,
         response: { message: 'permission denied' },
@@ -318,7 +318,7 @@ router.get(
     const user = req.user;
 
     // Check for permissions
-    if (visibility == 'private' && !UserManagment.checkAdmin(user)) {
+    if (visibility == 'private' && !UserManagment.isAdmin(user)) {
       return res.status(403).send({
         status: 403,
         response: { message: 'permission denied' },
@@ -392,7 +392,7 @@ router.get(
     }
 
     // Check for permissions
-    if (visibility == 'private' && !UserManagment.checkAdmin(user)) {
+    if (visibility == 'private' && !UserManagment.isAdmin(user)) {
       return res.status(403).send({
         status: 403,
         response: { message: 'permission denied' },
@@ -465,7 +465,7 @@ router.get(
     }
 
     // Check for permissions
-    if (visibility == 'private' && !UserManagment.checkAdmin(user)) {
+    if (visibility == 'private' && !UserManagment.isAdmin(user)) {
       return res.status(403).send({
         status: 403,
         response: { message: 'permission denied' },

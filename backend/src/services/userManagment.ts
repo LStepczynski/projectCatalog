@@ -87,9 +87,7 @@ export class UserManagment {
    * @returns {boolean}
    */
   public static checkUsername(username: string, user: any) {
-    if (user.Admin === 'true') return true;
-    if (user.Username === username) return true;
-    return false;
+    return this.isAdmin(user) || user.CanPost === 'true';
   }
 
   /**
@@ -100,9 +98,8 @@ export class UserManagment {
    * @param {UserObject} user - user object
    * @returns {boolean}
    */
-  public static checkAdmin(user: any) {
-    if (user.Admin === 'true') return true;
-    return false;
+  public static isAdmin(user: any) {
+    return user.Admin === 'true';
   }
 
   /**
@@ -128,18 +125,11 @@ export class UserManagment {
    * @returns {*} object
    */
   public static decodeJWT(token: string) {
-    const base64Url = token.split('.')[1]; // Get the payload part
-    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-    const jsonPayload = decodeURIComponent(
-      atob(base64)
-        .split('')
-        .map(function (c) {
-          return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-        })
-        .join('')
-    );
-
-    return JSON.parse(jsonPayload);
+    try {
+      return jwt.decode(token);
+    } catch {
+      return null;
+    }
   }
 
   /**
@@ -754,8 +744,7 @@ export class UserManagment {
     delete user.Liked;
     delete user.VerificationCode;
 
-    resultWithToken.response.verificationToken =
-      UserManagment.getAccessJWT(user);
+    resultWithToken.response.accessToken = UserManagment.getAccessJWT(user);
     resultWithToken.response.user = user;
     return resultWithToken;
   }

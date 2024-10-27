@@ -49,7 +49,7 @@ export const getUser = (): User | undefined => {
     const user: User = JSON.parse(userString);
     return user;
   } catch (error) {
-    console.error("Error parsing user from localStorage", error);
+    console.error('Error parsing user from localStorage', error);
     return undefined;
   }
 };
@@ -59,36 +59,44 @@ export const logOut = () => {
   window.location.href = '/sign-in';
 };
 
-export const fetchWrapper = async (url: string, options: RequestInit = {}, cache: boolean = false, cacheDuration: number = 360) => {
+export const fetchWrapper = async (
+  url: string,
+  options: RequestInit = {},
+  cache: boolean = false,
+  cacheDuration: number = 360
+) => {
   const now = Math.floor(Date.now() / 1000);
 
   if (cache) {
-    const cachedRes = sessionStorage.getItem(url)
+    const cachedRes = sessionStorage.getItem(url);
     if (cachedRes) {
       try {
-        const data = JSON.parse(cachedRes)
+        const data = JSON.parse(cachedRes);
         if (now < data.exp) {
-          return data.data
+          return data.data;
         }
       } catch (err) {
-        console.error(err)
-      }      
-    } 
+        console.error(err);
+      }
+    }
   }
 
   // Get the user and check for an expiration date
-  const user = getUser()
+  const user = getUser();
+
   if (user && user.exp) {
     const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
     // Request a new token if it is expired
     if (now > user.exp) {
-      const renewReq = await fetch(`${backendUrl}/user/token-refresh`, {credentials: 'include'})
-      const renewRes = await renewReq.json()
+      const renewReq = await fetch(`${backendUrl}/user/token-refresh`, {
+        credentials: 'include',
+      });
+      const renewRes = await renewReq.json();
       if (renewRes.status != 200) {
         // Log out on error
-        logOut()
-        throw Error('User token verification failed')
+        logOut();
+        throw Error('User token verification failed');
       }
       localStorage.setItem('user', JSON.stringify(renewRes.response.user));
     }
@@ -99,10 +107,12 @@ export const fetchWrapper = async (url: string, options: RequestInit = {}, cache
 
   // Set default headers if not provided
   // Ensure defaultHeaders is always a valid HeadersInit
-  const defaultHeaders: HeadersInit = !isFormData ? {
-    'Content-Type': 'application/json',
-    ...options.headers,
-  } : options.headers ?? {}; // Use an empty object if headers is undefined
+  const defaultHeaders: HeadersInit = !isFormData
+    ? {
+        'Content-Type': 'application/json',
+        ...options.headers,
+      }
+    : options.headers ?? {}; // Use an empty object if headers is undefined
 
   // Create the full options object with default headers
   const fetchOptions: RequestInit = {
@@ -114,7 +124,7 @@ export const fetchWrapper = async (url: string, options: RequestInit = {}, cache
 
   try {
     const response = await fetch(url, fetchOptions);
-    
+
     // Parse response as JSON if content-type is application/json
     const data = await response.json();
 
@@ -126,9 +136,9 @@ export const fetchWrapper = async (url: string, options: RequestInit = {}, cache
     if (cache) {
       const storageData = {
         data: data,
-        exp: now + (data.status == 200 ? cacheDuration : 90)
-      }
-      sessionStorage.setItem(url, JSON.stringify(storageData))
+        exp: now + (data.status == 200 ? cacheDuration : 90),
+      };
+      sessionStorage.setItem(url, JSON.stringify(storageData));
     }
 
     return data;
@@ -137,4 +147,3 @@ export const fetchWrapper = async (url: string, options: RequestInit = {}, cache
     throw error; // Re-throw error to be handled by caller
   }
 };
-
