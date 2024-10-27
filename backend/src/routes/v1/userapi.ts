@@ -11,19 +11,44 @@ dotenv.config();
 const router = Router();
 
 router.post('/sign-up', RateLimiting.register, async (req, res) => {
-  const username = req.body.username;
-  const password = req.body.password;
-  const email = req.body.email;
+  try {
+    const { username, password, email } = req.body;
 
-  if ([username, password, email].some((val) => val === undefined)) {
-    return res.status(400).send({
-      status: 400,
-      response: { message: 'username, password, or email is missing' },
+    const invalidFields = ['username', 'password', 'email'].filter((field) => {
+      const value = req.body[field];
+      return (
+        value === undefined ||
+        value === null ||
+        (typeof value === 'string' && value.trim() === '')
+      );
+    });
+
+    if (invalidFields.length > 0) {
+      return res.status(400).json({
+        status: 400,
+        response: {
+          message: `The following fields are missing or invalid: ${invalidFields.join(
+            ', '
+          )}.`,
+        },
+      });
+    }
+
+    // Proceed to create the user
+    const response = await UserManagment.createUser(
+      username.trim(),
+      password,
+      email.trim()
+    );
+
+    return res.status(response.status).json(response);
+  } catch (error) {
+    console.error('Error in /sign-up route:', error);
+    return res.status(500).json({
+      status: 500,
+      response: { message: 'Internal server error.' },
     });
   }
-
-  const response = await UserManagment.createUser(username, password, email);
-  return res.status(response.status).send(response);
 });
 
 router.post('/sign-in', RateLimiting.login, async (req, res) => {

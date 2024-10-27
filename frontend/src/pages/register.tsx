@@ -1,5 +1,13 @@
-import React from 'react';
-import { Box, TextInput, Button, Text, Heading, Link } from '@primer/react';
+import React, { useState, ChangeEvent, FormEvent } from 'react';
+import {
+  Box,
+  TextInput,
+  Button,
+  Text,
+  Heading,
+  Link,
+  Spinner,
+} from '@primer/react';
 
 import {
   PersonIcon,
@@ -11,66 +19,92 @@ import {
 
 import { capitalize, fetchWrapper } from '@helper/helper';
 
-export const Register = () => {
-  const [passwordIcon, setPasswordIcon] = React.useState<any>(EyeIcon);
-  const [passVis, setPassVis] = React.useState<string>('password');
-  const [errorMessage, setErrorMessage] = React.useState<string>('');
-  const [formData, setFormData] = React.useState({
+interface FormData {
+  username: string;
+  password: string;
+  email: string;
+}
+
+export const Register: React.FC = () => {
+  const [passwordVisible, setPasswordVisible] = useState<boolean>(false);
+  const [errorMessage, setErrorMessage] = useState<string>('');
+  const [loading, setLoading] = useState<boolean>(false);
+  const [formData, setFormData] = useState<FormData>({
     username: '',
     password: '',
     email: '',
   });
 
-  const handleInputChange = (event: any) => {
+  const handleInputChange = (event: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = event.target;
-    setFormData({
-      ...formData,
+    setFormData((prevData) => ({
+      ...prevData,
       [name]: value,
-    });
+    }));
   };
 
-  const changeIcon = () => {
-    if (passwordIcon == EyeClosedIcon) {
-      setPasswordIcon(EyeIcon);
-      setPassVis('password');
-    } else {
-      setPasswordIcon(EyeClosedIcon);
-      setPassVis('text');
-    }
+  const togglePasswordVisibility = () => {
+    setPasswordVisible((prev) => !prev);
   };
 
-  const handleSubmit = (event: any) => {
-    event.preventDefault();
-    if (Object.values(formData).some((value) => value.trim() == '')) {
-      setErrorMessage('All fields must be filled');
-      return;
+  const validateForm = (): boolean => {
+    const { username, password, email } = formData;
+
+    if (
+      username.trim() === '' ||
+      password.trim() === '' ||
+      email.trim() === ''
+    ) {
+      setErrorMessage('All fields must be filled.');
+      return false;
     }
 
-    if (formData.password.length < 8) {
+    if (password.length < 8) {
       setErrorMessage('Password must be at least 8 characters long.');
-      return;
+      return false;
     }
 
-    if (!/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(formData.email)) {
+    // Simple email regex for validation
+    const emailRegex = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/;
+    if (!emailRegex.test(email)) {
       setErrorMessage('Invalid email address.');
-      return;
+      return false;
     }
 
-    const backendUrl = import.meta.env.VITE_BACKEND_URL;
-    fetchWrapper(`${backendUrl}/user/sign-up`, {
-      method: 'POST',
-      body: JSON.stringify(formData),
-    })
-      .then((data) => {
-        if (data.status != 200) {
-          setErrorMessage(capitalize(data.response.message) + '.');
-          return;
-        }
-        window.location.href = '/sign-in';
-      })
-      .catch((err) => {
-        setErrorMessage(capitalize(err) + '.');
+    setErrorMessage('');
+    return true;
+  };
+
+  const handleSubmit = async (event: FormEvent) => {
+    event.preventDefault();
+
+    if (!validateForm()) return;
+
+    setLoading(true);
+    try {
+      const backendUrl = import.meta.env.VITE_BACKEND_URL;
+      const response = await fetchWrapper(`${backendUrl}/user/sign-up`, {
+        method: 'POST',
+        body: JSON.stringify(formData),
       });
+
+      if (response.status !== 200) {
+        setErrorMessage(capitalize(response.response.message) + '.');
+        return;
+      }
+
+      window.location.href = '/sign-in';
+      setFormData({
+        username: '',
+        password: '',
+        email: '',
+      });
+    } catch (err: any) {
+      console.error('Registration error:', err);
+      setErrorMessage(capitalize(err.message || 'An error occurred') + '.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const inputStyle = {
@@ -85,6 +119,8 @@ export const Register = () => {
       }}
     >
       <Box
+        as="form"
+        onSubmit={handleSubmit}
         sx={{
           backgroundColor: 'menu.bgActive',
           borderRadius: '10px',
@@ -114,6 +150,7 @@ export const Register = () => {
             onChange={handleInputChange}
             leadingVisual={PersonIcon}
             sx={inputStyle}
+            required
           />
         </Box>
 
@@ -124,10 +161,12 @@ export const Register = () => {
             name="email"
             size="large"
             placeholder="Email"
+            type="email"
             value={formData.email}
             onChange={handleInputChange}
             leadingVisual={MailIcon}
             sx={inputStyle}
+            required
           />
         </Box>
 
@@ -136,7 +175,7 @@ export const Register = () => {
           <TextInput
             aria-label="Password"
             name="password"
-            type={passVis}
+            type={passwordVisible ? 'text' : 'password'}
             size="large"
             placeholder="Password"
             value={formData.password}
@@ -144,12 +183,13 @@ export const Register = () => {
             leadingVisual={LockIcon}
             trailingAction={
               <TextInput.Action
-                onClick={changeIcon}
-                icon={passwordIcon}
-                aria-label="Visibility"
+                onClick={togglePasswordVisibility}
+                icon={passwordVisible ? EyeClosedIcon : EyeIcon}
+                aria-label={passwordVisible ? 'Hide password' : 'Show password'}
               />
             }
             sx={inputStyle}
+            required
           />
         </Box>
 
@@ -162,15 +202,26 @@ export const Register = () => {
             {errorMessage}
           </Text>
         )}
+
         <Button
-          onClick={handleSubmit}
+          type="submit"
+          disabled={loading}
           sx={{
             backgroundColor: 'primer.canvas.sticky',
             fontSize: '16px',
             py: '20px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
           }}
         >
-          Sign Up
+          {loading ? (
+            <>
+              <Spinner sx={{ mt: 2 }} size="small" />
+            </>
+          ) : (
+            'Sign Up'
+          )}
         </Button>
       </Box>
     </Box>
