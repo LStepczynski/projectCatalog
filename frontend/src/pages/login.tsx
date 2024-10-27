@@ -1,7 +1,13 @@
-import React from 'react';
-import { Box, TextInput, Button, Text, Heading, Link } from '@primer/react';
-
-import { ShowInformationPopup } from '../components/contentDisplay/informationPopup';
+import React, { useState, ChangeEvent, FormEvent } from 'react';
+import {
+  Box,
+  TextInput,
+  Button,
+  Text,
+  Heading,
+  Link,
+  Spinner,
+} from '@primer/react';
 
 import {
   PersonIcon,
@@ -11,58 +17,76 @@ import {
 } from '@primer/octicons-react';
 
 import { capitalize, fetchWrapper } from '@helper/helper';
+import { ShowInformationPopup } from '../components/contentDisplay/informationPopup';
 
-export const Login = () => {
-  const [passwordIcon, setPasswordIcon] = React.useState<any>(EyeIcon);
-  const [passVis, setPassVis] = React.useState<string>('password');
-  const [errorMessage, setErrorMessage] = React.useState<string>('');
-  const [formData, setFormData] = React.useState({
+interface FormData {
+  username: string;
+  password: string;
+}
+
+export const Login: React.FC = () => {
+  const [passwordVisible, setPasswordVisible] = useState<boolean>(false);
+  const [errorMessage, setErrorMessage] = useState<string>('');
+  const [loading, setLoading] = useState<boolean>(false);
+  const [formData, setFormData] = useState<FormData>({
     username: '',
     password: '',
   });
 
-  const handleInputChange = (event: any) => {
+  const handleInputChange = (event: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = event.target;
-    setFormData({
-      ...formData,
+    setFormData((prevData) => ({
+      ...prevData,
       [name]: value,
-    });
+    }));
   };
 
-  const changeIcon = () => {
-    if (passwordIcon == EyeClosedIcon) {
-      setPasswordIcon(EyeIcon);
-      setPassVis('password');
-    } else {
-      setPasswordIcon(EyeClosedIcon);
-      setPassVis('text');
-    }
+  const togglePasswordVisibility = () => {
+    setPasswordVisible((prev) => !prev);
   };
 
-  const handleSubmit = (event: any) => {
-    event.preventDefault();
-    if (Object.values(formData).some((value) => value.trim() == '')) {
-      setErrorMessage('All fields must be filled');
-      return;
+  const validateForm = (): boolean => {
+    const { username, password } = formData;
+
+    if (username.trim() === '' || password.trim() === '') {
+      setErrorMessage('All fields must be filled.');
+      return false;
     }
 
-    if (formData.password.length < 8) {
+    if (password.length < 8) {
       setErrorMessage('Invalid login credentials.');
-      return;
+      return false;
     }
 
-    const backendUrl = import.meta.env.VITE_BACKEND_URL;
-    fetchWrapper(`${backendUrl}/user/sign-in`, {
-      method: 'POST',
-      body: JSON.stringify(formData),
-    }).then((data) => {
-      if (data.status != 200) {
-        setErrorMessage(capitalize(data.response.message) + '.');
+    setErrorMessage('');
+    return true;
+  };
+
+  const handleSubmit = async (event: FormEvent) => {
+    event.preventDefault();
+
+    if (!validateForm()) return;
+
+    setLoading(true);
+    try {
+      const backendUrl = import.meta.env.VITE_BACKEND_URL;
+      const response = await fetchWrapper(`${backendUrl}/user/sign-in`, {
+        method: 'POST',
+        body: JSON.stringify(formData),
+      });
+
+      if (response.status !== 200) {
+        setErrorMessage(capitalize(response.response.message) + '.');
         return;
       }
 
       window.location.href = '/';
-    });
+    } catch (err: any) {
+      console.error('Login error:', err);
+      setErrorMessage(capitalize(err.message || 'An error occurred') + '.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const inputStyle = {
@@ -77,6 +101,8 @@ export const Login = () => {
       }}
     >
       <Box
+        as="form"
+        onSubmit={handleSubmit}
         sx={{
           backgroundColor: 'menu.bgActive',
           borderRadius: '10px',
@@ -106,6 +132,7 @@ export const Login = () => {
             onChange={handleInputChange}
             leadingVisual={PersonIcon}
             sx={inputStyle}
+            required
           />
         </Box>
 
@@ -114,7 +141,7 @@ export const Login = () => {
           <TextInput
             aria-label="Password"
             name="password"
-            type={passVis}
+            type={passwordVisible ? 'text' : 'password'}
             size="large"
             placeholder="Password"
             value={formData.password}
@@ -122,12 +149,13 @@ export const Login = () => {
             leadingVisual={LockIcon}
             trailingAction={
               <TextInput.Action
-                onClick={changeIcon}
-                icon={passwordIcon}
-                aria-label="Visibility"
+                onClick={togglePasswordVisibility}
+                icon={passwordVisible ? EyeClosedIcon : EyeIcon}
+                aria-label={passwordVisible ? 'Hide password' : 'Show password'}
               />
             }
             sx={inputStyle}
+            required
           />
         </Box>
 
@@ -144,38 +172,67 @@ export const Login = () => {
             {errorMessage}
           </Text>
         )}
+
         <Button
-          onClick={handleSubmit}
+          type="submit"
+          disabled={loading}
           sx={{
             backgroundColor: 'primer.canvas.sticky',
             fontSize: '16px',
             py: '20px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
           }}
         >
-          Sign In
+          {loading ? (
+            <>
+              <Spinner sx={{ mt: 2 }} size="small" />
+            </>
+          ) : (
+            'Sign In'
+          )}
         </Button>
       </Box>
     </Box>
   );
 };
 
-const PasswordReset = ({ username }: any) => {
+interface PasswordResetProps {
+  username: string;
+}
+
+const PasswordReset: React.FC<PasswordResetProps> = ({ username }) => {
   const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
   const handleClick = async () => {
-    if (username == '') return;
+    if (username.trim() === '') return;
 
-    const response = await fetchWrapper(`${backendUrl}/user/forgot-password`, {
-      method: 'POST',
-      body: JSON.stringify({ username: username }),
-    });
+    try {
+      const response = await fetchWrapper(
+        `${backendUrl}/user/forgot-password`,
+        {
+          method: 'POST',
+          body: JSON.stringify({ username: username.trim() }),
+        }
+      );
 
-    ShowInformationPopup('Forgot Password', response.response.message);
+      ShowInformationPopup('Forgot Password', response.response.message);
+    } catch (err: any) {
+      console.error('Password reset error:', err);
+      ShowInformationPopup(
+        'Forgot Password',
+        capitalize(err.message || 'An error occurred') + '.'
+      );
+    }
   };
 
   return (
     <>
-      <Link onClick={handleClick} sx={{ cursor: 'pointer', width: '40%' }}>
+      <Link
+        onClick={handleClick}
+        sx={{ cursor: 'pointer', width: '40%', textAlign: 'center' }}
+      >
         Forgot Password
       </Link>
     </>
