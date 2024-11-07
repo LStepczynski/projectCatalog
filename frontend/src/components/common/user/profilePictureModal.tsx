@@ -1,13 +1,14 @@
-import { getUser } from '@helper/helper';
-import { Box, ActionList, Text } from '@primer/react';
+import { getUser } from '@utils/getUser';
+import { logOut } from '@utils/logOut';
 
+import { ProfilePicture } from '@components/common/user/profilePicture';
+
+import { Box, ActionList, Text } from '@primer/react';
 import {
   PersonIcon,
   MoveToStartIcon,
   PencilIcon,
 } from '@primer/octicons-react';
-import { ProfilePicture } from './profilePicture';
-import { logOut } from '@helper/helper';
 
 interface Props {
   state: boolean;

@@ -1,10 +1,14 @@
 import { useEffect, useState } from 'react';
+
+import { getUser } from '@utils/getUser';
+
+import { SideBar } from '@components/layout/sideBar';
+import { ProfileDropdown } from '@components/common/user/profileDropdown';
+
 import { Box, Button } from '@primer/react';
-import { debounce } from 'lodash';
 import { ThreeBarsIcon } from '@primer/octicons-react';
-import { SideBar } from './sideBar';
-import { getUser } from '@helper/helper';
-import { ProfileDropdown } from '../common/user/profileDropdown';
+
+import { debounce } from 'lodash';
 
 export const NavBar = () => {
   const [prevScrollPos, setPrevScrollPos] = useState(window.pageYOffset);

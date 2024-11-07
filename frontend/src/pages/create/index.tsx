@@ -1,3 +1,20 @@
+import React from 'react';
+import { useSearchParams } from 'react-router-dom';
+
+import { BannerUploadModal } from './components/bannerUploadModal';
+import { MultipleChoice } from './components/multipleChoice';
+
+import { getUser } from '@utils/getUser';
+import { fetchWrapper } from '@utils/fetchWrapper';
+import { capitalize } from '@utils/capitalize';
+
+import { useScreenWidth } from '@hooks/useScreenWidth';
+
+import { categories } from '@config/categories';
+import { ShowConfirmationPopup } from '@components/common/popups/confirmationPopup';
+import { ShowInformationPopup } from '@components/common/popups/informationPopup';
+import { AnimatedImage } from '@components/animation/animatedImage';
+
 import {
   Box,
   TextInput,
@@ -8,20 +25,6 @@ import {
   Select,
   Link,
 } from '@primer/react';
-
-import React from 'react';
-import { useSearchParams } from 'react-router-dom';
-
-import { categories } from '../components/other/categories';
-
-import { ShowConfirmationPopup } from '../components/contentDisplay/confirmationPopup';
-import { ShowInformationPopup } from '../components/contentDisplay/informationPopup';
-
-import { AnimatedImage } from '../components/animation/animatedImage';
-import { getUser, fetchWrapper, capitalize } from '@helper/helper';
-import { BannerUploadModal } from '../components/contentDisplay/bannerUploadModal';
-import { useScreenWidth } from '../components/other/useScreenWidth';
-import { MultipleChoice } from '../components/core/multipleChoice';
 
 export const Create = () => {
   const [bannerFile, setBannerFile] = React.useState<any>([null, null]); // file, link

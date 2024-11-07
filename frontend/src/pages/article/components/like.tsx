@@ -1,10 +1,11 @@
-import { Box, Text } from '@primer/react';
-import { HeartFillIcon, HeartIcon } from '@primer/octicons-react';
-
-import { fetchWrapper, getUser } from '@helper/helper';
+import React from 'react';
 import { useSearchParams } from 'react-router-dom';
 
-import React from 'react';
+import { fetchWrapper } from '@utils/fetchWrapper';
+import { getUser } from '@utils/getUser';
+
+import { Box, Text } from '@primer/react';
+import { HeartFillIcon, HeartIcon } from '@primer/octicons-react';
 
 interface Props {
   count: number;

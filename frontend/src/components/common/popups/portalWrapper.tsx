@@ -1,4 +1,5 @@
 import ReactDOM from 'react-dom';
+
 import { ThemeProvider, BaseStyles } from '@primer/react';
 
 export const PortalWrapper = ({ children }: any) => {

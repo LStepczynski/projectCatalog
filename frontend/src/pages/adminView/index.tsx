@@ -1,12 +1,15 @@
 import React from 'react';
 import { useParams } from 'react-router-dom';
 
-import { Box, Select, Text, Heading, Pagination } from '@primer/react';
+import { getUser } from '@utils/getUser';
+import { fetchWrapper } from '@utils/fetchWrapper';
 
-import { ArticlePrivate } from '../components/contentDisplay/articles/articlePrivate';
-import { getUser, fetchWrapper } from '@helper/helper';
-import { useScreenWidth } from '../components/other/useScreenWidth';
-import { SkeletonCategoryPanel } from '../components/core/skeletons/skeletonCategoryPanel';
+import { useScreenWidth } from '@hooks/useScreenWidth';
+
+import { SkeletonCategoryPanel } from '@components/common/skeletons/skeletonCategoryPanel';
+import { ArticlePrivate } from '@components/articles/articlePrivate';
+
+import { Box, Select, Text, Heading, Pagination } from '@primer/react';
 
 export const AdminView = () => {
   const [articles, setArticles] = React.useState<any>(null);

@@ -1,13 +1,16 @@
-import { useParams } from 'react-router-dom';
 import React from 'react';
-import { Box, Heading, Text, Pagination } from '@primer/react';
-import { ArticleLarge } from '../components/contentDisplay/articles/articleLarge';
-import { ArticleMedium } from '../components/contentDisplay/articles/articleMedium';
-import { ArticleSmall } from '../components/contentDisplay/articles/articleSmall';
-import { useScreenWidth } from '../components/other/useScreenWidth';
-import { fetchWrapper } from '@helper/helper';
+import { useParams } from 'react-router-dom';
 
-import { SkeletonCategoryPanel } from '../components/core/skeletons/skeletonCategoryPanel';
+import { useScreenWidth } from '@hooks/useScreenWidth';
+
+import { fetchWrapper } from '@utils/fetchWrapper';
+
+import { SkeletonCategoryPanel } from '@components/common/skeletons/skeletonCategoryPanel';
+import { ArticleMedium } from '@components/articles/articleMedium';
+import { ArticleLarge } from '@components/articles/articleLarge';
+import { ArticleSmall } from '@components/articles/articleSmall';
+
+import { Box, Heading, Text, Pagination } from '@primer/react';
 
 export const Category: React.FC = () => {
   const { categoryName, page } = useParams<{

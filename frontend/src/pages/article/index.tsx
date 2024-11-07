@@ -1,6 +1,18 @@
 import React from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 
+import { Like } from './components/like';
+
+import { getRelativeDate } from '@utils/getRelativeDate';
+import { fetchWrapper } from '@utils/fetchWrapper';
+import { capitalize } from '@utils/capitalize';
+
+import { useScreenWidth } from '@hooks/useScreenWidth';
+
+import { ArticleDifficultyLabel } from '@components/articles/articleDifficultyLabel';
+import { AnimatedImage } from '@components/animation/animatedImage';
+import Loading from '@components/animation/loading';
+
 import {
   Box,
   Heading,
@@ -10,13 +22,6 @@ import {
   Link,
   LabelGroup,
 } from '@primer/react';
-
-import { useScreenWidth } from '../../hooks/useScreenWidth';
-import { getRelativeDate, capitalize, fetchWrapper } from '@helper/helper';
-import { AnimatedImage } from '../../components/animation/animatedImage';
-import { ArticleDifficultyLabel } from '../../components/articles/articleDifficultyLabel';
-import { Like } from './components/like';
-import Loading from '../../components/animation/loading';
 
 export const Article = () => {
   const [article, setArticle] = React.useState<any>(null);

@@ -1,16 +1,20 @@
 import React from 'react';
 
-import { Box, Heading, Text, Button, TextInput } from '@primer/react';
-
-import { ProfilePicture } from '../../components/common/user/profilePicture';
 import { ProfileUploadModal } from './components/profileUploadModal';
-import { ShowInformationPopup } from '../../components/common/informationPopup';
-import { ShowConfirmationPopup } from '../../components/common/confirmationPopup';
 
-import { fetchWrapper, capitalize, getUser, logOut } from '@helper/helper';
-import { PortalWrapper } from '../../components/common/portalWrapper';
+import { fetchWrapper } from '@utils/fetchWrapper';
+import { capitalize } from '@utils/capitalize';
+import { getUser } from '@utils/getUser';
+import { logOut } from '@utils/logOut';
 
-import { useScreenWidth } from '../../hooks/useScreenWidth';
+import { useScreenWidth } from '@hooks/useScreenWidth';
+
+import { ShowConfirmationPopup } from '@components/common/popups/confirmationPopup';
+import { ShowInformationPopup } from '@components/common/popups/informationPopup';
+import { ProfilePicture } from '@components/common/user/profilePicture';
+import { PortalWrapper } from '@components/common/popups/portalWrapper';
+
+import { Box, Heading, Text, Button, TextInput } from '@primer/react';
 
 export const Account = () => {
   const [uploadModal, setUploadModal] = React.useState<any>(false);

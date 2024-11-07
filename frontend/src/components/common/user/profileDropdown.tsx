@@ -1,9 +1,9 @@
 import React from 'react';
 
-import { ProfilePictureModal } from './profilePictureModal';
-import { ProfilePicture } from './profilePicture';
+import { ProfilePictureModal } from '@components/common/user/profilePictureModal';
+import { ProfilePicture } from '@components/common/user/profilePicture';
 
-import { getUser } from '@helper/helper';
+import { getUser } from '@utils/getUser';
 import { Box } from '@primer/react';
 
 interface Props {

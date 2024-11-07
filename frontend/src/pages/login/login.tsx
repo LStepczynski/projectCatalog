@@ -1,4 +1,10 @@
 import React, { useState, ChangeEvent, FormEvent } from 'react';
+
+import { capitalize } from '@utils/capitalize';
+import { fetchWrapper } from '@utils/fetchWrapper';
+
+import { ShowInformationPopup } from '@components/common/popups/informationPopup';
+
 import {
   Box,
   TextInput,
@@ -8,16 +14,12 @@ import {
   Link,
   Spinner,
 } from '@primer/react';
-
 import {
   PersonIcon,
   LockIcon,
   EyeIcon,
   EyeClosedIcon,
 } from '@primer/octicons-react';
-
-import { capitalize, fetchWrapper } from '@helper/helper';
-import { ShowInformationPopup } from '../components/contentDisplay/informationPopup';
 
 interface FormData {
   username: string;

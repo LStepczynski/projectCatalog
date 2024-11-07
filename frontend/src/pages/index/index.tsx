@@ -1,12 +1,13 @@
+import React from 'react';
+
+import { RainbowText } from './components/rainbowText';
+
+import { useScreenWidth } from '@hooks/useScreenWidth';
+
 import { Box, Text, Heading } from '@primer/react';
 import { PersonIcon, BookIcon } from '@primer/octicons-react';
 
-import React from 'react';
-
 import anime from 'animejs';
-import { RainbowText } from './components/rainbowText';
-
-import { useScreenWidth } from '../../hooks/useScreenWidth';
 
 const keyframeStyles = {
   '@keyframes gradient-animation': {

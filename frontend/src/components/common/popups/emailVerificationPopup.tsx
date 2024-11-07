@@ -1,7 +1,7 @@
 import React from 'react';
 
-import { BannerPopup } from './bannerPopup';
-import { getUser } from '@helper/helper';
+import { BannerPopup } from '@components/common/popups/bannerPopup';
+import { getUser } from '@utils/getUser';
 
 export const EmailVerificationPopup = () => {
   const [bannerVis, setBannerVis] = React.useState(false);

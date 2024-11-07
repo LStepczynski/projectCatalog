@@ -1,16 +1,19 @@
-import { Box } from '@primer/react';
 import React from 'react';
+import { Box } from '@primer/react';
+
+import { capitalize } from '@utils/capitalize';
+import { fetchWrapper } from '@utils/fetchWrapper';
+
+import { useScreenWidth } from '@hooks/useScreenWidth';
+
+import { ArticleLarge } from '@components/articles/articleLarge';
+import { ArticleMedium } from '@components/articles/articleMedium';
+import { ArticleSmall } from '@components/articles/articleSmall';
 
 import { CategoryHeader } from './components/categoryHeader';
-import { ArticleLarge } from '../../components/articles/articleLarge';
-import { ArticleMedium } from '../../components/articles/articleMedium';
-import { ArticleSmall } from '../../components/articles/articleSmall';
-
-import { capitalize, fetchWrapper } from '@helper/helper';
-import { useScreenWidth } from '../../hooks/useScreenWidth';
 import { SkeletonCategoriesPanel } from './components/skeletonCategoriesPanel';
 
-import { categories } from '../../config/categories';
+import { categories } from '@config/categories';
 
 export const Categories = () => {
   const [articles, setArticles] = React.useState(() => {

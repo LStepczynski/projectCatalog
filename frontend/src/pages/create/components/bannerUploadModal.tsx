@@ -1,6 +1,8 @@
-import { Modal } from '../core/Modal';
-import { Box, TextInput, Button } from '@primer/react';
 import React from 'react';
+
+import { Modal } from '@components/common/popups/Modal';
+
+import { Box, TextInput, Button } from '@primer/react';
 import { MoveToBottomIcon } from '@primer/octicons-react';
 
 export const BannerUploadModal = ({ isOpen, closeFunc, bannerFunc }: any) => {

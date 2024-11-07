@@ -1,6 +1,7 @@
-import { Box, Text, Button } from '@primer/react';
-import { ThemeProvider, BaseStyles } from '@primer/react';
 import { createRoot } from 'react-dom/client';
+
+import { ThemeProvider, BaseStyles } from '@primer/react';
+import { Box, Text, Button } from '@primer/react';
 
 interface Props {
   title: string;

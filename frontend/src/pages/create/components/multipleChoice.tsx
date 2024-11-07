@@ -1,4 +1,7 @@
 import React from 'react';
+
+import { capitalize } from '@utils/capitalize';
+
 import {
   Box,
   TextInput,
@@ -8,8 +11,6 @@ import {
   ActionList,
 } from '@primer/react';
 import { SearchIcon, ChevronDownIcon } from '@primer/octicons-react';
-
-import { capitalize } from '@helper/helper';
 
 interface Props {
   text: string;

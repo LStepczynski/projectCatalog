@@ -1,3 +1,7 @@
+import { getUser } from '@utils/getUser';
+
+import { categories } from '@config/categories';
+
 import { Box, ActionList, Text } from '@primer/react';
 import {
   PersonIcon,
@@ -6,8 +10,6 @@ import {
   PencilIcon,
   ChecklistIcon,
 } from '@primer/octicons-react';
-import { getUser } from '@helper/helper';
-import { categories } from '../../config/categories';
 
 interface Props {
   state: boolean;

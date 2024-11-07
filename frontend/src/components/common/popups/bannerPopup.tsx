@@ -1,8 +1,10 @@
 import React from 'react';
+
+import { useScreenWidth } from '@hooks/useScreenWidth';
+
 import { debounce } from 'lodash';
 
 import { Box, Text } from '@primer/react';
-import { useScreenWidth } from '../../hooks/useScreenWidth';
 import { XCircleIcon } from '@primer/octicons-react';
 
 interface Props {

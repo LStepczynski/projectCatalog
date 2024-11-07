@@ -1,9 +1,12 @@
-import { Box, Heading, Text, Avatar } from '@primer/react';
 import React from 'react';
-import { getRelativeDate } from '@helper/helper';
-import { AnimatedImage } from '../animation/animatedImage';
-import { ArticleDropdown } from './articleDropdown';
-import { ArticleDifficultyLabel } from './articleDifficultyLabel';
+
+import { getRelativeDate } from '@utils/getRelativeDate';
+
+import { ArticleDifficultyLabel } from '@components/articles/articleDifficultyLabel';
+import { ArticleDropdown } from '@components/articles/articleDropdown';
+import { AnimatedImage } from '@components/animation/animatedImage';
+
+import { Box, Heading, Text, Avatar } from '@primer/react';
 
 interface Props {
   article: Article;

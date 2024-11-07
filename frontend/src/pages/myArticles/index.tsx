@@ -1,14 +1,17 @@
 import React from 'react';
 import { useParams } from 'react-router-dom';
 
-import { Box, Heading, Pagination } from '@primer/react';
+import { getUser } from '@utils/getUser';
+import { fetchWrapper } from '@utils/fetchWrapper';
 
-import { ArticleSmall } from '../components/contentDisplay/articles/articleSmall';
-import { ArticlePrivate } from '../components/contentDisplay/articles/articlePrivate';
-import { getUser, fetchWrapper } from '@helper/helper';
-import { useScreenWidth } from '../components/other/useScreenWidth';
+import { useScreenWidth } from '@hooks/useScreenWidth';
+
+import { ArticleSmall } from '@components/articles/articleSmall';
+import { ArticlePrivate } from '@components/articles/articlePrivate';
+import { SkeletonCategoryPanel } from '@components/common/skeletons/skeletonCategoryPanel';
+
+import { Box, Heading, Pagination } from '@primer/react';
 import { PencilIcon } from '@primer/octicons-react';
-import { SkeletonCategoryPanel } from '../components/core/skeletons/skeletonCategoryPanel';
 
 export const MyArticles = () => {
   const [publicArticles, setPublicArticles] = React.useState<any>(null);

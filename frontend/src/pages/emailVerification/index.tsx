@@ -1,9 +1,10 @@
-import { fetchWrapper, logOut } from '@helper/helper';
+import React from 'react';
 import { useParams } from 'react-router-dom';
 
-import { ShowInformationPopup } from '../components/contentDisplay/informationPopup';
+import { fetchWrapper } from '@utils/fetchWrapper';
+import { logOut } from '@utils/logOut';
 
-import React from 'react';
+import { ShowInformationPopup } from '@components/common/popups/informationPopup';
 
 export const EmailVerification = () => {
   const [response, setResponse] = React.useState<any>(null);

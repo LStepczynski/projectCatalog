@@ -1,10 +1,14 @@
 import React from 'react';
-import { Box, TextInput, Button } from '@primer/react';
-import { Modal } from '../../../components/common/Modal';
+
+import { fetchWrapper } from '@utils/fetchWrapper';
+import { getUser } from '@utils/getUser';
+
+import { ShowInformationPopup } from '@components/common/popups/informationPopup';
+import { ShowConfirmationPopup } from '@components/common/popups/confirmationPopup';
+import { Modal } from '@components/common/popups/Modal';
+
 import { MoveToBottomIcon } from '@primer/octicons-react';
-import { ShowConfirmationPopup } from '../../../components/common/confirmationPopup';
-import { ShowInformationPopup } from '../../../components/common/informationPopup';
-import { getUser, fetchWrapper } from '@helper/helper';
+import { Box, TextInput, Button } from '@primer/react';
 
 export const ProfileUploadModal = ({ endpoint, isOpen, closeFunc }: any) => {
   const fileInputRef = React.useRef<any>(null);

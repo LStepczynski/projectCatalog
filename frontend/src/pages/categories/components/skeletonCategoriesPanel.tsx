@@ -1,6 +1,8 @@
+import { SkeletonBox } from '@components/common/skeletons/skeletonBox';
+
+import { useScreenWidth } from '@hooks/useScreenWidth';
+
 import { Box } from '@primer/react';
-import { SkeletonBox } from '../../../components/layout/skeletonBox';
-import { useScreenWidth } from '../../../hooks/useScreenWidth';
 
 interface Props {
   headerWidth: string;

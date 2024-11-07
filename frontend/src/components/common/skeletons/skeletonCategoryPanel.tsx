@@ -1,6 +1,8 @@
+import { useScreenWidth } from '@hooks/useScreenWidth';
+
+import { SkeletonBox } from '@components/common/skeletons/skeletonBox';
+
 import { Box } from '@primer/react';
-import { SkeletonBox } from './skeletonBox';
-import { useScreenWidth } from '../../other/useScreenWidth';
 
 export const SkeletonCategoryPanel = ({ bigArticles = true }) => {
   const screenWidth = useScreenWidth();

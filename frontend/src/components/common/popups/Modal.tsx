@@ -1,4 +1,5 @@
-import { PortalWrapper } from './portalWrapper';
+import { PortalWrapper } from '@components/common/popups/portalWrapper';
+
 import { Box, Button } from '@primer/react';
 
 export const Modal = ({ children, isOpen, closeFunc }: any) => {
