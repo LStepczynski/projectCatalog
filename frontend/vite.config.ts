@@ -7,7 +7,11 @@ export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
-      '@helper': resolve(__dirname, 'src/helper'),
+      '@utils': resolve(__dirname, 'src/utils'),
+      '@hooks': resolve(__dirname, 'src/hooks'),
+      '@pages': resolve(__dirname, 'src/pages'),
+      '@components': resolve(__dirname, 'src/components'),
+      '@config': resolve(__dirname, 'src/config'),
     },
   },
 });

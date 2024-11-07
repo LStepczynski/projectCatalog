@@ -1,5 +1,6 @@
-import { Box } from '@primer/react';
 import { useState, useRef } from 'react';
+
+import { Box } from '@primer/react';
 
 interface Props {
   url: string;
