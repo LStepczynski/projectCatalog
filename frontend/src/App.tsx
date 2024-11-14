@@ -1,7 +1,7 @@
 import { ThemeProvider, BaseStyles, Box } from '@primer/react';
 import { Routes } from './routes';
 import { NavBar } from './components/layout/navBar';
-import { EmailVerificationPopup } from './components/common/emailVerificationPopup';
+import { EmailVerificationPopup } from '@components/common/popups/emailVerificationPopup';
 
 export const App = () => {
   const mode = 'dark';
