@@ -377,7 +377,7 @@ export class UserManagment {
 
   /**
    * Checks if an article is in the user's liked list
-   *
+   * @TODO:
    * @public
    * @static
    * @async
@@ -398,7 +398,7 @@ export class UserManagment {
 
   /**
    * Updates the user object in the database and returns an api response
-   *
+   * @TODO: User
    * @public
    * @static
    * @async
@@ -473,6 +473,7 @@ export class UserManagment {
       const result = await client.send(command);
 
       if (!result.Attributes) {
+        throw new CustomExcpetion({ status: 400, response: 'User not found' });
         return {
           status: 404,
           response: { message: 'User not found' },
@@ -495,12 +496,14 @@ export class UserManagment {
   /**
    * Authenticates the user with the username and password. Returns the user JWT object
    * and the api response
-   *
+   * @TODO: Auth
    * @public
    * @static
    * @async
+   *
    * @param {string} username
    * @param {string} password
+   *
    * @returns {unknown}
    */
   public static async verifyUser(username: string, password: string) {
