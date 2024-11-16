@@ -1,8 +1,6 @@
-interface User {
-  [key: string]: any;
-}
+import { UserObject } from '@type/user';
 
-export const getUser = (): User | undefined => {
+export const getUser = (): UserObject | undefined => {
   // Retrieve the string from localStorage
   const userString = localStorage.getItem('user');
 
@@ -13,7 +11,7 @@ export const getUser = (): User | undefined => {
 
   // Parse the string into a User object (assuming it's stored as JSON)
   try {
-    const user: User = JSON.parse(userString);
+    const user: UserObject = JSON.parse(userString);
     return user;
   } catch (error) {
     console.error('Error parsing user from localStorage', error);

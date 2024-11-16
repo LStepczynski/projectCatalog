@@ -76,6 +76,42 @@ const getFetchOptions = (options: any) => {
   return fetchOptions;
 };
 
+/**
+ * A wrapper around the Fetch API with caching, user session validation, and configurable options.
+ *
+ * @param {string} url - The URL to send the request to.
+ * @param {RequestInit} [options={}] - Fetch API request options (e.g., method, headers, body).
+ * @param {boolean} [cache=false] - Whether to enable caching for this request.
+ * @param {number} [cacheDuration=360] - The cache duration in seconds. Only used if `cache` is true.
+ * @returns {Promise<any>} - Resolves with the response data.
+ *
+ * @throws {Error} If the fetch request fails or returns an invalid response.
+ *
+ * @example
+ * // Example 1: Basic GET request without caching
+ * const data = await fetchWrapper('https://api.example.com/data');
+ * console.log(data);
+ *
+ * @example
+ * // Example 2: POST request with a JSON body
+ * const data = await fetchWrapper('https://api.example.com/submit', {
+ *   method: 'POST',
+ *   body: JSON.stringify({ name: 'John Doe', age: 30 }),
+ * });
+ * console.log(data);
+ *
+ * @example
+ * // Example 3: GET request with caching
+ * const data = await fetchWrapper('https://api.example.com/data', {}, true, 600);
+ * console.log(data);
+ *
+ * @example
+ * // Example 4: Request with custom headers
+ * const data = await fetchWrapper('https://api.example.com/secure-data', {
+ *   headers: { Authorization: 'Bearer your-token' },
+ * });
+ * console.log(data);
+ */
 export const fetchWrapper = async (
   url: string,
   options: RequestInit = {},

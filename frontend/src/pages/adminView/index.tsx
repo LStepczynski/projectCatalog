@@ -1,52 +1,34 @@
 import React from 'react';
 import { useParams } from 'react-router-dom';
 
-import { getUser } from '@utils/getUser';
-import { fetchWrapper } from '@utils/fetchWrapper';
-
+import { useCheckPermission } from '@pages/adminView/hooks/useCheckPermission';
 import { useScreenWidth } from '@hooks/useScreenWidth';
+import { useFetchData } from '@hooks/useFetchData';
 
 import { SkeletonCategoryPanel } from '@components/common/skeletons/skeletonCategoryPanel';
+import { QuerySettings } from '@pages/adminView/components/main/querySettings';
 import { ArticlePrivate } from '@components/articles/articlePrivate';
+import { Separator } from '@components/animation/separator';
 
-import { Box, Select, Text, Heading, Pagination } from '@primer/react';
+import { Box, Heading, Pagination } from '@primer/react';
+
+const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
 export const AdminView = () => {
-  const [articles, setArticles] = React.useState<any>(null);
-  const [status, setStatus] = React.useState('review');
-  const screenWidth = useScreenWidth();
+  const [status, setStatus] = React.useState<'review' | 'private'>('review');
   const { page } = useParams();
 
-  const backendUrl = import.meta.env.VITE_BACKEND_URL;
-  const user = getUser();
-  if (user && user.Admin != 'true') {
-    return (window.location.href = '/');
-  }
+  useCheckPermission();
 
-  React.useEffect(() => {
-    if (user?.Verified != 'true') {
-      alert(
-        'Your account is not verified. Please verify your email to review articles.'
-      );
-      window.location.href = '/account';
-      return;
-    }
+  const {
+    data,
+    error,
+    isLoading,
+  }: { data: any; error: any; isLoading: boolean } = useFetchData(
+    `${backendUrl}/articles/private?status=${status}&page=${page}`
+  );
 
-    const controller = new AbortController();
-    const signal = controller.signal;
-
-    fetchWrapper(
-      `${backendUrl}/articles/private?status=${status}&page=${page}`,
-      { signal },
-      true
-    ).then((data) => {
-      setArticles(data.response.return);
-    });
-
-    return () => {
-      controller.abort();
-    };
-  }, [status, page]);
+  const screenWidth = useScreenWidth();
 
   return (
     <Box
@@ -62,47 +44,13 @@ export const AdminView = () => {
       <Heading sx={{ fontSize: screenWidth < 768 ? '28px' : '42px' }}>
         Article Review
       </Heading>
-      <Box
-        sx={{
-          width: '100%',
-          height: '1px',
-          backgroundColor: 'ansi.black',
-        }}
-      ></Box>
-      <Box
-        sx={{
-          width: '100%',
-          display: 'grid',
-          justifyItems: 'right',
-        }}
-      >
-        <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 2,
-          }}
-        >
-          <Text
-            sx={{
-              opacity: 0.7,
-              fontSize: '14px',
-            }}
-          >
-            Display:
-          </Text>
-          <Select
-            onChange={(event) => {
-              setArticles(null);
-              setStatus(event?.target.value);
-            }}
-          >
-            <Select.Option value="review">Review</Select.Option>
-            <Select.Option value="private">Private</Select.Option>
-          </Select>
-        </Box>
-      </Box>
 
+      <Separator />
+
+      {/* Allows to query for articles that are 'private' or 'review' */}
+      <QuerySettings setStatus={setStatus} />
+
+      {/* Render articles */}
       <Box
         sx={{
           display: 'flex',
@@ -113,9 +61,9 @@ export const AdminView = () => {
           mt: 4,
         }}
       >
-        {articles ? (
+        {!isLoading ? (
           <>
-            {articles.map((item: any, index: any) => (
+            {data.map((item: any, index: any) => (
               <ArticlePrivate key={index} article={item} />
             ))}
           </>
@@ -123,6 +71,8 @@ export const AdminView = () => {
           <SkeletonCategoryPanel bigArticles={false} />
         )}
       </Box>
+
+      {/* Switch between pages */}
       <Pagination
         currentPage={Number(page) || 1}
         pageCount={99}

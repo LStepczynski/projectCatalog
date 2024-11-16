@@ -36,6 +36,9 @@
       "@config/*": [
         "src/config/*"
       ],
+      "@type/*": [
+        "src/types/*"
+      ],
     }
   },
   "include": ["src"],
