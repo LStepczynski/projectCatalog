@@ -1,76 +1,32 @@
 import React from 'react';
 import { useParams } from 'react-router-dom';
 
-import { useScreenWidth } from '@hooks/useScreenWidth';
-
-import { fetchWrapper } from '@utils/fetchWrapper';
+import { useGetArticles } from '@pages/category/hooks/useGetArticles';
+import { useFetchData } from '@hooks/useFetchData';
 
 import { SkeletonCategoryPanel } from '@components/common/skeletons/skeletonCategoryPanel';
-import { ArticleMedium } from '@components/articles/articleMedium';
-import { ArticleLarge } from '@components/articles/articleLarge';
-import { ArticleSmall } from '@components/articles/articleSmall';
+import { NotFound } from '@pages/category/components/main/notFound';
 
-import { Box, Heading, Text, Pagination } from '@primer/react';
+import { Box, Pagination } from '@primer/react';
+
+const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
 export const Category: React.FC = () => {
+  const { getArticlesToRender } = useGetArticles();
+
   const { categoryName, page } = useParams<{
     categoryName: string;
     page: string;
   }>();
-  const [articles, setArticles] = React.useState<any>(null);
-  const screenWidth = useScreenWidth();
 
-  const backendUrl = import.meta.env.VITE_BACKEND_URL;
+  const { data, isLoading }: any = useFetchData(
+    `${backendUrl}/articles/${categoryName}?page=${page}`,
+    [],
+    {},
+    true
+  );
 
-  React.useEffect(() => {
-    const controller = new AbortController();
-    const signal = controller.signal;
-
-    if (categoryName && page) {
-      fetchWrapper(
-        `${backendUrl}/articles/${categoryName}?page=${page}`,
-        {
-          signal,
-        },
-        true,
-        60 * 60
-      ).then((data) => {
-        setArticles(data.response.return);
-      });
-    }
-
-    return () => {
-      controller.abort();
-    };
-  }, [categoryName, page]);
-
-  const getArticlesToRender = () => {
-    if (!articles) return null;
-    if (screenWidth < 430) {
-      return articles.map((item: any, index: any) => (
-        <ArticleSmall key={index} article={item} />
-      ));
-    }
-
-    if (screenWidth < 1280) {
-      return articles.map((item: any, index: any) => (
-        <ArticleMedium key={index} article={item} />
-      ));
-    }
-
-    return (
-      <>
-        {articles.slice(0, 2).map((item: any, index: any) => (
-          <ArticleLarge key={index} article={item} />
-        ))}
-        {articles.slice(2).map((item: any, index: any) => (
-          <ArticleMedium key={index} article={item} />
-        ))}
-      </>
-    );
-  };
-
-  if (!articles) {
+  if (isLoading) {
     return (
       <Box
         sx={{
@@ -84,36 +40,8 @@ export const Category: React.FC = () => {
     );
   }
 
-  if (articles.length == 0) {
-    return (
-      <Box sx={{ mt: '100px' }}>
-        <Box sx={{ mb: 4 }}>
-          <Heading
-            sx={{
-              ...styles.H1,
-              display: 'grid',
-              justifyContent: 'center',
-            }}
-          >
-            No Articles Found
-          </Heading>
-        </Box>
-        <Box>
-          <Text
-            as="p"
-            sx={{
-              ...styles.P1,
-              display: 'grid',
-              justifyContent: 'center',
-              textAlign: 'center',
-              mx: 2,
-            }}
-          >
-            Sorry, no articles have been published yet. Check again later.
-          </Text>
-        </Box>
-      </Box>
-    );
+  if (data.length == 0) {
+    return <NotFound />;
   }
 
   return (
@@ -131,8 +59,9 @@ export const Category: React.FC = () => {
           justifyContent: 'center',
         }}
       >
-        {getArticlesToRender()}
+        {getArticlesToRender(data)}
       </Box>
+
       <Pagination
         currentPage={Number(page) || 1}
         pageCount={99}
