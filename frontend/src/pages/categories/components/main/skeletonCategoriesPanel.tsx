@@ -12,16 +12,23 @@ export const SkeletonCategoriesPanel = (props: Props) => {
   const screenWidth = useScreenWidth();
   const { headerWidth } = props;
 
+  // Return a skeleton layout based on the screen width
   const skeletonReturn = () => {
     let returnValue;
+
+    // 5 small if less than 430px
     if (screenWidth < 430) {
       returnValue = [...Array(5)].map((_, index) => (
         <SkeletonBox key={index} width="310px" height="285px" />
       ));
+
+      // 5 medium if less than 1280px
     } else if (screenWidth < 1280) {
       returnValue = [...Array(5)].map((_, index) => (
         <SkeletonBox key={index} width="380px" height="342px" />
       ));
+
+      // 2 big, 3 medium if bigger than 1279px
     } else {
       returnValue = (
         <>

@@ -20,13 +20,10 @@ export const AdminView = () => {
 
   useCheckPermission();
 
-  const {
-    data,
-    error,
-    isLoading,
-  }: { data: any; error: any; isLoading: boolean } = useFetchData(
-    `${backendUrl}/articles/private?status=${status}&page=${page}`
-  );
+  const { data, isLoading }: { data: any; error: any; isLoading: boolean } =
+    useFetchData(
+      `${backendUrl}/articles/private?status=${status}&page=${page}`
+    );
 
   const screenWidth = useScreenWidth();
 
