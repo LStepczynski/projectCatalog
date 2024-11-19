@@ -21,9 +21,9 @@ export const BannerUploadModal = ({ isOpen, closeFunc, bannerFunc }: any) => {
         return;
       }
 
-      const maxSize = 2 * 1024 * 1024;
+      const maxSize = 4 * 1024 * 1024;
       if (file.size > maxSize) {
-        alert('File size exceeds 2MB.');
+        alert('File size exceeds 4MB.');
         return;
       }
 
