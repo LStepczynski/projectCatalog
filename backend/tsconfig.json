@@ -8,8 +8,29 @@
       "esModuleInterop": true,
       "moduleResolution": "node",
       "paths": {
-        ":api/services/*": [
+        "@api/*": [
+          "src/api/*"
+        ],
+        "@assets/*": [
+          "src/assets/*"
+        ],
+        "@config/*": [
+          "src/config/*"
+        ],
+        "@images/*": [
+          "src/images/*"
+        ],
+        "@scripts/*": [
+          "src/scripts/*"
+        ],
+        "@services/*": [
           "src/services/*"
+        ],
+        "@type/*": [
+          "src/types/*"
+        ],
+        "@utils/*": [
+          "src/utils/*"
         ],
       }
     },
