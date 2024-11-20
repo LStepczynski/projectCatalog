@@ -1,8 +1,6 @@
 node_modules
 .serverless
 /dist
-/src/plans
 /.esbuild
 /docker
 .env.*
-src/test.ts
