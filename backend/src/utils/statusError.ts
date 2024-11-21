@@ -21,9 +21,9 @@ export class UserError extends StatusError {
 }
 
 export class InternalError extends StatusError {
-  details?: string;
+  details?: string[];
 
-  constructor(message: string, status: number = 500, details?: string) {
+  constructor(message: string, status: number = 500, details?: string[]) {
     super(message, status, false);
     this.details = details;
   }
