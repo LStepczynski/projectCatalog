@@ -8,3 +8,5 @@ export {
 export { asyncHandler } from '@utils/asyncHandler';
 
 export { errorHandler } from '@utils/middleware';
+
+export { resizeImage } from '@utils/resizeImage'

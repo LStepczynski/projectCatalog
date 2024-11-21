@@ -8,8 +8,8 @@ import {
 
 import dotenv from 'dotenv';
 
-import { StatusError } from '@utils/index';
-import sharp from 'sharp';
+import { InternalError } from '@utils/index';
+import { resizeImage } from '@utils/index';
 
 dotenv.config();
 
@@ -18,6 +18,14 @@ const s3Client = new S3Client({
 });
 
 export class S3 {
+  public static getBucket(): string {
+    const bucketName = process.env.AWS_S3_BUCKET_NAME;
+    if (!bucketName) {
+      throw new InternalError('Bucket not found', 500, ['s3BucketNotFound']);
+    }
+    return bucketName
+  }
+
   /**
    * Adds an article to the S3
    *
@@ -25,40 +33,27 @@ export class S3 {
    * @static
    * @async
    * @param {string} tableName
-   * @param {*} metadata - The metadata of an article as a dictionary
-   * @returns {Promise<boolean>} - Returns if the operation succeeded
+   * @returns {Promise<void>}
    */
   public static async addToS3(
     tableName: string,
     body: string,
     id: string
-  ): Promise<boolean> {
-    try {
-      // Get the bucket name and generate the object id
-      const bucketName = process.env.AWS_S3_BUCKET_NAME;
-      if (!bucketName) {
-        throw new StatusError('Bucket not found', 500);
-      }
+  ): Promise<void> {
+    // Get the bucket name and generate the object id
+    const objectKey = `${tableName}/${id}.md`;
 
-      const objectKey = `${tableName}/${id}.md`;
+    // Add the object to the S3
+    const params = {
+      Bucket: this.getBucket(),
+      Key: objectKey,
+      Body: body,
+      ContentType: 'text',
+    };
 
-      // Add the object to the S3
-      const params = {
-        Bucket: bucketName,
-        Key: objectKey,
-        Body: markdownString,
-        ContentType: 'text/markdown',
-      };
-
-      const command = new PutObjectCommand(params);
-      await s3Client.send(command);
-
-      console.log(`File uploaded successfully to ${bucketName}/${objectKey}`);
-      return true;
-    } catch (err: any) {
-      console.error('Error uploading file to S3:', err);
-      return false;
-    }
+    // Send command
+    const command = new PutObjectCommand(params);
+    await s3Client.send(command);
   }
 
   /**
@@ -69,22 +64,15 @@ export class S3 {
    * @async
    * @param {string} tableName - table name the article is in
    * @param {string} id - article id
-   * @returns {boolean} - Returns if the operation succeeded
+   * @returns {Promise<void>}
    */
-  public static async removeArticleFromS3(tableName: string, id: string) {
-    try {
-      const params = {
-        Bucket: process.env.AWS_S3_BUCKET_NAME,
-        Key: `${tableName}/${id}.md`,
-      };
+  public static async removeArticleFromS3(tableName: string, id: string): Promise<void> {
+    const params = {
+      Bucket: this.getBucket(),
+      Key: `${tableName}/${id}.md`,
+    };
 
-      await s3Client.send(new DeleteObjectCommand(params));
-
-      return true;
-    } catch (err) {
-      console.log(err);
-      return false;
-    }
+    await s3Client.send(new DeleteObjectCommand(params));
   }
 
   /**
@@ -94,22 +82,15 @@ export class S3 {
    * @static
    * @async
    * @param {string} id - image id
-   * @returns {boolean} - Returns if the operation succeeded
+   * @returns {Promise<void>}
    */
-  public static async removeImageFromS3(id: string) {
-    try {
-      const params = {
-        Bucket: process.env.AWS_S3_BUCKET_NAME,
-        Key: `images/${id}.png`,
-      };
+  public static async removeImageFromS3(id: string): Promise<void> {
+    const params = {
+      Bucket: this.getBucket(),
+      Key: `images/${id}.png`,
+    };
 
-      await s3Client.send(new DeleteObjectCommand(params));
-
-      return true;
-    } catch (err) {
-      console.log(err);
-      return false;
-    }
+    await s3Client.send(new DeleteObjectCommand(params));
   }
 
   /**
@@ -119,38 +100,29 @@ export class S3 {
    * @static
    * @async
    * @param {string[]} keys - Array of S3 object keys to delete.
-   * @returns {Promise<boolean>} - Returns true if all deletions succeeded, otherwise false.
+   * @returns {Promise<void>} - Returns true if all deletions succeeded, otherwise false.
    */
-  public static async deleteMultipleFiles(keys: string[]): Promise<boolean> {
+  public static async deleteMultipleFiles(keys: string[]): Promise<void> {
+    
+    // Check if there are no files to delete
     if (keys.length === 0) {
-      return true;
+      return;
     }
 
-    try {
-      const params = {
-        Bucket: process.env.AWS_S3_BUCKET_NAME!,
-        Delete: {
-          Objects: keys.map((key) => ({ Key: key })),
-          Quiet: true,
-        },
-      };
+    const params = {
+      Bucket: this.getBucket(),
+      Delete: {
+        Objects: keys.map((key) => ({ Key: key })),
+        Quiet: true,
+      },
+    };
 
-      const command = new DeleteObjectsCommand(params);
-      const response = await s3Client.send(command);
+    const command = new DeleteObjectsCommand(params);
+    const response = await s3Client.send(command);
 
-      if (response.Errors && response.Errors.length > 0) {
-        console.error(
-          'Errors occurred while deleting some files:',
-          response.Errors
-        );
-        return false;
-      }
-
-      console.log(`Successfully deleted ${keys.length} files from S3.`);
-      return true;
-    } catch (err: any) {
-      console.error('Error deleting multiple files from S3:', err);
-      return false;
+    // Throw an internal error if there were problems deleting
+    if (response.Errors && response.Errors.length > 0) {
+      throw new InternalError(`Error while batch deleting files in S3: ${response.Errors}`, 500, ['s3BatchDelete']);
     }
   }
 
@@ -162,37 +134,26 @@ export class S3 {
    * @async
    * @param {string} tableName - table name the article is in
    * @param {string} id - article id
-   * @returns {{ body: any; metadata: any; }} - Fetched article
+   * @returns {string} - Fetched article
    */
   public static async readFromS3(tableName: string, id: string) {
-    try {
-      const objectKey = `${tableName}/${id}.md`;
-      const bucketName = process.env.AWS_S3_BUCKET_NAME;
+    const objectKey = `${tableName}/${id}.md`;
 
-      const params = {
-        Bucket: bucketName,
-        Key: objectKey,
-      };
+    const params = {
+      Bucket: this.getBucket(),
+      Key: objectKey,
+    };
 
-      const command = new GetObjectCommand(params);
-      const response = await s3Client.send(command);
+    const command = new GetObjectCommand(params);
+    const response = await s3Client.send(command);
 
-      const fileContents = await response.Body?.transformToString();
+    const fileContents = await response.Body?.transformToString();
 
-      if (fileContents == undefined) {
-        throw new Error('file undefined');
-      }
-
-      const parsed = matter(fileContents);
-
-      return {
-        body: parsed.content,
-        metadata: parsed.data,
-      };
-    } catch (error: any) {
-      console.error('Error reading file from S3:', error);
-      return undefined;
+    if (fileContents == undefined) {
+      throw new InternalError('Article body not found in the S3', 500, ['s3GetObject']);
     }
+
+    return fileContents
   }
 
   /**
@@ -205,42 +166,29 @@ export class S3 {
    * @param {*} image - image
    * @param {number} [imgWidth=1280] - Width to which the image is going to be resized to
    * @param {number} [imgHeight=720] - Height to which the image is going to be resized to
-   * @returns {boolean} - Returns if the operation succeeded
+   * @returns {void} - Returns if the operation succeeded
    */
   public static async saveImage(
     id: string,
-    image: any,
+    image: string,
     imgWidth: number = 1280,
     imgHeight: number = 720
   ) {
-    try {
-      // Resizes an image
-      const base64Data = image.replace(/^data:image\/\w+;base64,/, '');
-      const imageBuffer = Buffer.from(base64Data, 'base64');
-      image = await sharp(imageBuffer)
-        .resize({ width: imgWidth, height: imgHeight, fit: 'cover' })
-        .png()
-        .toBuffer();
+    // Resizes an image
+    const resizedImage = await resizeImage(image, imgWidth, imgWidth)
 
-      // Get the bucket name and generate image key
-      const bucketName = process.env.AWS_S3_BUCKET_NAME;
-      const objectKey = `images/${id}.png`;
+    // Get the bucket name and generate image key
+    const bucketName = this.getBucket();
+    const objectKey = `images/${id}.webp`;
 
-      const params = {
-        Bucket: bucketName,
-        Key: objectKey,
-        Body: image,
-        ContentType: 'image/png',
-      };
+    const params = {
+      Bucket: bucketName,
+      Key: objectKey,
+      Body: resizedImage,
+      ContentType: 'image/webp',
+    };
 
-      const command = new PutObjectCommand(params);
-      await s3Client.send(command);
-
-      console.log(`File uploaded successfully to ${bucketName}/${objectKey}`);
-      return true;
-    } catch (err: any) {
-      console.error('Error uploading file to S3:', err);
-      return false;
-    }
+    const command = new PutObjectCommand(params);
+    await s3Client.send(command);
   }
 }
