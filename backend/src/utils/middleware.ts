@@ -36,7 +36,7 @@ export const errorHandler = (
   const message =
     isAppError && err.isUserError
       ? err.message
-      : err.message || 'An unexpected error occurred. Please try again later.';
+      : 'An unexpected error occurred. Please try again later.';
 
   // Construct error response
   const resp: ErrorResponse = {
@@ -46,13 +46,16 @@ export const errorHandler = (
   };
 
   // Include stack trace in development mode
-  if (process.env.NODE_ENV === 'development') {
+  if (process.env.DEV_STATE === 'development') {
     resp.stack = err.stack;
   }
 
   // Log error
-  if (!isAppError || process.env.NODE_ENV !== 'production') {
-    console.error('Error:', isAppError ? err : JSON.stringify(err, null, 2));
+  if (!isAppError || process.env.DEV_STATE !== 'production') {
+    console.error(
+      'Error:',
+      isAppError ? err.message : err.stack || err.message
+    );
   }
 
   // Send response

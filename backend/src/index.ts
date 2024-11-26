@@ -14,7 +14,6 @@ const app = express();
 
 app.use(express.json({ limit: '3mb' })); // Limit payload size
 app.use(cookieParser()); // Allow for reading cookies in routes
-app.use(errorHandler); // Centralized error handling
 
 app.use(
   cors({
@@ -26,5 +25,7 @@ app.use(
 );
 
 app.use('/', routes);
+
+app.use(errorHandler); // Centralized error handling
 
 export const handler = serverless(app);

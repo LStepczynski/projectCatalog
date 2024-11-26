@@ -1,40 +1,23 @@
 {
-    "compilerOptions": {
-      "target": "ES2019",
-      "module": "CommonJS",
-      "outDir": "./dist",
-      "strict": true,
-      "baseUrl": ".",
-      "esModuleInterop": true,
-      "moduleResolution": "node",
-      "paths": {
-        "@api/*": [
-          "src/api/*"
-        ],
-        "@assets/*": [
-          "src/assets/*"
-        ],
-        "@config/*": [
-          "src/config/*"
-        ],
-        "@images/*": [
-          "src/images/*"
-        ],
-        "@scripts/*": [
-          "src/scripts/*"
-        ],
-        "@services/*": [
-          "src/services/*"
-        ],
-        "@type/*": [
-          "src/types/*"
-        ],
-        "@utils/*": [
-          "src/utils/*"
-        ],
-      }
-    },
-    "include": [
-      "src/**/*",
-    ],
-  }
+  "compilerOptions": {
+    "types": ["vitest/globals"],
+    "target": "ES2019",
+    "module": "CommonJS",
+    "outDir": "./dist",
+    "strict": true,
+    "baseUrl": ".",
+    "esModuleInterop": true,
+    "moduleResolution": "node",
+    "paths": {
+      "@api/*": ["src/api/*"],
+      "@assets/*": ["src/assets/*"],
+      "@config/*": ["src/config/*"],
+      "@images/*": ["src/images/*"],
+      "@scripts/*": ["src/scripts/*"],
+      "@services/*": ["src/services/*"],
+      "@type/*": ["src/types/*"],
+      "@utils/*": ["src/utils/*"]
+    }
+  },
+  "include": ["src/**/*", "test/**/*"]
+}
