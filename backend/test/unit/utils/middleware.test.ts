@@ -60,6 +60,7 @@ describe('ErrorHandler Middleware', () => {
       status: 'error',
       data: null,
       message: 'Invalid JSON format',
+      statusCode: 400,
     });
   });
 
@@ -71,10 +72,14 @@ describe('ErrorHandler Middleware', () => {
       status: 'error',
       data: null,
       message: 'Custom error message',
+      statusCode: 400,
     });
   });
 
   it('should return 500 for unexpected errors in production mode', async () => {
+    // Mock console.error to suppress error logs
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
     const res = await request(app).get('/unexpected-error');
 
     expect(res.status).toBe(500);
@@ -82,12 +87,25 @@ describe('ErrorHandler Middleware', () => {
       status: 'error',
       data: null,
       message: 'An unexpected error occurred. Please try again later.',
+      statusCode: 500,
     });
     expect(res.body.stack).toBeUndefined(); // No stack trace in production
+
+    // Optionally, verify that console.error was called correctly
+    expect(consoleSpy).toHaveBeenCalledWith(
+      'Error:',
+      expect.stringContaining('Unexpected error')
+    );
+
+    // Restore the original console.error implementation
+    consoleSpy.mockRestore();
   });
 
   it('should include stack trace in development mode', async () => {
     process.env.DEV_STATE = 'development';
+
+    // Mock console.error to suppress error logs
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
     const res = await request(app).get('/unexpected-error');
 
@@ -97,6 +115,15 @@ describe('ErrorHandler Middleware', () => {
       'An unexpected error occurred. Please try again later.'
     );
     expect(res.body.stack).toBeDefined(); // Stack trace should be included
+
+    // Optionally, verify that console.error was called correctly
+    expect(consoleSpy).toHaveBeenCalledWith(
+      'Error:',
+      expect.stringContaining('Unexpected error')
+    );
+
+    // Restore the original console.error implementation
+    consoleSpy.mockRestore();
   });
 
   it('should not interfere with valid routes', async () => {

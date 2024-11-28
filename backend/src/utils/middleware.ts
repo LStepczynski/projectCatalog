@@ -25,6 +25,7 @@ export const errorHandler = (
       status: 'error',
       data: null,
       message: 'Invalid JSON format',
+      statusCode: 400,
     });
   }
 
@@ -43,6 +44,7 @@ export const errorHandler = (
     status: 'error',
     data: null,
     message,
+    statusCode: statusCode,
   };
 
   // Include stack trace in development mode
@@ -50,7 +52,7 @@ export const errorHandler = (
     resp.stack = err.stack;
   }
 
-  // Log error
+  // Log error if it is not an App error or if the app is not in production
   if (!isAppError || process.env.DEV_STATE !== 'production') {
     console.error(
       'Error:',
@@ -59,5 +61,5 @@ export const errorHandler = (
   }
 
   // Send response
-  res.status(statusCode).json(resp);
+  res.status(resp.statusCode).json(resp);
 };

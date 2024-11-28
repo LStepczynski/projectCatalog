@@ -1,4 +1,3 @@
-// __tests__/asyncHandler.test.ts
 import { describe, it, expect, vi } from 'vitest';
 import { Request, Response, NextFunction } from 'express';
 import { asyncHandler } from '@utils/asyncHandler';
