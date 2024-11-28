@@ -1,17 +1,20 @@
 import { Router, Request, Response } from 'express';
 
+import { UserCrud } from '@services/userCrud';
+
+import { UserInput, AuthResponse, User } from '@type/index';
+
 import {
   asyncHandler,
   isValidString,
   UserError,
   isValidEmail,
+  validatePassword,
+  checkUniqueUser,
+  validateSignUpFields,
 } from '@utils/index';
 
 import dotenv from 'dotenv';
-import { validatePassword } from '@utils/validatePassword';
-import { UserCrud } from '@services/userCrud';
-import { UserInput, AuthResponse, User } from '@type/index';
-
 dotenv.config();
 
 const router = Router();
@@ -30,33 +33,13 @@ const router = Router();
 router.post(
   '/sign-up',
   asyncHandler(async (req: Request, res: Response) => {
-    // Check for fields that are missing
-    const invalidFields = ['username', 'password', 'email'].filter(
-      (field: string) => {
-        const value = req.body[field];
-        return !isValidString(value);
-      }
-    );
+    // Validate fields
+    validateSignUpFields(req.body);
 
-    // Throw error in case of missing fields
-    if (invalidFields.length > 0) {
-      throw new UserError(
-        `Missing following fields: ${invalidFields.join(', ')}.`,
-        400
-      );
-    }
+    // Check if the email and username are unique
+    await checkUniqueUser(req.body.username, req.body.email);
 
-    // Throw error in case of invalid email format
-    if (!isValidEmail(req.body.email)) {
-      throw new UserError('Invalid email format.', 400);
-    }
-
-    // Throw error in case of an invalid password
-    const validationResponse = validatePassword(req.body.password);
-    if (validationResponse !== '') {
-      throw new UserError(validationResponse, 400);
-    }
-
+    // Construct the request and send it
     const partialUserObject: UserInput = {
       username: req.body.username,
       password: req.body.password,

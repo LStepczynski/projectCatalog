@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 
-import { isValidString } from '@utils/isValidString';
+import { isValidString } from '@utils/validations/isValidString';
 
 describe('isValidString', () => {
   it('should accept a valid string', () => {

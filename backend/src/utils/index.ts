@@ -5,11 +5,17 @@ export {
   AppError,
 } from '@utils/statusError';
 
+export { validatePassword } from '@utils/validations/validatePassword';
+
+export { validateSignUpFields } from '@utils/validations/validateSignUpFields';
+
+export { checkUniqueUser } from '@utils/validations/checkUniqueUser';
+
 export { getUnixTimestamp } from '@utils/getUnixTimestamp';
 
-export { isValidEmail } from '@utils/isValidEmail';
+export { isValidEmail } from '@utils/validations/isValidEmail';
 
-export { isValidString } from '@utils/isValidString';
+export { isValidString } from '@utils/validations/isValidString';
 
 export { asyncHandler } from '@utils/asyncHandler';
 

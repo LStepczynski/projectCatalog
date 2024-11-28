@@ -1,5 +1,5 @@
 import { describe, test, expect } from 'vitest';
-import { validatePassword } from '@utils/validatePassword';
+import { validatePassword } from '@utils/validations/validatePassword';
 
 describe('validatePassword', () => {
   test('should return an error if the password is less than 8 characters', () => {
