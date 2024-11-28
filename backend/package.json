@@ -8,9 +8,9 @@
     "deploy": "sls deploy --stage production",
     "build": "tsc && copyfiles -u 1 src/**/*.md dist",
     "docker": "docker-compose up",
-    "db-populate": "ts-node src/tools/db-setup.ts",
-    "db-clear": "ts-node src/tools/deleteTables.ts",
-    "db-reset": "npm run db-clear && npm run db-populate"
+    "createTables": "ts-node -r tsconfig-paths/register src/scripts/dynamodbCreateTables.ts",
+    "deleteTables": "ts-node -r tsconfig-paths/register src/scripts/dynamodbDeleteTables.ts",
+    "scanTable": "ts-node -r tsconfig-paths/register src/scripts/dynamodbScanTable.ts"
   },
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.568.0",
@@ -50,6 +50,7 @@
     "copyfiles": "^2.4.1",
     "serverless-esbuild": "^1.52.1",
     "supertest": "^7.0.0",
+    "tsconfig-paths": "^4.2.0",
     "typescript": "^5.4.5",
     "vitest": "^2.1.5"
   }

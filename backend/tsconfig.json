@@ -16,7 +16,8 @@
       "@scripts/*": ["src/scripts/*"],
       "@services/*": ["src/services/*"],
       "@type/*": ["src/types/*"],
-      "@utils/*": ["src/utils/*"]
+      "@utils/*": ["src/utils/*"],
+      "@database/*": ["src/database/*"]
     }
   },
   "include": ["src/**/*", "test/**/*"]
