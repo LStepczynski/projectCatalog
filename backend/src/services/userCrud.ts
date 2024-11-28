@@ -12,7 +12,7 @@ import {
 import { marshall } from '@aws-sdk/util-dynamodb';
 import { getUnixTimestamp } from '@utils/getUnixTimestamp';
 import { UserInput, User } from '@type/user';
-import { client } from '@services/dynamodb';
+import { client } from '@database/dynamodb';
 import { InternalError } from '@utils/statusError';
 
 export class UserCrud {
@@ -35,10 +35,10 @@ export class UserCrud {
     const finishedUserObject: User = {
       profilePicture: this.DEFAULT_PROFILE_URL,
       accountCreated: currentTime,
-      lastPictureChange: currentTime,
-      lastEmailChange: currentTime,
-      lastPasswordChange: currentTime,
-      lastPasswordReset: currentTime,
+      lastPictureChange: 0,
+      lastEmailChange: 0,
+      lastPasswordChange: 0,
+      lastPasswordReset: 0,
       roles: [],
       ...partialUserObject,
     };
