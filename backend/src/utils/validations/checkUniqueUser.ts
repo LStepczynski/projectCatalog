@@ -24,10 +24,10 @@ export const checkUniqueUser = async (username: string, email: string) => {
   ]);
 
   if (existingUsername) {
-    throw new UserError('Username is already in use', 400);
+    throw new UserError('Username is already in use', 409);
   }
 
   if (existingEmail.length > 0) {
-    throw new UserError('Email is already in use', 400);
+    throw new UserError('Email is already in use', 409);
   }
 };
