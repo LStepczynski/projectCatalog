@@ -7,8 +7,6 @@ export {
 
 export { validatePassword } from '@utils/validations/validatePassword';
 
-export { validateSignUpFields } from '@utils/validations/validateSignUpFields';
-
 export { checkUniqueUser } from '@utils/validations/checkUniqueUser';
 
 export { getUnixTimestamp } from '@utils/getUnixTimestamp';

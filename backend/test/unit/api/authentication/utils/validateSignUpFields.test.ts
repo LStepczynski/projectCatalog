@@ -1,4 +1,4 @@
-import { validateSignUpFields } from '@utils/validations/validateSignUpFields';
+import { validateSignFields } from '@api/authentication/utils';
 import { UserError } from '@utils/statusError';
 
 describe('validateSignUpFields', () => {
@@ -9,8 +9,8 @@ describe('validateSignUpFields', () => {
       email: '', // Missing email
     };
 
-    expect(() => validateSignUpFields(invalidBody)).toThrow(UserError);
-    expect(() => validateSignUpFields(invalidBody)).toThrow(
+    expect(() => validateSignFields(invalidBody)).toThrow(UserError);
+    expect(() => validateSignFields(invalidBody)).toThrow(
       'Missing fields: password, email'
     );
   });
@@ -22,8 +22,8 @@ describe('validateSignUpFields', () => {
       email: 'invalidemail', // Invalid email format
     };
 
-    expect(() => validateSignUpFields(invalidBody)).toThrow(UserError);
-    expect(() => validateSignUpFields(invalidBody)).toThrow(
+    expect(() => validateSignFields(invalidBody)).toThrow(UserError);
+    expect(() => validateSignFields(invalidBody)).toThrow(
       'Invalid email format.'
     );
   });
@@ -35,8 +35,8 @@ describe('validateSignUpFields', () => {
       email: 'johndoe@example.com',
     };
 
-    expect(() => validateSignUpFields(invalidBody)).toThrow(UserError);
-    expect(() => validateSignUpFields(invalidBody)).toThrow(
+    expect(() => validateSignFields(invalidBody)).toThrow(UserError);
+    expect(() => validateSignFields(invalidBody)).toThrow(
       'Password must be at least 8 characters.'
     );
   });
@@ -48,6 +48,6 @@ describe('validateSignUpFields', () => {
       email: 'johndoe@example.com',
     };
 
-    expect(() => validateSignUpFields(validBody)).not.toThrow();
+    expect(() => validateSignFields(validBody)).not.toThrow();
   });
 });

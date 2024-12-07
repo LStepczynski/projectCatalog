@@ -4,15 +4,9 @@ import { UserCrud } from '@services/userCrud';
 
 import { UserInput, AuthResponse, User } from '@type/index';
 
-import {
-  asyncHandler,
-  isValidString,
-  UserError,
-  isValidEmail,
-  validatePassword,
-  checkUniqueUser,
-  validateSignUpFields,
-} from '@utils/index';
+import { validateSignFields } from '@api/authentication/utils';
+
+import { asyncHandler, checkUniqueUser } from '@utils/index';
 
 import dotenv from 'dotenv';
 dotenv.config();
@@ -34,7 +28,7 @@ router.post(
   '/sign-up',
   asyncHandler(async (req: Request, res: Response) => {
     // Validate fields
-    validateSignUpFields(req.body);
+    validateSignFields(req.body);
 
     // Check if the email and username are unique
     await checkUniqueUser(req.body.username, req.body.email);
@@ -60,6 +54,14 @@ router.post(
     };
 
     res.status(response.statusCode).send(response);
+  })
+);
+
+router.post(
+  '/sign-in',
+  asyncHandler(async (req: Request, res: Response) => {
+    // Validate fields
+    validateSignFields(req.body);
   })
 );
 
