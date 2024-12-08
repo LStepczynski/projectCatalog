@@ -5,4 +5,6 @@ export { SuccessResponse } from '@type/successResponse';
 
 export { User, UserInput } from '@type/user';
 
+export { JwtPayload } from '@type/jwtPayload';
+
 export { PublicArticle, PrivateArticle } from '@type/article';
