@@ -5,6 +5,7 @@ export default defineConfig({
   resolve: {
     alias: {
       '@utils': path.resolve(__dirname, './src/utils'),
+      '@api': path.resolve(__dirname, './src/api'),
     },
   },
   test: {
