@@ -132,3 +132,51 @@
     ```
 
 ---
+
+### 3. Refresh Authentication Token
+
+**Endpoint:** `GET /auth/refresh`
+
+**Description:** Verifies the provided refresh token, generates a new authentication token, and sets it in an HTTP-only cookie.
+
+**Request Requirements:**
+
+- **Cookies**:
+  - **`refreshToken`**: `string` - The refresh token stored in the user's browser.
+
+**Responses:**
+
+- **200 OK**: Token refresh successful.
+
+  - **Trigger**: A valid refresh token is provided.
+  - **Example Response:**
+
+    ```json
+    {
+      "status": "success",
+      "data": null,
+      "message": "Token refresh successful.",
+      "statusCode": 200,
+      "auth": {
+        "user": {
+          "id": "123",
+          "username": "exampleuser"
+        }
+      }
+    }
+    ```
+
+- **401 Unauthorized**: Missing or invalid refresh token.
+
+  - **Trigger**: Refresh token is missing, expired, or invalid.
+  - **Example Response:**
+
+    ```json
+    {
+      "status": "error",
+      "message": "Missing or invalid refresh token.",
+      "statusCode": 401
+    }
+    ```
+
+---

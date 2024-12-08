@@ -70,6 +70,7 @@ router.post(
 /**
  * @route POST auth/sign-in
  * @async
+ *
  * Handles user sign-in by validating credentials and returning authentication data.
  *
  * @TODO: Add the expiration to the returned user object itself [?]
@@ -152,21 +153,37 @@ router.post(
   })
 );
 
+/**
+ * @route GET auth/refresh
+ * @async
+ *
+ * Endpoint to refresh the user's authentication token.
+ *
+ * @description Verifies the provided refresh token, generates a new authentication token, and sets it in an HTTP-only cookie.
+ *
+ * @throws {UserError} 401 - If the refresh token is missing or invalid.
+ *
+ * @response {200} - Token refresh successful. Returns a new access token and user information.
+ * @response {401} - Missing or invalid refresh token.
+ */
 router.get(
   '/refresh',
   asyncHandler(async (req: Request, res: Response) => {
+    // Check for the refresh token
     if (!req.cookies.refreshToken) {
       throw new UserError('Missing refresh token.', 401);
     }
 
+    // remove the `exp` and `iat` properties
     const { exp, iat, ...payload } = verifyToken(
       req.cookies.refreshToken,
       true
     );
 
+    // Generate a new access token
     const newToken = generateToken(payload);
 
-    // Return the JWT refresh token in a cookie
+    // Return the JWT access token in a cookie
     res.cookie('token', newToken, {
       httpOnly: true,
       sameSite: process.env.STATE === 'PRODUCTION' ? 'none' : 'lax',
@@ -178,6 +195,7 @@ router.get(
       maxAge: 30 * 60 * 1000,
     });
 
+    // Return the response
     const response: AuthResponse<null> = {
       status: 'success',
       data: null,
