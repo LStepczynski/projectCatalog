@@ -1,4 +1,5 @@
-import { validateSignUpFields } from '@utils/validations/validateSignUpFields';
+import { validateSignUpFields } from '@api/authentication/utils/validateSignUpFields';
+import { describe, it, expect } from 'vitest';
 import { UserError } from '@utils/statusError';
 
 describe('validateSignUpFields', () => {

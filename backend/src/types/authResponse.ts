@@ -5,7 +5,6 @@ import { User } from '@type/user';
 export interface AuthResponse<T> extends ApiResponse<T> {
   status: 'success';
   auth: {
-    token: string;
-    user: User;
+    user: Omit<User, 'password'>;
   };
 }

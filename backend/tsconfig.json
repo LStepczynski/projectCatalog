@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "typeRoots": ["./node_modules/@types", "./types", "./src/types"],
     "types": ["vitest/globals"],
     "target": "ES2019",
     "module": "CommonJS",
