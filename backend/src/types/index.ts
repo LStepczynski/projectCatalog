@@ -7,4 +7,4 @@ export { User, UserInput } from '@type/user';
 
 export { JwtPayload } from '@type/jwtPayload';
 
-export { PublicArticle, PrivateArticle } from '@type/article';
+export { PublicArticle, PrivateArticle, ArticleInput } from '@type/article';
