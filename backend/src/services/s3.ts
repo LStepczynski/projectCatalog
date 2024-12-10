@@ -13,9 +13,21 @@ import { resizeImage } from '@utils/index';
 
 dotenv.config();
 
-const s3Client = new S3Client({
-  region: process.env.AWS_S3_REGION,
-});
+const s3Client = new S3Client(
+  process.env.DEV_STATE === 'development'
+    ? {
+        region: 'local',
+        endpoint: 'http://localhost:9000',
+        credentials: {
+          accessKeyId: 'admin',
+          secretAccessKey: 'password123',
+        },
+        forcePathStyle: true,
+      }
+    : {
+        region: process.env.AWS_S3_REGION,
+      }
+);
 
 export class S3 {
   public static getBucket(): string {
