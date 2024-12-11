@@ -7,6 +7,7 @@ interface Article {
   likes: number;
   image: string;
   difficulty: 'Hard' | 'Medium' | 'Easy';
+  deleted: boolean;
 
   author: string;
   authorProfilePicture: string;
@@ -24,4 +25,4 @@ export interface PrivateArticle extends Article {
 }
 
 export interface ArticleInput
-  extends Omit<Article, 'createdAt' | 'lastEdited'> {}
+  extends Omit<Article, 'createdAt' | 'lastEdited' | 'deleted'> {}

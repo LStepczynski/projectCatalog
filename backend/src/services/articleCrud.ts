@@ -51,6 +51,7 @@ export class ArticleCrud {
       lastEdited: 0,
       createdAt: currentTime,
       status: 'Private',
+      deleted: false,
       ...metadata,
     };
 
