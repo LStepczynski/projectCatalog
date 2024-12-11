@@ -46,6 +46,9 @@ export class ArticleCrud {
   ): Promise<PrivateArticle> {
     const currentTime = getUnixTimestamp();
 
+    // Save image
+    const imageURL = await S3.saveImage(metadata.id, metadata.image);
+
     // Fill in the missing fields
     const finishedArticleObject: PrivateArticle = {
       lastEdited: 0,
@@ -53,9 +56,8 @@ export class ArticleCrud {
       status: 'Private',
       deleted: false,
       ...metadata,
+      image: imageURL, // Replace the base64 string for S3 url
     };
-
-    await S3.saveImage(finishedArticleObject.id, finishedArticleObject.image);
 
     await S3.addToS3(
       this.UNPUBLISHED_TABLE_NAME,

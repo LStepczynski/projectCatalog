@@ -45,13 +45,13 @@ export class S3 {
    * @static
    * @async
    * @param {string} tableName
-   * @returns {Promise<void>}
+   * @returns {Promise<string>}
    */
   public static async addToS3(
     tableName: string,
     body: string,
     id: string
-  ): Promise<void> {
+  ): Promise<string> {
     // Get the bucket name and generate the object id
     const objectKey = `${tableName}/${id}.txt`;
 
@@ -67,6 +67,7 @@ export class S3 {
     const command = new PutObjectCommand(params);
     try {
       await s3Client.send(command);
+      return objectKey;
     } catch (err) {
       throw new InternalError('Addition to the S3 failed', 500, ['addToS3']);
     }
@@ -190,7 +191,7 @@ export class S3 {
    * @param {*} image - image
    * @param {number} [imgWidth=1280] - Width to which the image is going to be resized to
    * @param {number} [imgHeight=720] - Height to which the image is going to be resized to
-   * @returns {void} - Returns if the operation succeeded
+   * @returns {Promise<string>} - Returns if the operation succeeded
    */
   public static async saveImage(
     id: string,
@@ -215,6 +216,9 @@ export class S3 {
     const command = new PutObjectCommand(params);
     try {
       await s3Client.send(command);
+      return `https://${this.getBucket()}.s3.${
+        process.env.AWS_S3_REGION
+      }.amazonaws.com/${objectKey}`;
     } catch (err) {
       throw new InternalError('Addition to the S3 failed', 500, ['saveImage']);
     }

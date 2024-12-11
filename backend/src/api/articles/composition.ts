@@ -20,6 +20,8 @@ const router = Router();
  * @middleware role(['admin', 'publisher'])
  * @async
  *
+ * @TODO: Test the role middleware
+ *
  * Creates a new article with provided metadata and body.
  *
  * @param {Object} req.body - The request body.
