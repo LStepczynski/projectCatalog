@@ -7,7 +7,6 @@ interface Article {
   likes: number;
   image: string;
   difficulty: 'Hard' | 'Medium' | 'Easy';
-  deleted: boolean;
 
   author: string;
   authorProfilePicture: string;

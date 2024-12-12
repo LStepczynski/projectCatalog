@@ -1,14 +1,27 @@
-import { PutItemCommand, PutItemCommandInput } from '@aws-sdk/client-dynamodb';
-import { ArticleInput, PrivateArticle } from '@type/article';
+import {
+  DeleteItemCommand,
+  DeleteItemCommandInput,
+  GetItemCommand,
+  GetItemCommandInput,
+  PutItemCommand,
+  PutItemCommandInput,
+} from '@aws-sdk/client-dynamodb';
+import { ArticleInput, PrivateArticle, PublicArticle } from '@type/article';
 import { getUnixTimestamp } from '@utils/getUnixTimestamp';
 import { marshall, unmarshall } from '@aws-sdk/util-dynamodb';
 import { client } from '@database/dynamodb';
 import { InternalError } from '@utils/statusError';
 import { S3 } from '@services/s3';
 
+type VisibilityType = 'public' | 'private';
 export class ArticleCrud {
   private static UNPUBLISHED_TABLE_NAME = 'ArticlesUnpublished';
   private static PUBLISHED_TABLE_NAME = 'ArticlesPublished';
+
+  public static visibilityToTable(visibility: VisibilityType): string {
+    if (visibility === 'private') return this.UNPUBLISHED_TABLE_NAME;
+    return this.PUBLISHED_TABLE_NAME;
+  }
 
   /**
    * Creates a new article and stores its metadata, content, and associated image in the respective storage systems.
@@ -54,7 +67,6 @@ export class ArticleCrud {
       lastEdited: 0,
       createdAt: currentTime,
       status: 'Private',
-      deleted: false,
       ...metadata,
       image: imageURL, // Replace the base64 string for S3 url
     };
@@ -78,6 +90,63 @@ export class ArticleCrud {
       throw new InternalError('Addition to the database failed', 500, [
         'createArticle',
       ]);
+    }
+  }
+
+  public static async getMetadata(id: string, table: string) {
+    // Request Params
+    const params: GetItemCommandInput = {
+      TableName: table,
+      Key: {
+        id: { S: id },
+      },
+    };
+
+    try {
+      const resp = await client.send(new GetItemCommand(params));
+
+      // Return the item if found
+      if (resp.Item) {
+        return unmarshall(resp.Item) as PrivateArticle | PublicArticle;
+      }
+
+      return null;
+    } catch (err) {
+      // Throw an internal error if there was an unexpected problem
+      throw new InternalError(
+        'Error while fetching the article from the database',
+        500,
+        ['getMetadata', 'article']
+      );
+    }
+  }
+
+  public static async delete(id: string, table: string) {
+    // Request Params
+    const params: DeleteItemCommandInput = {
+      TableName: table,
+      Key: {
+        id: { S: id },
+      },
+      ReturnValues: 'ALL_OLD',
+    };
+
+    try {
+      const resp = await client.send(new DeleteItemCommand(params));
+
+      // Return the item if found
+      if (resp.Attributes) {
+        return unmarshall(resp.Attributes) as PrivateArticle | PublicArticle;
+      }
+
+      return null;
+    } catch (err) {
+      // Throw an internal error if there was an unexpected problem
+      throw new InternalError(
+        'Error while deleting the article from the database',
+        500,
+        ['getMetadata', 'article']
+      );
     }
   }
 }

@@ -8,6 +8,11 @@ export {
 export { generateToken, generateRefresh } from '@utils/jwt/generateToken';
 export { verifyToken } from '@utils/jwt/verifyToken';
 
+export {
+  validateSchema,
+  FieldSchema,
+  FieldType,
+} from '@utils/validations/validateSchema';
 export { validatePassword } from '@utils/validations/validatePassword';
 export { checkUniqueUser } from '@utils/validations/checkUniqueUser';
 
