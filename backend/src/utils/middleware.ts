@@ -57,7 +57,8 @@ export const errorHandler = (
   if (!isAppError || process.env.DEV_STATE !== 'production') {
     console.error(
       'Error:',
-      isAppError ? err.message : err.stack || err.message
+      isAppError ? err.message : err.stack || err.message,
+      (err as AppError)?.details ?? []
     );
   }
 
@@ -92,7 +93,7 @@ export const errorHandler = (
 export const authenticate = (requireAccount: boolean = true) => {
   return (req: Request, res: Response, next: NextFunction) => {
     const token = req.cookies?.token;
-
+    console.log('Breakpoint passed');
     if (!token) {
       if (!requireAccount) {
         // Allow unauthenticated requests if `requireAccount` is false

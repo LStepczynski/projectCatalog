@@ -10,6 +10,7 @@ provider:
   name: aws
   runtime: nodejs18.x
   region: us-east-2
+  timeout: 900
   iamRoleStatements:
     - Effect: 'Allow'
       Action:
@@ -40,10 +41,10 @@ custom:
   dotenv:
     path: .env.${opt:stage, 'dev'}
   esbuild:
-    minify: true
+    minify: false # switch to true later
     bundle: true
     target: 'node18'
-    sourcemap: false
+    sourcemap: true
     packagerOptions:
       scripts:
         - npm install --os=linux --cpu=x64 sharp

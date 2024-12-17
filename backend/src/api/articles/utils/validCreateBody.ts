@@ -27,6 +27,10 @@ const schema: Record<string, FieldSchema> = {
     required: true,
     enumValues: ['Hard', 'Medium', 'Easy'],
   },
+  body: {
+    type: 'string',
+    required: true,
+  },
   status: {
     type: 'enum',
     required: false,
@@ -34,6 +38,6 @@ const schema: Record<string, FieldSchema> = {
   },
 };
 
-export const validCreateMetadata = (obj: any) => {
+export const validCreateBody = (obj: any) => {
   return validateSchema(obj, schema);
 };

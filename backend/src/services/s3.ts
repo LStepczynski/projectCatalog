@@ -89,7 +89,7 @@ export class S3 {
   ): Promise<void> {
     const params = {
       Bucket: this.getBucket(),
-      Key: `${tableName}/${id}.md`,
+      Key: `${tableName}/${id}.txt`,
     };
 
     await s3Client.send(new DeleteObjectCommand(params));
@@ -107,7 +107,7 @@ export class S3 {
   public static async removeImageFromS3(id: string): Promise<void> {
     const params = {
       Bucket: this.getBucket(),
-      Key: `images/${id}.png`,
+      Key: `images/${id}.webp`,
     };
 
     await s3Client.send(new DeleteObjectCommand(params));
@@ -160,7 +160,7 @@ export class S3 {
    * @returns {string} - Fetched article
    */
   public static async readFromS3(tableName: string, id: string) {
-    const objectKey = `${tableName}/${id}.md`;
+    const objectKey = `${tableName}/${id}.txt`;
 
     const params = {
       Bucket: this.getBucket(),

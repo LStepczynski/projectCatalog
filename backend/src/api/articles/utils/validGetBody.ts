@@ -7,11 +7,11 @@ const schema: Record<string, FieldSchema> = {
   },
   visibility: {
     type: 'string',
-    required: false,
+    required: true,
     enumValues: ['public', 'private'],
   },
 };
 
-export const validDeleteMetadata = (obj: any) => {
+export const validGetBody = (obj: any) => {
   return validateSchema(obj, schema);
 };
