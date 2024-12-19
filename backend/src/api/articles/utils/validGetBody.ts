@@ -6,7 +6,7 @@ const schema: Record<string, FieldSchema> = {
     required: true,
   },
   visibility: {
-    type: 'string',
+    type: 'enum',
     required: true,
     enumValues: ['public', 'private'],
   },
