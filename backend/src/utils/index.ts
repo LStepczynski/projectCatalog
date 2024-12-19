@@ -22,3 +22,4 @@ export { isValidEmail } from '@utils/validations/isValidEmail';
 export { getUnixTimestamp } from '@utils/getUnixTimestamp';
 export { asyncHandler } from '@utils/asyncHandler';
 export { resizeImage } from '@utils/resizeImage';
+export { capitalize } from '@utils/capitalize';

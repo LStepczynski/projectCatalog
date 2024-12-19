@@ -1,4 +1,4 @@
-export type FieldType = 'string' | 'number' | 'array' | 'enum';
+export type FieldType = 'string' | 'number' | 'array' | 'enum' | 'any';
 
 export interface FieldSchema {
   type: FieldType;
@@ -31,6 +31,8 @@ export const validateSchema = (
 
     // Check field type
     switch (fieldSchema.type) {
+      case 'any':
+        break;
       case 'string':
         if (typeof value !== 'string') return false;
         break;

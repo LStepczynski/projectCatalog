@@ -1,7 +1,6 @@
 import {
   CreateTableCommandInput,
   ScalarAttributeType,
-  ProjectionType,
 } from '@aws-sdk/client-dynamodb';
 
 const tokensSchema: CreateTableCommandInput = {
@@ -12,28 +11,14 @@ const tokensSchema: CreateTableCommandInput = {
       AttributeType: ScalarAttributeType.S,
     },
     {
-      AttributeName: 'username',
-      AttributeType: ScalarAttributeType.S,
+      AttributeName: 'expiration',
+      AttributeType: ScalarAttributeType.N,
     },
   ],
   KeySchema: [
     {
       AttributeName: 'content',
       KeyType: 'HASH',
-    },
-  ],
-  GlobalSecondaryIndexes: [
-    {
-      IndexName: 'UsernameIndex',
-      KeySchema: [
-        {
-          AttributeName: 'username',
-          KeyType: 'HASH',
-        },
-      ],
-      Projection: {
-        ProjectionType: ProjectionType.ALL,
-      },
     },
   ],
   BillingMode: 'PAY_PER_REQUEST',
