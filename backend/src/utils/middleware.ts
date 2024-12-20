@@ -93,7 +93,7 @@ export const errorHandler = (
 export const authenticate = (requireAccount: boolean = true) => {
   return (req: Request, res: Response, next: NextFunction) => {
     const token = req.cookies?.token;
-    console.log('Breakpoint passed');
+
     if (!token) {
       if (!requireAccount) {
         // Allow unauthenticated requests if `requireAccount` is false

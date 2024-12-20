@@ -14,15 +14,18 @@ import {
   asyncHandler,
   checkUniqueUser,
   generateToken,
+  authenticate,
   UserError,
   verifyToken,
+  setAuthCookies,
 } from '@utils/index';
 
 import dotenv from 'dotenv';
-import { generateRefresh } from '@utils/jwt/generateToken';
+import { Tokens } from '@services/token';
 dotenv.config();
 
 const router = Router();
+
 /**
  * @route POST auth/sign-up
  * @async
@@ -111,32 +114,7 @@ router.post(
 
     // Generate the JWT token
     const { password, ...userWithoutPassword } = dbUser;
-    const jwtToken = generateToken(userWithoutPassword);
-    const refreshToken = generateRefresh(userWithoutPassword);
-
-    // Return the JWT in a cookie
-    res.cookie('token', jwtToken, {
-      httpOnly: true,
-      sameSite: process.env.STATE === 'PRODUCTION' ? 'none' : 'lax',
-      secure: process.env.STATE === 'PRODUCTION',
-      domain:
-        process.env.STATE === 'PRODUCTION'
-          ? '.projectcatalog.click'
-          : undefined,
-      maxAge: 30 * 60 * 1000,
-    });
-
-    // Return the JWT refresh token in a cookie
-    res.cookie('refreshToken', refreshToken, {
-      httpOnly: true,
-      sameSite: process.env.STATE === 'PRODUCTION' ? 'none' : 'lax',
-      secure: process.env.STATE === 'PRODUCTION',
-      domain:
-        process.env.STATE === 'PRODUCTION'
-          ? '.projectcatalog.click'
-          : undefined,
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
+    setAuthCookies(userWithoutPassword, res);
 
     // Return response
     const response: AuthResponse<null> = {
@@ -203,6 +181,51 @@ router.get(
       statusCode: 200,
       auth: {
         user: payload,
+      },
+    };
+
+    res.status(response.statusCode).send(response);
+  })
+);
+
+router.get(
+  '/verify/:token',
+  authenticate(),
+  asyncHandler(async (req: Request, res: Response) => {
+    const isUuid =
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+        req.params.token
+      );
+    if (!isUuid) {
+      throw new UserError('Invalid or expired verification token.', 400);
+    }
+
+    const token = await Tokens.getToken(req.params.token);
+    if (token == null) {
+      throw new UserError('Invalid or expired verification token.', 400);
+    }
+
+    if (token.username != req.user?.username) {
+      throw new UserError('Invalid or expired verification token.', 400);
+    }
+
+    const newUser = await UserCrud.appendRoleToUser(
+      req.user.username,
+      'verified'
+    );
+
+    await Tokens.deleteToken(req.params.token);
+
+    const { password, ...userWithoutPassword } = newUser;
+    setAuthCookies(userWithoutPassword, res);
+
+    const response: AuthResponse<null> = {
+      status: 'success',
+      data: null,
+      message: 'Successfully verified the account.',
+      statusCode: 200,
+      auth: {
+        user: userWithoutPassword,
       },
     };
 

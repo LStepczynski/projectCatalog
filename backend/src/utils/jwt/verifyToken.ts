@@ -28,6 +28,10 @@ export const verifyToken = (
 
   try {
     const decoded = jwt.verify(token, secret) as JwtPayload;
+
+    delete decoded.iat;
+    delete decoded.exp;
+
     return decoded;
   } catch (err: any) {
     throw new UserError('Invalid or expired token.', 403);

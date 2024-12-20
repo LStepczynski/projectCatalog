@@ -6,6 +6,7 @@ export {
 } from '@utils/statusError';
 
 export { generateToken, generateRefresh } from '@utils/jwt/generateToken';
+export { setAuthCookies } from '@utils/jwt/setAuthCookies';
 export { verifyToken } from '@utils/jwt/verifyToken';
 
 export {
