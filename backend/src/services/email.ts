@@ -50,6 +50,8 @@ export class Email {
   /**
    * Sends an account verification email to a new user.
    *
+   * @TODO: Update the email to include the verification resend link
+   *
    * @param {string} email - The recipient's email address.
    * @param {string} username - The username of the recipient.
    * @param {string} code - The verification code used to validate the account.

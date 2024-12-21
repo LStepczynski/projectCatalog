@@ -212,10 +212,33 @@ router.get(
   })
 );
 
+/**
+ * GET auth/verify/:token
+ *
+ * Verifies a user's account using a unique verification token. If the token is valid,
+ * the user's "verified" role is added, the token is deleted, and the user's session cookies
+ * are set. The route returns a success response upon successful verification.
+ *
+ * @param {string} token - The unique verification token passed as a route parameter.
+ *
+ * Response:
+ * - Status: 200 (OK)
+ * - Body: A success message and the user's data without sensitive fields (e.g., password).
+ *
+ * Errors:
+ * - 400: If the token is invalid, expired, or does not match the authenticated user.
+ * - 500: Internal server error for unexpected issues.
+ */
 router.get(
   '/verify/:token',
   authenticate(),
   asyncHandler(async (req: Request, res: Response) => {
+    // Check if the user is already verified
+    if (req.user?.roles.includes('verified')) {
+      throw new UserError('Account already verified', 400);
+    }
+
+    // Check if the token is a uuid
     const isUuid =
       /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
         req.params.token
@@ -224,22 +247,27 @@ router.get(
       throw new UserError('Invalid or expired verification token.', 400);
     }
 
+    // Check if the verification token exists
     const token = await Tokens.getToken(req.params.token);
     if (token == null) {
       throw new UserError('Invalid or expired verification token.', 400);
     }
 
+    // Check if the token belongs to the user
     if (token.username != req.user?.username) {
       throw new UserError('Invalid or expired verification token.', 400);
     }
 
+    // Append the verification role to the user
     const newUser = await UserCrud.appendRoleToUser(
       req.user.username,
       'verified'
     );
 
+    // Delete the used token
     await Tokens.deleteToken(req.params.token);
 
+    // Send the auth response and new JWT tokens in a cookie
     const { password, ...userWithoutPassword } = newUser;
     setAuthCookies(userWithoutPassword, res);
 
@@ -251,6 +279,71 @@ router.get(
       auth: {
         user: userWithoutPassword,
       },
+    };
+
+    res.status(response.statusCode).send(response);
+  })
+);
+
+/**
+ * GET auth/verify/resend
+ *
+ * Resends a verification email to the user if their account is not already verified.
+ * This route generates a new verification token, stores it in the database, and sends
+ * it to the user's registered email address.
+ *
+ * Response:
+ * - Status: 200 (OK)
+ * - Body: A success message confirming the email was sent.
+ *
+ * Errors:
+ * - 400: If the account is already verified (both via JWT and database).
+ * - 404: If the account does not exist in the database.
+ * - 500: If there is an internal server error during token creation or email sending.
+ */
+router.get(
+  '/verify/resend',
+  authenticate(),
+  asyncHandler(async (req: Request, res: Response) => {
+    // Check if the user is already verified according to their JWT
+    if (req.user?.roles.includes('verified')) {
+      throw new UserError('Account already verified', 400);
+    }
+
+    // Fetch the user from the database
+    const user = await UserCrud.get(req.user!.username);
+    if (user == null) {
+      throw new UserError('Account does not exist');
+    }
+
+    // Check if the user is already verified against the database
+    // to prevent the usage of old JWT tokens
+    if (user.roles.includes('verified')) {
+      throw new UserError('Account already verified', 400);
+    }
+
+    // Create the token
+    const verificationToken: Token = {
+      username: user.username,
+      type: 'verification',
+      content: uuid(),
+      expiration: getUnixTimestamp() + 60 * 60 * 24,
+    };
+
+    await Tokens.createToken(verificationToken);
+
+    // Send the verification email
+    await Email.sendAccountVerificationEmail(
+      user.email,
+      user.username,
+      verificationToken.content
+    );
+
+    const response: SuccessResponse<null> = {
+      status: 'success',
+      data: null,
+      message: 'Verification email was successfuly sent.',
+      statusCode: 200,
     };
 
     res.status(response.statusCode).send(response);
