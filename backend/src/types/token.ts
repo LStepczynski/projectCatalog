@@ -3,5 +3,5 @@ export interface Token {
   content: string;
   type: string;
   expiration: number;
-  data: Record<string, any>;
+  data?: Record<string, any>;
 }

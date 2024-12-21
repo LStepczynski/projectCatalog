@@ -10,10 +10,6 @@ const tokensSchema: CreateTableCommandInput = {
       AttributeName: 'content',
       AttributeType: ScalarAttributeType.S,
     },
-    {
-      AttributeName: 'expiration',
-      AttributeType: ScalarAttributeType.N,
-    },
   ],
   KeySchema: [
     {

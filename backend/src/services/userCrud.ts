@@ -75,7 +75,7 @@ export class UserCrud {
     const params: UpdateItemCommandInput = {
       TableName: this.TABLE_NAME,
       Key: {
-        id: { S: userId },
+        username: { S: userId },
       },
       UpdateExpression:
         'SET #roles = list_append(if_not_exists(#roles, :emptyList), :newRole)',
@@ -86,8 +86,8 @@ export class UserCrud {
         ':newRole': { L: [{ S: role }] }, // List containing the new role
         ':emptyList': { L: [] }, // Empty list to initialize roles if it doesn't exist
       },
-      ConditionExpression: 'attribute_exists(id)',
-      ReturnValues: 'UPDATED_NEW',
+      ConditionExpression: 'attribute_exists(username)',
+      ReturnValues: 'ALL_NEW',
     };
 
     try {

@@ -1,15 +1,18 @@
 import { Router, Request, Response } from 'express';
-
+import { v4 as uuid } from 'uuid';
 import bcrypt from 'bcryptjs';
 
 import { UserCrud } from '@services/userCrud';
-
-import { UserInput, AuthResponse, User, SuccessResponse } from '@type/index';
+import { Tokens } from '@services/token';
 
 import {
-  validateSignUpFields,
-  validateSignInFields,
-} from '@api/authentication/utils';
+  UserInput,
+  AuthResponse,
+  User,
+  SuccessResponse,
+  Token,
+} from '@type/index';
+
 import {
   asyncHandler,
   checkUniqueUser,
@@ -18,10 +21,16 @@ import {
   UserError,
   verifyToken,
   setAuthCookies,
+  getUnixTimestamp,
 } from '@utils/index';
 
+import {
+  validateSignUpFields,
+  validateSignInFields,
+} from '@api/authentication/utils';
+
 import dotenv from 'dotenv';
-import { Tokens } from '@services/token';
+import { Email } from '@services/email';
 dotenv.config();
 
 const router = Router();
@@ -57,7 +66,22 @@ router.post(
       email: req.body.email,
     };
 
-    const fullUserObject: User = await UserCrud.create(partialUserObject);
+    const user = await UserCrud.create(partialUserObject);
+
+    const verificationToken: Token = {
+      username: user.username,
+      type: 'verification',
+      content: uuid(),
+      expiration: getUnixTimestamp() + 60 * 60 * 24,
+    };
+
+    await Tokens.createToken(verificationToken);
+
+    await Email.sendAccountVerificationEmail(
+      user.email,
+      verificationToken.username,
+      verificationToken.content
+    );
 
     const response: SuccessResponse<null> = {
       status: 'success',
