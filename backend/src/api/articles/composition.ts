@@ -160,6 +160,18 @@ router.delete(
   })
 );
 
+/**
+ * Updates an article's metadata after validating the request and permissions.
+ * Only the owner of the article or an admin can update the article.
+ *
+ * @route PUT articles/update
+ * @middleware authenticate - Ensures the user is authenticated.
+ * @middleware role - Restricts access to users with the 'publisher' role.
+ *
+ * @throws {UserError} - If the request body is invalid or the article is not found.
+ * @throws {ErrorResponse} - If the user does not have permission to update the article.
+ * @returns {SuccessResponse<null>} - A success message with HTTP status code 200.
+ */
 router.put(
   '/update',
   authenticate(),

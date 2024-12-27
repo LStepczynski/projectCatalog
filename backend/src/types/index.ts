@@ -9,4 +9,4 @@ export { JwtPayload } from '@type/jwtPayload';
 
 export { Token } from '@type/token';
 
-export { PublicArticle, PrivateArticle, ArticleInput } from '@type/article';
+export { PublicArticle, PrivateArticle } from '@type/article';

@@ -5,24 +5,68 @@ import {
   GetItemCommandInput,
   PutItemCommand,
   PutItemCommandInput,
+  QueryCommand,
   UpdateItemCommand,
   UpdateItemCommandInput,
 } from '@aws-sdk/client-dynamodb';
-import { ArticleInput, PrivateArticle, PublicArticle } from '@type/article';
+import { PrivateArticle, PublicArticle } from '@type/article';
 import { getUnixTimestamp } from '@utils/getUnixTimestamp';
 import { marshall, unmarshall } from '@aws-sdk/util-dynamodb';
 import { client } from '@database/dynamodb';
 import { InternalError } from '@utils/statusError';
 import { S3 } from '@services/s3';
+import { QueryCommandInput } from '@aws-sdk/lib-dynamodb';
 
 type VisibilityType = 'public' | 'private';
 export class ArticleCrud {
   private static UNPUBLISHED_TABLE_NAME = 'ArticlesUnpublished';
   private static PUBLISHED_TABLE_NAME = 'ArticlesPublished';
 
+  private static DEFAULT_BANNER_LINK =
+    'https://project-catalog-storage.s3.us-east-2.amazonaws.com/images/banner.webp';
+
   public static visibilityToTable(visibility: VisibilityType): string {
     if (visibility === 'private') return this.UNPUBLISHED_TABLE_NAME;
     return this.PUBLISHED_TABLE_NAME;
+  }
+
+  /**
+   * Queries the DynamoDB table for multiple users based on the provided query parameters.
+   *
+   * @param params - The query parameters to execute the DynamoDB query.
+   *                 These include `TableName`, `KeyConditionExpression`, and other optional query conditions.
+   * @returns A promise that resolves to an array of `User` objects matching the query conditions.
+   *          Returns an empty array if no users are found.
+   * @throws InternalError - If an unexpected issue occurs during the query execution.
+   */
+  public static async query(
+    params: QueryCommandInput
+  ): Promise<PrivateArticle[] | PublicArticle[]> {
+    // Add the table name to the params
+    const completeParams: QueryCommandInput = {
+      ...params,
+    };
+
+    try {
+      const resp = await client.send(new QueryCommand(completeParams));
+
+      // Return the user objects
+      if (resp.Items && resp.Items.length > 0) {
+        return resp.Items.map((item) => unmarshall(item)) as
+          | PrivateArticle[]
+          | PublicArticle[];
+      }
+
+      // Return an empty array if no users found
+      return [];
+    } catch (err) {
+      // Throw an internal error if there was an unexpected problem
+      throw new InternalError(
+        'Error while fetching articles from the database',
+        500,
+        ['queryArticles']
+      );
+    }
   }
 
   /**
@@ -56,22 +100,26 @@ export class ArticleCrud {
    * }
    */
   public static async create(
-    metadata: ArticleInput,
+    metadata: Partial<PrivateArticle>,
     body: string
   ): Promise<PrivateArticle> {
     const currentTime = getUnixTimestamp();
 
     // Save image
-    const imageURL = await S3.saveImage(metadata.id, metadata.image);
+    let imageURL;
+    if (metadata.image) {
+      imageURL = await S3.saveImage(metadata.id!, metadata.image);
+    }
 
     // Fill in the missing fields
-    const finishedArticleObject: PrivateArticle = {
+    const finishedArticleObject = {
       lastEdited: 0,
       createdAt: currentTime,
       status: 'Private',
+      tags: [],
       ...metadata,
-      image: imageURL, // Replace the base64 string for S3 url
-    };
+      image: imageURL ? imageURL : this.DEFAULT_BANNER_LINK, // Replace the base64 string for S3 url
+    } as PrivateArticle;
 
     await S3.addToS3(
       this.UNPUBLISHED_TABLE_NAME,
@@ -177,10 +225,43 @@ export class ArticleCrud {
     }
   }
 
-  public static async update(id: string, updates: Record<string, any>) {
+  /**
+   * @TODO: Test image updates
+   * @TODO: Test lastEdited property
+   *
+   * Updates an item in the database by its `id` with the provided `updates`.
+   * Supports special handling for `image` and `body` properties, including S3 operations.
+   * Dynamically builds update expressions for efficient database updates.
+   *
+   * @param {string} id - The unique identifier of the item to update.
+   * @param {Record<string, any>} updates - An object containing the fields to update and their new values.
+   * @throws {InternalError} - If the body upload to S3 fails or if the database update operation fails.
+   * @returns {Promise<PrivateArticle | null>} - The updated item as an object, or undefined if no updates were applied.
+   *
+   * @example
+   * const updates = {
+   *   title: 'New Title',
+   *   image: 'base64string',
+   *   body: 'Updated content body',
+   * };
+   *
+   * try {
+   *   const updatedItem = await update('item123', updates);
+   *   console.log('Updated item:', updatedItem);
+   * } catch (error) {
+   *   console.error('Failed to update item:', error);
+   * }
+   */
+  public static async update(
+    id: string,
+    updates: Record<string, any>
+  ): Promise<PrivateArticle | null> {
     // Check if `updates` is empty
     const updateKeys = Object.keys(updates);
-    if (updateKeys.length === 0) return;
+    if (updateKeys.length === 0) return null;
+
+    updateKeys.push('lastEdited');
+    updates.lastEdited = getUnixTimestamp();
 
     // Replace the base64 string with an S3 link
     if (updateKeys.includes('image')) {
@@ -197,7 +278,7 @@ export class ArticleCrud {
           'updateArticle',
         ]);
       }
-      if (updateKeys.length === 1) return { s3Updated: true };
+      if (updateKeys.length === 1) return null;
     }
 
     // Prepare the UpdateCommand
@@ -227,11 +308,14 @@ export class ArticleCrud {
       UpdateExpression: updateExpression.slice(0, -1), // Remove trailing comma
       ExpressionAttributeNames: expressionAttributeNames,
       ExpressionAttributeValues: expressionAttributeValues,
+      ConditionExpression: 'attribute_exists(id)',
+      ReturnValues: 'ALL_NEW',
     };
 
     // Send request
     try {
-      await client.send(new UpdateItemCommand(params));
+      const response = await client.send(new UpdateItemCommand(params));
+      return unmarshall(response.Attributes!) as PrivateArticle;
     } catch (error) {
       throw new InternalError(
         'Failed to update the item in the database.',

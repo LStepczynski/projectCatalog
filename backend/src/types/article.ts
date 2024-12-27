@@ -22,6 +22,3 @@ export interface PublicArticle extends Article {
 export interface PrivateArticle extends Article {
   status: 'Private' | 'In Review';
 }
-
-export interface ArticleInput
-  extends Omit<Article, 'createdAt' | 'lastEdited' | 'deleted'> {}

@@ -3,8 +3,6 @@ import {
   PutItemCommand,
   UpdateItemCommand,
   UpdateItemCommandInput,
-  DeleteItemCommand,
-  ReturnValue,
   QueryCommand,
   PutItemCommandInput,
   GetItemCommandInput,
@@ -19,8 +17,8 @@ import { QueryCommandInput } from '@aws-sdk/lib-dynamodb';
 
 export class UserCrud {
   private static TABLE_NAME = 'Users';
-  private static DEFAULT_PROFILE_URL =
-    'https://project-catalog-storage.s3.us-east-2.amazonaws.com/images/pfp.png';
+  private static DEFAULT_PROFILE_NAME = 'pfp';
+  private static DEFAULT_PROFILE_URL = `https://project-catalog-storage.s3.us-east-2.amazonaws.com/images/${this.DEFAULT_PROFILE_NAME}.png`;
 
   /**
    * Creates a User object and adds it to the database
@@ -62,48 +60,28 @@ export class UserCrud {
   }
 
   /**
-   * Appends a role to the user's roles list in the DynamoDB table.
+   * Updates a user record in the database by `id` with the specified `updates`.
+   * Automatically updates the `lastPictureChange` property if the `profilePicture` is updated.
+   * Dynamically constructs the update expressions for efficient database updates.
    *
-   * @param userId - The ID of the user.
-   * @param role - The role to append to the roles list.
-   * @throws {Error} - If the update operation fails.
+   * @param {string} id - The user username.
+   * @param {Record<string, any>} updates - An object containing the fields to update and their new values.
+   * @throws {InternalError} - If the database update operation fails.
+   * @returns {Promise<User | null>} - The updated user object, or `null` if no updates were applied.
    */
-  public static async appendRoleToUser(
-    userId: string,
-    role: string
-  ): Promise<User> {
-    const params: UpdateItemCommandInput = {
-      TableName: this.TABLE_NAME,
-      Key: {
-        username: { S: userId },
-      },
-      UpdateExpression:
-        'SET #roles = list_append(if_not_exists(#roles, :emptyList), :newRole)',
-      ExpressionAttributeNames: {
-        '#roles': 'roles',
-      },
-      ExpressionAttributeValues: {
-        ':newRole': { L: [{ S: role }] }, // List containing the new role
-        ':emptyList': { L: [] }, // Empty list to initialize roles if it doesn't exist
-      },
-      ConditionExpression: 'attribute_exists(username)',
-      ReturnValues: 'ALL_NEW',
-    };
-
-    try {
-      const result = await client.send(new UpdateItemCommand(params));
-      return unmarshall(result.Attributes as any) as User;
-    } catch (err) {
-      throw new InternalError('Failed to append role to user.', 500, [
-        'appendRoleToUser',
-      ]);
-    }
-  }
-
-  public static async update(id: string, updates: Record<string, any>) {
+  public static async update(
+    id: string,
+    updates: Record<string, any>
+  ): Promise<User | null> {
     // Check if `updates` is empty
     const updateKeys = Object.keys(updates);
-    if (updateKeys.length === 0) return;
+    if (updateKeys.length === 0) return null;
+
+    // Update the lastPictureChange property
+    if (updateKeys.includes('profilePicture')) {
+      updateKeys.push('lastPictureChange');
+      updates.lastPictureChange = getUnixTimestamp();
+    }
 
     // Prepare the UpdateCommand
     let updateExpression = 'SET';
@@ -128,15 +106,17 @@ export class UserCrud {
 
     const params: UpdateItemCommandInput = {
       TableName: this.TABLE_NAME,
-      Key: marshall({ id }), // Use marshall for the Key
+      Key: { username: { S: id } }, // Use marshall for the Key
       UpdateExpression: updateExpression.slice(0, -1), // Remove trailing comma
       ExpressionAttributeNames: expressionAttributeNames,
       ExpressionAttributeValues: expressionAttributeValues,
+      ReturnValues: 'ALL_NEW',
     };
 
     // Send request
     try {
-      await client.send(new UpdateItemCommand(params));
+      const response = await client.send(new UpdateItemCommand(params));
+      return unmarshall(response.Attributes!) as User;
     } catch (error) {
       throw new InternalError(
         'Failed to update the item in the database.',

@@ -15,12 +15,12 @@ const schema: Record<string, FieldSchema> = {
   },
   tags: {
     type: 'array',
-    required: true,
+    required: false,
     elementType: 'string',
   },
   image: {
     type: 'string',
-    required: true,
+    required: false,
   },
   difficulty: {
     type: 'enum',

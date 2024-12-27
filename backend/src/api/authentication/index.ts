@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import { v4 as uuid } from 'uuid';
 import bcrypt from 'bcryptjs';
 
+import { UserService } from '@services/userService';
 import { UserCrud } from '@services/userCrud';
 import { Tokens } from '@services/token';
 
@@ -259,7 +260,7 @@ router.get(
     }
 
     // Append the verification role to the user
-    const newUser = await UserCrud.appendRoleToUser(
+    const newUser = await UserService.appendRoleToUser(
       req.user.username,
       'verified'
     );
