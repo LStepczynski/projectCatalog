@@ -6,6 +6,8 @@ import {
   QueryCommand,
   PutItemCommandInput,
   GetItemCommandInput,
+  DeleteItemCommandInput,
+  DeleteItemCommand,
 } from '@aws-sdk/client-dynamodb';
 
 import { marshall, unmarshall } from '@aws-sdk/util-dynamodb';
@@ -197,6 +199,36 @@ export class UserCrud {
         500,
         ['getUser']
       );
+    }
+  }
+
+  /**
+   * Deletes a user record from the database by username.
+   * Returns the deleted user data if the deletion was successful.
+   *
+   * @param {string} username - The unique identifier of the user to delete.
+   * @throws {InternalError} - If an error occurs during the deletion operation.
+   * @returns {Promise<User | null>} - The deleted user object, or `null` if the user did not exist.
+   */
+  public static async delete(username: string): Promise<User | null> {
+    const params: DeleteItemCommandInput = {
+      TableName: this.TABLE_NAME,
+      Key: {
+        username: { S: username },
+      },
+      ReturnValues: 'ALL_OLD',
+    };
+
+    try {
+      const response = await client.send(new DeleteItemCommand(params));
+      if (response.Attributes) {
+        return unmarshall(response.Attributes) as User;
+      }
+      return null;
+    } catch (err) {
+      throw new InternalError('Error while deleting from the databse', 500, [
+        'userDelete',
+      ]);
     }
   }
 }

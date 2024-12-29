@@ -16,11 +16,15 @@ import { client } from '@database/dynamodb';
 import { InternalError } from '@utils/statusError';
 import { S3 } from '@services/s3';
 import { ArticleCrud } from '@services/articleCrud';
+import {
+  BatchWriteCommand,
+  BatchWriteCommandInput,
+} from '@aws-sdk/lib-dynamodb';
 
 type VisibilityType = 'public' | 'private';
 export class ArticleService {
-  private static UNPUBLISHED_TABLE_NAME = 'ArticlesUnpublished';
-  private static PUBLISHED_TABLE_NAME = 'ArticlesPublished';
+  public static UNPUBLISHED_TABLE_NAME = 'ArticlesUnpublished';
+  public static PUBLISHED_TABLE_NAME = 'ArticlesPublished';
 
   /**
    * Updates all articles authored by the specified author with the given updates.
@@ -47,31 +51,60 @@ export class ArticleService {
     author: string,
     updates: Partial<PrivateArticle>
   ) {
-    const params: QueryCommandInput = {
-      TableName: this.UNPUBLISHED_TABLE_NAME,
-      IndexName: 'AuthorDifficultyIndex',
-      KeyConditionExpression: 'author = :author',
-      ExpressionAttributeValues: {
-        ':author': { S: author },
-      },
-      ProjectionExpression: 'id',
-    };
-
     // Returns a list of existing articles with only the `id` property
-    const authorArticleIds = (await ArticleCrud.query(params)).map(
-      (article) => article.id
-    ) as string[];
+    const privateArticleIds = await this.getUserArticles(
+      author,
+      this.UNPUBLISHED_TABLE_NAME
+    );
+
+    const publicArticleIds = await this.getUserArticles(
+      author,
+      this.PUBLISHED_TABLE_NAME
+    );
 
     try {
-      const updatePromises = authorArticleIds.map((id: string) => {
-        return ArticleCrud.update(id, updates);
+      const privateUpdatePromises = privateArticleIds.map((id: string) => {
+        return ArticleCrud.update(id, updates, this.UNPUBLISHED_TABLE_NAME);
       });
 
-      await Promise.all(updatePromises);
+      const publicUpdatePromises = publicArticleIds.map((id: string) => {
+        return ArticleCrud.update(id, updates, this.PUBLISHED_TABLE_NAME);
+      });
+
+      await Promise.all(publicUpdatePromises);
+      await Promise.all(privateUpdatePromises);
     } catch (err) {
       throw new InternalError('Error while updating an article.', 500, [
         'updateArticlesByAuthor',
       ]);
     }
+  }
+
+  /**
+   * Retrieves a list of article IDs authored by the specified user from the given table.
+   * Uses the `AuthorDifficultyIndex` index to query the articles efficiently.
+   *
+   * @param {string} username - The username of the author whose articles should be retrieved.
+   * @param {string} table - The name of the database table to query (e.g., published or unpublished articles).
+   * @returns {Promise<string[]>} - An array of article IDs authored by the user.
+   */
+  public static async getUserArticles(
+    username: string,
+    table: string
+  ): Promise<string[]> {
+    const params: QueryCommandInput = {
+      TableName: table,
+      IndexName: 'AuthorDifficultyIndex',
+      KeyConditionExpression: 'author = :author',
+      ExpressionAttributeValues: {
+        ':author': { S: username },
+      },
+      ProjectionExpression: 'id',
+    };
+
+    // Returns a list of existing articles with only the `id` property
+    return (await ArticleCrud.query(params)).map(
+      (article) => article.id
+    ) as string[];
   }
 }

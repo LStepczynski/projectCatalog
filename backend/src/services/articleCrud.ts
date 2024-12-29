@@ -15,12 +15,16 @@ import { marshall, unmarshall } from '@aws-sdk/util-dynamodb';
 import { client } from '@database/dynamodb';
 import { InternalError } from '@utils/statusError';
 import { S3 } from '@services/s3';
-import { QueryCommandInput } from '@aws-sdk/lib-dynamodb';
+import {
+  BatchWriteCommand,
+  BatchWriteCommandInput,
+  QueryCommandInput,
+} from '@aws-sdk/lib-dynamodb';
 
 type VisibilityType = 'public' | 'private';
 export class ArticleCrud {
-  private static UNPUBLISHED_TABLE_NAME = 'ArticlesUnpublished';
-  private static PUBLISHED_TABLE_NAME = 'ArticlesPublished';
+  public static UNPUBLISHED_TABLE_NAME = 'ArticlesUnpublished';
+  public static PUBLISHED_TABLE_NAME = 'ArticlesPublished';
 
   private static DEFAULT_BANNER_LINK =
     'https://project-catalog-storage.s3.us-east-2.amazonaws.com/images/banner.webp';
@@ -226,6 +230,86 @@ export class ArticleCrud {
   }
 
   /**
+   * Deletes multiple items from the specified database table in batches.
+   * Splits the IDs into manageable chunks of up to 25 items per batch for DynamoDB's batch operations.
+   * Retries any unprocessed items as necessary.
+   *
+   * @param {string[]} ids - An array of IDs representing the items to delete.
+   * @param {string} table - The name of the database table from which to delete the items.
+   * @throws {InternalError} - If an error occurs during the batch delete operation.
+   * @returns {Promise<void>} - Resolves when all items are successfully deleted.
+   */
+  public static async batchDelete(ids: string[], table: string): Promise<void> {
+    const MAX_BATCH_SIZE = 25;
+    const batches = [];
+
+    // Split the IDs into batches of 25
+    for (let i = 0; i < ids.length; i += MAX_BATCH_SIZE) {
+      batches.push(ids.slice(i, i + MAX_BATCH_SIZE));
+    }
+
+    // Process each batch
+    for (const batch of batches) {
+      const params: BatchWriteCommandInput = {
+        RequestItems: {
+          [table]: batch.map((id) => ({
+            DeleteRequest: {
+              Key: { id: id },
+            },
+          })),
+        },
+      };
+
+      try {
+        const result = await client.send(new BatchWriteCommand(params));
+
+        // Handle unprocessed items
+        if (
+          result.UnprocessedItems &&
+          Object.keys(result.UnprocessedItems).length > 0
+        ) {
+          await this.retryUnprocessedItems(result.UnprocessedItems, table);
+        }
+      } catch (error) {
+        throw new InternalError('Error while deleting from the database', 500, [
+          'batchDelete',
+          'articleService',
+        ]);
+      }
+    }
+  }
+
+  /**
+   * Retries deleting unprocessed items from a batch delete operation.
+   * Recursively attempts to process any unprocessed items until all are successfully deleted.
+   *
+   * @param {BatchWriteCommandInput['RequestItems']} unprocessedItems - The unprocessed items from a previous batch delete attempt.
+   * @param {string} table - The name of the database table associated with the unprocessed items.
+   * @throws {InternalError} - If an error occurs while retrying the deletion of unprocessed items.
+   * @returns {Promise<void>} - Resolves when all unprocessed items are successfully deleted.
+   */
+  private static async retryUnprocessedItems(
+    unprocessedItems: BatchWriteCommandInput['RequestItems'],
+    table: string
+  ): Promise<void> {
+    const params: BatchWriteCommandInput = { RequestItems: unprocessedItems };
+
+    try {
+      const result = await client.send(new BatchWriteCommand(params));
+      if (
+        result.UnprocessedItems &&
+        Object.keys(result.UnprocessedItems).length > 0
+      ) {
+        await this.retryUnprocessedItems(result.UnprocessedItems, table);
+      }
+    } catch (error) {
+      throw new InternalError('Error while reprocessing items.', 500, [
+        'retryUnprocessedItems',
+      ]);
+    }
+  }
+
+  /**
    * @TODO: Test image updates
    * @TODO: Test lastEdited property
    *
@@ -235,6 +319,7 @@ export class ArticleCrud {
    *
    * @param {string} id - The unique identifier of the item to update.
    * @param {Record<string, any>} updates - An object containing the fields to update and their new values.
+   * @param {string} table - Selected table name
    * @throws {InternalError} - If the body upload to S3 fails or if the database update operation fails.
    * @returns {Promise<PrivateArticle | null>} - The updated item as an object, or undefined if no updates were applied.
    *
@@ -254,7 +339,8 @@ export class ArticleCrud {
    */
   public static async update(
     id: string,
-    updates: Record<string, any>
+    updates: Record<string, any>,
+    table: string = this.UNPUBLISHED_TABLE_NAME
   ): Promise<PrivateArticle | null> {
     // Check if `updates` is empty
     const updateKeys = Object.keys(updates);
@@ -303,7 +389,7 @@ export class ArticleCrud {
     });
 
     const params: UpdateItemCommandInput = {
-      TableName: this.UNPUBLISHED_TABLE_NAME,
+      TableName: table,
       Key: marshall({ id }), // Use marshall for the Key
       UpdateExpression: updateExpression.slice(0, -1), // Remove trailing comma
       ExpressionAttributeNames: expressionAttributeNames,

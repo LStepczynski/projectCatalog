@@ -42,8 +42,6 @@ const router = Router();
  *
  * Create a new user account
  *
- * TODO: Send auth email
- *
  * @param {string} req.body.username
  * @param {string} req.body.password
  * @param {string} req.body.email

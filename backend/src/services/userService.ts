@@ -12,10 +12,60 @@ import { UserCrud } from './userCrud';
 
 import { v4 as uuid } from 'uuid';
 import { ArticleService } from './articleService';
+import { ArticleCrud } from './articleCrud';
 
 export class UserService {
   private static TABLE_NAME = 'Users';
   private static DEFAULT_PROFILE_NAME = 'pfp';
+
+  /**
+   * Deletes a user's account along with all their associated articles.
+   * Fetches the user if a username string is provided, and deletes both unpublished and published articles.
+   * Finally, removes the user record from the database.
+   *
+   * @param {User | string} user - The user object or the username string of the user.
+   * @throws {UserError} - If the user does not exist.
+   * @returns {Promise<User | null>} - The deleted user object, or `null` if the user did not exist.
+   */
+  public static async deleteUserAccount(user: User | string) {
+    // If `user` is a string, fetch the user from the database and save it as `user`
+    if (typeof user === 'string') {
+      const result = await UserCrud.get(user);
+      if (result) {
+        user = result;
+      } else {
+        throw new UserError('User not found', 404);
+      }
+    }
+
+    // Fetch all user article ids
+    const privateArticleIds = await ArticleService.getUserArticles(
+      user.username,
+      ArticleCrud.UNPUBLISHED_TABLE_NAME
+    );
+    const publicArticleIds = await ArticleService.getUserArticles(
+      user.username,
+      ArticleCrud.PUBLISHED_TABLE_NAME
+    );
+
+    // Send delete requests if any articles are found
+    if (privateArticleIds.length > 0) {
+      await ArticleCrud.batchDelete(
+        privateArticleIds,
+        ArticleCrud.UNPUBLISHED_TABLE_NAME
+      );
+    }
+
+    if (publicArticleIds.length > 0) {
+      await ArticleCrud.batchDelete(
+        publicArticleIds,
+        ArticleCrud.PUBLISHED_TABLE_NAME
+      );
+    }
+
+    // Delete the user from the database
+    return await UserCrud.delete(user.username);
+  }
 
   /**
    * Appends a role to the user's roles list in the DynamoDB table.
@@ -57,6 +107,7 @@ export class UserService {
   }
 
   /**
+   *
    * Changes the user's profile picture, replacing it with the new image.
    * If the user is a string, fetches the user data from the database.
    * Handles image management, including overwriting default or existing profile pictures.
