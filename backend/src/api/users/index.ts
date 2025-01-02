@@ -20,8 +20,6 @@ dotenv.config();
 const router = Router();
 
 /**
- * @TODO: Test everything
- *
  * Updates the authenticated user's password after validating the provided old and new passwords.
  * Ensures the old password matches the stored password and updates the password with the hashed new password.
  *
@@ -59,7 +57,7 @@ router.put(
     // Check if the passwords match
     const isMatch = await bcrypt.compare(oldPassword, user.password);
     if (!isMatch) {
-      throw new UserError('Invalid password.', 401);
+      throw new UserError('Missing or invalid new password.', 400);
     }
 
     // Hash the new password
@@ -92,8 +90,6 @@ router.put(
 
 /**
  * Changes the user's profile picture, enforcing a cooldown period between updates.
- *
- * @TODO: Test if articles in both tables got the profile updated
  *
  * @route PUT users/change-icon
  * @middleware authenticate - Ensures the user is authenticated.
@@ -152,8 +148,6 @@ router.put(
 );
 
 /**
- * @TODO: Test everything
- *
  * Deletes the authenticated user's account after verifying their password.
  * Removes all associated articles and clears authentication cookies.
  *
@@ -183,7 +177,7 @@ router.delete(
     // Check if the passwords match
     const isMatch = await bcrypt.compare(req.body.password, user.password);
     if (!isMatch) {
-      throw new UserError('Invalid password.', 401);
+      throw new UserError('Missing or password.', 400);
     }
 
     // Delete user along with all of their articles

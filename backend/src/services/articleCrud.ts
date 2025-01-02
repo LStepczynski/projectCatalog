@@ -346,7 +346,9 @@ export class ArticleCrud {
     const updateKeys = Object.keys(updates);
     if (updateKeys.length === 0) return null;
 
-    updateKeys.push('lastEdited');
+    if (!updateKeys.includes('lastEdited')) {
+      updateKeys.push('lastEdited');
+    }
     updates.lastEdited = getUnixTimestamp();
 
     // Replace the base64 string with an S3 link
@@ -402,7 +404,7 @@ export class ArticleCrud {
     try {
       const response = await client.send(new UpdateItemCommand(params));
       return unmarshall(response.Attributes!) as PrivateArticle;
-    } catch (error) {
+    } catch (err) {
       throw new InternalError(
         'Failed to update the item in the database.',
         500,
