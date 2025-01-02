@@ -54,6 +54,12 @@ export class UserService {
         privateArticleIds,
         ArticleCrud.UNPUBLISHED_TABLE_NAME
       );
+      await S3.deleteMultipleFiles([
+        ...privateArticleIds.map(
+          (id: string) => `ArticlesUnpublished/${id}.txt`
+        ),
+        ...privateArticleIds.map((id: string) => `images/${id}.webp`),
+      ]);
     }
 
     if (publicArticleIds.length > 0) {
@@ -61,6 +67,10 @@ export class UserService {
         publicArticleIds,
         ArticleCrud.PUBLISHED_TABLE_NAME
       );
+      await S3.deleteMultipleFiles([
+        ...publicArticleIds.map((id: string) => `ArticlesPublished/${id}.txt`),
+        ...publicArticleIds.map((id: string) => `images/${id}.webp`),
+      ]);
     }
 
     // Delete the user from the database
