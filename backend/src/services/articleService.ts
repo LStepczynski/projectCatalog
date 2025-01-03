@@ -27,6 +27,46 @@ export class ArticleService {
   public static PUBLISHED_TABLE_NAME = 'ArticlesPublished';
 
   /**
+   * Modifies the like count for a specified article by a given amount.
+   *
+   * @param {string} id - The ID of the article whose like count is to be modified.
+   * @param {number} amount - The amount to increment or decrement the like count. Positive values increment, negative values decrement.
+   *
+   * @throws {InternalError} 500 - If there is an error modifying the database entry.
+   *
+   * @returns {Promise<PublicArticle | null>} - Returns the updated article object if successful, or `null` if the update failed.
+   */
+  public static async modifyLikeCount(
+    id: string,
+    amount: number
+  ): Promise<PublicArticle | null> {
+    const params: UpdateItemCommandInput = {
+      TableName: this.PUBLISHED_TABLE_NAME,
+      Key: {
+        id: { S: id },
+      },
+      UpdateExpression: 'SET likes = if_not_exists(likes, :start) + :increment',
+      ExpressionAttributeValues: {
+        ':start': { N: '0' },
+        ':increment': { N: String(amount) },
+      },
+      ReturnValues: 'UPDATED_NEW',
+    };
+
+    try {
+      const resp = await client.send(new UpdateItemCommand(params));
+      if (resp.Attributes) {
+        return unmarshall(resp.Attributes) as PublicArticle;
+      }
+      return null;
+    } catch (err) {
+      throw new InternalError('Error modifying the database', 500, [
+        'modifyLikeCount',
+      ]);
+    }
+  }
+
+  /**
    * Updates all articles authored by the specified author with the given updates.
    * Queries the database for articles by the author and applies the updates to each article.
    *

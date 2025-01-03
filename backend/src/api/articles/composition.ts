@@ -16,6 +16,8 @@ import { validDeleteBody } from '@api/articles/utils/validDeleteBody';
 import { ArticleCrud } from '@services/articleCrud';
 import { ErrorResponse } from '@type/errorResponse';
 import { validUpdateBody } from './utils/validUpdateBody';
+import { Likes } from '@services/likes';
+import { ArticleService } from '@services/articleService';
 
 dotenv.config();
 
@@ -221,6 +223,117 @@ router.put(
 
       res.status(response.statusCode).send(response);
     }
+  })
+);
+
+/**
+ * @route GET articles/like/:id
+ * @middleware authenticate, role(['verified'])
+ *
+ * Checks whether the specified article is liked by the authenticated user.
+ *
+ * @description Validates the article ID as a UUID and determines if the authenticated user has liked the article. Responds with the like status.
+ *
+ * @param {string} id - The UUID of the article to check.
+ * @header {Authorization} - Bearer token for user authentication.
+ *
+ * @throws {InternalError} 500 - If there is an error interacting with the database.
+ *
+ * @response {200} - Returns the like status of the article for the user.
+ * @response {200.data.isLiked} {boolean} - `true` if the article is liked, `false` otherwise.
+ */
+router.get(
+  '/like/:id',
+  authenticate(),
+  role(['verified']),
+  asyncHandler(async (req: Request, res: Response) => {
+    let isLiked = true;
+
+    // Check if the id is a uuid
+    const isUuid =
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+        req.params.id
+      );
+    if (!isUuid) {
+      isLiked = false;
+    }
+
+    // Check if the article is liked by the user
+    if (isLiked) {
+      const likeObject = await Likes.get(req.params.id, req.user!.username);
+      if (likeObject == null) {
+        isLiked = false;
+      }
+    }
+
+    const response: SuccessResponse<{ isLiked: boolean }> = {
+      status: 'success',
+      data: { isLiked },
+      message: `Successfuly cheked if the article is liked.`,
+      statusCode: 200,
+    };
+
+    res.status(response.statusCode).send(response);
+  })
+);
+
+/**
+ * @route PUT articles/like/:id
+ * @middleware authenticate, role(['verified'])
+ *
+ * Toggles the "like" status for a given article. If the article is liked by the user, it will be unliked; if it is not liked, it will be liked. Updates the article's like count accordingly.
+ *
+ * @description Validates the article ID as a UUID, verifies that the article exists, and toggles the like status for the current user. Responds with a success message indicating the updated like status.
+ *
+ * @param {string} id - The UUID of the article to be liked or unliked.
+ * @header {Authorization} - Bearer token for user authentication.
+ *
+ * @throws {UserError} 404 - If the article ID is invalid or the article does not exist.
+ * @throws {InternalError} 500 - If there is an error interacting with the database or updating the like count.
+ *
+ * @response {200} - Successfully toggled the like status. Message indicates whether the article was liked or unliked.
+ */
+router.put(
+  '/like/:id',
+  authenticate(),
+  role(['verified']),
+  asyncHandler(async (req: Request, res: Response) => {
+    // Check if the id is a uuid
+    const isUuid =
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+        req.params.id
+      );
+    if (!isUuid) {
+      throw new UserError('Article not found.', 404);
+    }
+
+    // Check if the article exists
+    const article = await ArticleCrud.getMetadata(
+      req.params.id,
+      ArticleCrud.PUBLISHED_TABLE_NAME
+    );
+    if (article == null) {
+      throw new UserError('Article not found.', 404);
+    }
+
+    // Create or delete the like object and adjust article rating
+    const likeObject = await Likes.get(req.params.id, req.user!.username);
+    if (likeObject == null) {
+      await Likes.create(req.params.id, req.user!.username);
+      await ArticleService.modifyLikeCount(req.params.id, 1);
+    } else {
+      await Likes.delete(req.params.id, req.user!.username);
+      await ArticleService.modifyLikeCount(req.params.id, -1);
+    }
+
+    const response: SuccessResponse<null> = {
+      status: 'success',
+      data: null,
+      message: `Article sucessfully ${likeObject ? 'unliked' : 'liked'}.`,
+      statusCode: 200,
+    };
+
+    res.status(response.statusCode).send(response);
   })
 );
 
