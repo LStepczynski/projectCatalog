@@ -1,20 +1,23 @@
 import { Router, Request, Response } from 'express';
 
 import bcrypt from 'bcryptjs';
-
 import dotenv from 'dotenv';
-import { asyncHandler } from '@utils/asyncHandler';
-import { authenticate, role } from '@utils/middleware';
-import { InternalError, UserError } from '@utils/statusError';
-import { UserCrud } from '@services/userCrud';
-import { UserService } from '@services/userService';
+
 import {
+  asyncHandler,
+  authenticate,
+  role,
+  InternalError,
+  UserError,
   getUnixTimestamp,
   setAuthCookies,
   validatePassword,
 } from '@utils/index';
-import { AuthResponse } from '@type/authResponse';
-import { SuccessResponse } from '@type/successResponse';
+
+import { UserService } from '@services/userService';
+import { UserCrud } from '@services/userCrud';
+
+import { AuthResponse, SuccessResponse } from '@type/index';
 dotenv.config();
 
 const router = Router();
@@ -35,7 +38,6 @@ const router = Router();
 router.put(
   '/change-password',
   authenticate(),
-  role(['verified']),
   asyncHandler(async (req: Request, res: Response) => {
     // Verify if both passwords are of a valid format
     const oldPassword = req.body.oldPassword;

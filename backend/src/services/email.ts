@@ -91,7 +91,7 @@ export class Email {
     await this.sendEmail(
       email,
       'Password Reset Request',
-      `Hello ${username},\n\nYou can reset your password by clicking this link: ${process.env.FRONTEND_URL}/password-reset/${code}\n\nThis link will expire in 6 hours.\n\nIf you did not request a password reset, please ignore this email.`
+      `Hello ${username},\n\nYou can reset your password by clicking this link: ${process.env.FRONTEND_URL}/password-reset/${code}\n\nThis link will expire in 3 hours.\n\nIf you did not request a password reset, please ignore this email.`
     );
   }
 

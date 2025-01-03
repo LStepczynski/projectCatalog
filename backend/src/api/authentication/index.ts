@@ -32,6 +32,7 @@ import {
 
 import dotenv from 'dotenv';
 import { Email } from '@services/email';
+import { randString } from '@utils/randString';
 dotenv.config();
 
 const router = Router();
@@ -212,38 +213,85 @@ router.get(
 );
 
 /**
- * GET auth/verify/:token
+ * @route POST auth/password-reset
+ * @async
  *
- * Verifies a user's account using a unique verification token. If the token is valid,
- * the user's "verified" role is added, the token is deleted, and the user's session cookies
- * are set. The route returns a success response upon successful verification.
+ * Endpoint to initiate a password reset process for a user.
  *
- * @param {string} token - The unique verification token passed as a route parameter.
+ * @description Validates the provided username, checks if the user exists, generates a password reset token, sends a password reset email, and removes the
+ * token for security. If the username is invalid or the user does not exist, the response does not reveal user information for security purposes.
  *
- * Response:
- * - Status: 200 (OK)
- * - Body: A success message and the user's data without sensitive fields (e.g., password).
+ * @throws {UserError} 400 - If the provided username is invalid.
  *
- * Errors:
- * - 400: If the token is invalid, expired, or does not match the authenticated user.
- * - 500: Internal server error for unexpected issues.
+ * @response {200} - Password reset request successful. If the user exists, a password reset email has been sent.
  */
-router.get(
-  '/verify/:token',
-  authenticate(),
+router.post(
+  '/password-reset',
   asyncHandler(async (req: Request, res: Response) => {
-    // Check if the user is already verified
-    if (req.user?.roles.includes('verified')) {
-      throw new UserError('Account already verified', 400);
+    // Validations
+    if (typeof req.body.username != 'string' || req.body.username == '') {
+      throw new UserError('Invalid username.');
     }
 
+    // Declare a generic response
+    const response: SuccessResponse<null> = {
+      status: 'success',
+      data: null,
+      message: 'If the user exists, a password reset email has been sent.',
+      statusCode: 200,
+    };
+
+    // Fetch the user
+    const user = await UserCrud.get(req.body.username);
+    if (user == null) {
+      return res.status(response.statusCode).send(response);
+    }
+
+    // Create a password reset token
+    const token: Token = {
+      username: user.username,
+      content: uuid(),
+      type: 'password-reset',
+      expiration: getUnixTimestamp() + 60 * 60 * 3, // 3h
+    };
+    await Tokens.createToken(token);
+
+    // Send an email with the reset link
+    await Email.sendPasswordResetEmail(
+      user.email,
+      user.username,
+      token.content
+    );
+
+    return res.status(response.statusCode).send(response);
+  })
+);
+
+/**
+ * @route POST auth/password-reset/:token
+ * @async
+ *
+ * Endpoint to reset the user's password using a password reset token.
+ *
+ * @description Validates the provided password reset token, checks for expiration, generates a new random password, updates the user's password in the database,
+ * and sends an email with the new password to the user. If the token is invalid, expired, or the user cannot be updated, an error is thrown.
+ *
+ * @param {string} req.params.token - The password reset token provided in the URL.
+ *
+ * @throws {UserError} 400 - If the token is invalid, expired, or the user cannot be updated.
+ *
+ * @response {200} - Password reset successful. An email with the new password has been sent to the user.
+ */
+router.post(
+  '/password-reset/:token',
+  asyncHandler(async (req: Request, res: Response) => {
     // Check if the token is a uuid
     const isUuid =
       /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
         req.params.token
       );
     if (!isUuid) {
-      throw new UserError('Invalid or expired verification token.', 400);
+      throw new UserError('Invalid or expired password reset token.', 400);
     }
 
     // Check if the verification token exists
@@ -252,32 +300,34 @@ router.get(
       throw new UserError('Invalid or expired verification token.', 400);
     }
 
-    // Check if the token belongs to the user
-    if (token.username != req.user?.username) {
+    // Check for expiration
+    if (token.expiration < getUnixTimestamp()) {
       throw new UserError('Invalid or expired verification token.', 400);
     }
 
-    // Append the verification role to the user
-    const newUser = await UserService.appendRoleToUser(
-      req.user.username,
-      'verified'
-    );
+    // Generate a new password and hash it
+    const newPassword = randString(12);
+    const newHashedPassword = await bcrypt.hash(newPassword, 10);
 
-    // Delete the used token
-    await Tokens.deleteToken(req.params.token);
+    // Update the user's password
+    const user = await UserCrud.update(token.username, {
+      password: newHashedPassword,
+    });
+    if (user == null) {
+      throw new UserError('Invalid or expired verification token.', 400);
+    }
 
-    // Send the auth response and new JWT tokens in a cookie
-    const { password, ...userWithoutPassword } = newUser;
-    setAuthCookies(userWithoutPassword, res);
+    // Send an email with the new password to the user
+    await Email.sendNewPasswordEmail(user.email, user.username, newPassword);
 
-    const response: AuthResponse<null> = {
+    // Delete the token after use
+    await Tokens.deleteToken(token.content);
+
+    const response: SuccessResponse<null> = {
       status: 'success',
       data: null,
-      message: 'Successfully verified the account.',
+      message: 'An email with a new password has been sent.',
       statusCode: 200,
-      auth: {
-        user: userWithoutPassword,
-      },
     };
 
     res.status(response.statusCode).send(response);
@@ -343,6 +393,84 @@ router.get(
       data: null,
       message: 'Verification email was successfuly sent.',
       statusCode: 200,
+    };
+
+    res.status(response.statusCode).send(response);
+  })
+);
+
+/**
+ * GET auth/verify/:token
+ *
+ * Verifies a user's account using a unique verification token. If the token is valid,
+ * the user's "verified" role is added, the token is deleted, and the user's session cookies
+ * are set. The route returns a success response upon successful verification.
+ *
+ * @param {string} token - The unique verification token passed as a route parameter.
+ *
+ * Response:
+ * - Status: 200 (OK)
+ * - Body: A success message and the user's data without sensitive fields (e.g., password).
+ *
+ * Errors:
+ * - 400: If the token is invalid, expired, or does not match the authenticated user.
+ * - 500: Internal server error for unexpected issues.
+ */
+router.get(
+  '/verify/:token',
+  authenticate(),
+  asyncHandler(async (req: Request, res: Response) => {
+    // Check if the user is already verified
+    if (req.user?.roles.includes('verified')) {
+      throw new UserError('Account already verified', 400);
+    }
+
+    // Check if the token is a uuid
+    const isUuid =
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+        req.params.token
+      );
+    if (!isUuid) {
+      throw new UserError('Invalid or expired verification token.', 400);
+    }
+
+    // Check if the verification token exists
+    const token = await Tokens.getToken(req.params.token);
+    if (token == null) {
+      throw new UserError('Invalid or expired verification token.', 400);
+    }
+
+    // Check if the token belongs to the user
+    if (token.username != req.user?.username) {
+      throw new UserError('Invalid or expired verification token.', 400);
+    }
+
+    // Check for expiration
+    if (token.expiration < getUnixTimestamp()) {
+      throw new UserError('Invalid or expired verification token.', 400);
+    }
+
+    // Append the verification role to the user
+    const newUser = await UserService.appendRoleToUser(
+      req.user.username,
+      'verified'
+    );
+
+    // Delete the used token
+    await Tokens.deleteToken(req.params.token);
+
+    // Send the auth response and new JWT tokens in a cookie
+    const { password, ...userWithoutPassword } = newUser;
+    setAuthCookies(userWithoutPassword, res);
+
+    const response: AuthResponse<null> = {
+      status: 'success',
+      data: null,
+      message: 'Successfully verified the account.',
+      statusCode: 200,
+      auth: {
+        user: userWithoutPassword,
+      },
     };
 
     res.status(response.statusCode).send(response);
