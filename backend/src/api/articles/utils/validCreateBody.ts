@@ -1,4 +1,5 @@
 import { FieldSchema, validateSchema } from '@utils/index';
+import { categories } from '@config/categories';
 
 const schema: Record<string, FieldSchema> = {
   title: {
@@ -10,8 +11,9 @@ const schema: Record<string, FieldSchema> = {
     required: true,
   },
   category: {
-    type: 'string',
+    type: 'enum',
     required: true,
+    enumValues: categories,
   },
   tags: {
     type: 'array',

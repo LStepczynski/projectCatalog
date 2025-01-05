@@ -31,6 +31,8 @@ const router = Router();
  * @middleware role(['admin', 'publisher'])
  * @async
  *
+ * @TODO: Return fields that are incorrect to lower ambiguity
+ *
  * Creates a new article with provided metadata and body.
  *
  * @param {Object} req.body - The request body.
@@ -302,6 +304,98 @@ router.put(
       status: 'success',
       data: null,
       message: 'Article successfuly published.',
+      statusCode: 200,
+    };
+
+    res.status(response.statusCode).send(response);
+  })
+);
+
+/**
+ * @route PUT articles/hide/:id
+ * @middleware authenticate, role(['admin', 'publisher'])
+ *
+ * Hides a published article by moving it to the unpublished database table. The article's metadata is updated, and its publication status is set to private.
+ *
+ * @description Validates the article ID as a UUID, ensures the article exists in the published table, and hides it by transferring its data to the unpublished table. Verifies that the user has the necessary permissions to hide the article.
+ *
+ * @param {string} id - The UUID of the article to hide.
+ * @header {Authorization} - Bearer token for user authentication.
+ *
+ * @throws {UserError} 404 - If the article ID is invalid or the article does not exist in the published table.
+ * @throws {UserError} 403 - If the user does not have permission to hide the article.
+ * @throws {InternalError} 500 - If there is an error during the hide operation.
+ *
+ * @response {200} - Successfully hidden the article.
+ */
+router.put(
+  '/hide/:id',
+  authenticate(),
+  role(['admin', 'publisher']),
+  asyncHandler(async (req: Request, res: Response) => {
+    // Check if the id is a uuid
+    const isUuid =
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+        req.params.id
+      );
+    if (!isUuid) {
+      throw new UserError('Article not found.', 404);
+    }
+
+    // Fetch article metadata
+    const articleMetadata = (await ArticleCrud.getMetadata(
+      req.params.id,
+      ArticleCrud.PUBLISHED_TABLE_NAME
+    )) as PublicArticle;
+    if (articleMetadata == null) {
+      throw new UserError('Article not found.', 404);
+    }
+
+    if (
+      !req.user?.roles.includes('admin') &&
+      req.user?.username != articleMetadata.author
+    ) {
+      throw new UserError('Invalid permission.', 403);
+    }
+
+    // Fetch the article body
+    const articleBody = await ArticleCrud.getBody(
+      req.params.id,
+      ArticleCrud.PUBLISHED_TABLE_NAME
+    );
+    if (articleBody == null) {
+      throw new UserError('Article not found.', 404);
+    }
+
+    // Convert PrivateArticle to PublicArticle
+    const newMetadata: PrivateArticle = {
+      ...articleMetadata,
+      status: 'Private',
+    };
+
+    // Remove the status property
+    delete (newMetadata as any).publishedAt;
+
+    // Add the article metadata and body to the Published table
+    await ArticleCrud.add(newMetadata, ArticleCrud.UNPUBLISHED_TABLE_NAME);
+    await S3.addToS3(
+      ArticleCrud.UNPUBLISHED_TABLE_NAME,
+      articleBody,
+      req.params.id
+    );
+
+    // Delete the article from the Unpublished table
+    await ArticleCrud.delete(
+      req.params.id,
+      ArticleCrud.PUBLISHED_TABLE_NAME,
+      false
+    );
+
+    // Return the response
+    const response: SuccessResponse<null> = {
+      status: 'success',
+      data: null,
+      message: 'Article successfuly hidden.',
       statusCode: 200,
     };
 

@@ -216,6 +216,8 @@ router.get(
  * @route POST auth/password-reset
  * @async
  *
+ * @TODO: Check if the user has requested a password reset recently
+ *
  * Endpoint to initiate a password reset process for a user.
  *
  * @description Validates the provided username, checks if the user exists, generates a password reset token, sends a password reset email, and removes the
