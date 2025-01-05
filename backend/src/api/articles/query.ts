@@ -106,12 +106,35 @@ router.get(
   })
 );
 
+/**
+ * @route GET articles/category/:category
+ * @middleware authenticate(false)
+ *
+ * Fetches articles from a specified category with optional pagination and filtering by private or public status.
+ *
+ * @description Retrieves articles based on the provided category and optional query parameters for pagination, sorting order, and private/public filtering. Ensures only authorized users can access private articles.
+ *
+ * @param {string} category - The category to fetch articles from.
+ * @query {boolean} [private=false] - Indicates whether to fetch private articles. Defaults to `false`.
+ * @query {number} [page=1] - The page number to retrieve (1-based indexing).
+ * @query {boolean} [scanForward=true] - Sorting order for the articles. `true` for ascending and `false` for descending.
+ *
+ * @throws {UserError} 400 - If the `page` query parameter is invalid.
+ * @throws {UserError} 403 - If attempting to access private articles without proper authorization.
+ * @throws {UserError} 404 - If the specified category does not exist.
+ * @throws {InternalError} 500 - If there is an error fetching articles from the database.
+ *
+ * @response {200} - Returns a list of articles in the specified category.
+ * @response {200.data} {PublicArticle[] | PrivateArticle[]} - Array of articles from the specified category.
+ */
 router.get(
   '/category/:category',
   authenticate(false),
   asyncHandler(async (req: Request, res: Response) => {
     const privateArticle = stringToBoolean(req.query.private) || false;
-    const scanForward = stringToBoolean(req.query.scanForward) || true;
+    let scanForward = stringToBoolean(req.query.scanForward);
+    if (scanForward == null) scanForward = true;
+
     const category = req.params.category;
     const page = Number(req.query.page) || 1;
 
@@ -131,12 +154,14 @@ router.get(
       TableName: privateArticle
         ? ArticleCrud.UNPUBLISHED_TABLE_NAME
         : ArticleCrud.PUBLISHED_TABLE_NAME,
-      IndexName: 'CategoryPublishedAtIndex',
+      IndexName: privateArticle
+        ? 'CategoryCreatedAtIndex'
+        : 'CategoryPublishedAtIndex',
       KeyConditionExpression: 'category = :category',
       ExpressionAttributeValues: {
         ':category': { S: category },
       },
-      Limit: 10,
+      Limit: 1,
       ScanIndexForward: scanForward,
     };
 

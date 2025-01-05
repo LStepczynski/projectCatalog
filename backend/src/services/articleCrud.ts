@@ -99,6 +99,16 @@ export class ArticleCrud {
     }
   }
 
+  /**
+   * Retrieves a specific page of items from a paginated query result in a database.
+   *
+   * @param {number} page - The page number to retrieve (1-based indexing).
+   * @param {QueryCommandInput} params - The query parameters for the database operation.
+   *
+   * @throws {InternalError} 500 - If there is an error executing the query command.
+   *
+   * @returns {Promise<any[]>} - Returns an array of items for the specified page. Returns an empty array if no items exist for the page.
+   */
   public static async getPagination(page: number, params: QueryCommandInput) {
     // Page count
     let count = 0;
