@@ -19,6 +19,10 @@ const articlesPublishedSchema: CreateTableCommandInput = {
       AttributeName: 'difficulty',
       AttributeType: ScalarAttributeType.S,
     },
+    {
+      AttributeName: 'createdAt',
+      AttributeType: ScalarAttributeType.S,
+    },
   ],
   KeySchema: [
     {
@@ -36,6 +40,22 @@ const articlesPublishedSchema: CreateTableCommandInput = {
         },
         {
           AttributeName: 'difficulty',
+          KeyType: 'RANGE',
+        },
+      ],
+      Projection: {
+        ProjectionType: ProjectionType.ALL,
+      },
+    },
+    {
+      IndexName: 'CategoryCreatedAtIndex',
+      KeySchema: [
+        {
+          AttributeName: 'category',
+          KeyType: 'HASH',
+        },
+        {
+          AttributeName: 'createdAt',
           KeyType: 'RANGE',
         },
       ],

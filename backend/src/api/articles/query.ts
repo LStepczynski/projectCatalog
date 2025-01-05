@@ -12,6 +12,8 @@ import { UserError } from '@utils/statusError';
 import { validGetBody } from '@api/articles/utils/validGetBody';
 
 import { ArticleCrud } from '@services/articleCrud';
+import { categories } from '@config/categories';
+import { stringToBoolean } from '@utils/stringToBoolean';
 
 dotenv.config();
 
@@ -98,6 +100,53 @@ router.get(
         body: articleBody,
       },
       message: 'Article fetched successfuly.',
+    };
+
+    res.status(response.statusCode).send(response);
+  })
+);
+
+router.get(
+  '/category/:category',
+  authenticate(false),
+  asyncHandler(async (req: Request, res: Response) => {
+    const privateArticle = stringToBoolean(req.query.private) || false;
+    const scanForward = stringToBoolean(req.query.scanForward) || true;
+    const category = req.params.category;
+    const page = Number(req.query.page) || 1;
+
+    if (isNaN(page) || page < 1) {
+      throw new UserError('Invalid page parameter.');
+    }
+
+    if (privateArticle && !req.user?.roles.includes('admin')) {
+      throw new UserError('Access denied.', 403);
+    }
+
+    if (!categories.includes(category)) {
+      throw new UserError('Category not found', 404);
+    }
+
+    const params = {
+      TableName: privateArticle
+        ? ArticleCrud.UNPUBLISHED_TABLE_NAME
+        : ArticleCrud.PUBLISHED_TABLE_NAME,
+      IndexName: 'CategoryPublishedAtIndex',
+      KeyConditionExpression: 'category = :category',
+      ExpressionAttributeValues: {
+        ':category': { S: category },
+      },
+      Limit: 10,
+      ScanIndexForward: scanForward,
+    };
+
+    const articles = await ArticleCrud.getPagination(page, params);
+
+    const response: SuccessResponse<PublicArticle[] | PrivateArticle[]> = {
+      status: 'success',
+      data: articles,
+      message: 'Articles successfuly fetched.',
+      statusCode: 200,
     };
 
     res.status(response.statusCode).send(response);

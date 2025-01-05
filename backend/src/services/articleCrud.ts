@@ -73,6 +73,28 @@ export class ArticleCrud {
     }
   }
 
+  public static async getPagination(page: number, params: QueryCommandInput) {
+    // Page count
+    let count = 0;
+    while (true) {
+      count += 1;
+
+      // Use the query method to retrieve items for the specified category
+      const data = await client.send(new QueryCommand(params));
+      if (data.LastEvaluatedKey) {
+        params.ExclusiveStartKey = data.LastEvaluatedKey;
+      }
+
+      // Return items if the desired page is reached or if there are no more pages
+      if (count === page || !data.LastEvaluatedKey) {
+        const items: any = data.Items
+          ? data.Items.map((item) => unmarshall(item))
+          : [];
+        return items;
+      }
+    }
+  }
+
   /**
    * Creates a new article and stores its metadata, content, and associated image in the respective storage systems.
    *
