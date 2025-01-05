@@ -8,7 +8,7 @@ import { PrivateArticle, PublicArticle } from '@type/article';
 
 import { authenticate, role } from '@utils/middleware';
 import { asyncHandler } from '@utils/asyncHandler';
-import { UserError } from '@utils/statusError';
+import { InternalError, UserError } from '@utils/statusError';
 
 import { validCreateBody } from '@api/articles/utils/validCreateBody';
 import { validDeleteBody } from '@api/articles/utils/validDeleteBody';
@@ -18,6 +18,8 @@ import { ErrorResponse } from '@type/errorResponse';
 import { validUpdateBody } from './utils/validUpdateBody';
 import { Likes } from '@services/likes';
 import { ArticleService } from '@services/articleService';
+import { S3 } from '@services/s3';
+import { getUnixTimestamp } from '@utils/getUnixTimestamp';
 
 dotenv.config();
 
@@ -28,8 +30,6 @@ const router = Router();
  * @middleware authenticate
  * @middleware role(['admin', 'publisher'])
  * @async
- *
- * @TODO: Test the role middleware
  *
  * Creates a new article with provided metadata and body.
  *
@@ -72,7 +72,7 @@ router.post(
 
     const { body, ...metadata } = req.body;
 
-    const createdArticle: PrivateArticle = await ArticleCrud.create(
+    const createdArticle: PrivateArticle = await ArticleService.create(
       metadata,
       body
     );
@@ -223,6 +223,89 @@ router.put(
 
       res.status(response.statusCode).send(response);
     }
+  })
+);
+
+/**
+ * @route PUT articles/publish/:id
+ * @middleware authenticate, role(['admin'])
+ *
+ * Publishes an article by moving it from the unpublished to the published database table. Includes transferring metadata and body, and updating timestamps.
+ *
+ * @description Validates the article ID as a UUID, ensures the article exists in the unpublished table, and publishes it by transferring its data to the published table while removing it from the unpublished table.
+ *
+ * @param {string} id - The UUID of the article to publish.
+ *
+ * @throws {UserError} 404 - If the article ID is invalid or the article does not exist in the unpublished table.
+ * @throws {InternalError} 500 - If there is an error during the publish operation.
+ *
+ * @response {200} - Successfully published the article.
+ */
+router.put(
+  '/publish/:id',
+  authenticate(),
+  role(['admin']),
+  asyncHandler(async (req: Request, res: Response) => {
+    // Check if the id is a uuid
+    const isUuid =
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+        req.params.id
+      );
+    if (!isUuid) {
+      throw new UserError('Article not found.', 404);
+    }
+
+    // Fetch article metadata
+    const articleMetadata = (await ArticleCrud.getMetadata(
+      req.params.id,
+      ArticleCrud.UNPUBLISHED_TABLE_NAME
+    )) as PrivateArticle;
+    if (articleMetadata == null) {
+      throw new UserError('Article not found.', 404);
+    }
+
+    // Fetch the article body
+    const articleBody = await ArticleCrud.getBody(
+      req.params.id,
+      ArticleCrud.UNPUBLISHED_TABLE_NAME
+    );
+    if (articleBody == null) {
+      throw new UserError('Article not found.', 404);
+    }
+
+    // Convert PrivateArticle to PublicArticle
+    const newMetadata: PublicArticle = {
+      ...articleMetadata,
+      publishedAt: getUnixTimestamp(),
+    };
+
+    // Remove the status property
+    delete (newMetadata as any).status;
+
+    // Add the article metadata and body to the Published table
+    await ArticleCrud.add(newMetadata, ArticleCrud.PUBLISHED_TABLE_NAME);
+    await S3.addToS3(
+      ArticleCrud.PUBLISHED_TABLE_NAME,
+      articleBody,
+      req.params.id
+    );
+
+    // Delete the article from the Unpublished table
+    await ArticleCrud.delete(
+      req.params.id,
+      ArticleCrud.UNPUBLISHED_TABLE_NAME,
+      false
+    );
+
+    // Return the response
+    const response: SuccessResponse<null> = {
+      status: 'success',
+      data: null,
+      message: 'Article successfuly published.',
+      statusCode: 200,
+    };
+
+    res.status(response.statusCode).send(response);
   })
 );
 

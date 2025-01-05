@@ -26,6 +26,73 @@ export class ArticleService {
   public static UNPUBLISHED_TABLE_NAME = 'ArticlesUnpublished';
   public static PUBLISHED_TABLE_NAME = 'ArticlesPublished';
 
+  private static DEFAULT_BANNER_LINK =
+    'https://project-catalog-storage.s3.us-east-2.amazonaws.com/images/banner.webp';
+
+  /**
+   * Creates a new article and stores its metadata, content, and associated image in the respective storage systems.
+   *
+   * This method performs the following actions:
+   * - Generates timestamps for the article's creation and last edited fields.
+   * - Saves the article's image to an S3 bucket.
+   * - Stores the article's content in S3.
+   * - Persists the article's metadata in a DynamoDB table.
+   *
+   * @param {ArticleInput} metadata - The metadata of the article, including fields like `title`, `author`, etc.
+   * @param {string} body - The content of the article.
+   * @returns {Promise<PrivateArticle>} - A promise resolving to the created article object, containing all metadata fields and timestamps.
+   *
+   * @throws {InternalError} - If an error occurs while saving the article's metadata, image, or content.
+   *
+   * @example
+   * const metadata = {
+   *   title: 'My New Article',
+   *   author: 'John Doe',
+   *   image: 'data:image/png;base64,...'
+   * };
+   * const body = 'This is the content of the article.';
+   *
+   * try {
+   *   const createdArticle = await ArticleCrud.create(metadata, body);
+   *   console.log('Article created:', createdArticle);
+   * } catch (error) {
+   *   console.error('Failed to create article:', error.message);
+   * }
+   */
+  public static async create(
+    metadata: Partial<PrivateArticle>,
+    body: string
+  ): Promise<PrivateArticle> {
+    const currentTime = getUnixTimestamp();
+
+    // Save image
+    let imageURL;
+    if (metadata.image) {
+      imageURL = await S3.saveImage(metadata.id!, metadata.image);
+    }
+
+    // Fill in the missing fields
+    const finishedArticleObject = {
+      lastEdited: 0,
+      createdAt: currentTime,
+      status: 'Private',
+      tags: [],
+      ...metadata,
+      image: imageURL ? imageURL : this.DEFAULT_BANNER_LINK, // Replace the base64 string for S3 url
+    } as PrivateArticle;
+
+    await S3.addToS3(
+      this.UNPUBLISHED_TABLE_NAME,
+      body,
+      finishedArticleObject.id
+    );
+
+    return (await ArticleCrud.add(
+      finishedArticleObject,
+      this.UNPUBLISHED_TABLE_NAME
+    )) as PrivateArticle;
+  }
+
   /**
    * Modifies the like count for a specified article by a given amount.
    *

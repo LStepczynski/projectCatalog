@@ -26,12 +26,38 @@ export class ArticleCrud {
   public static UNPUBLISHED_TABLE_NAME = 'ArticlesUnpublished';
   public static PUBLISHED_TABLE_NAME = 'ArticlesPublished';
 
-  private static DEFAULT_BANNER_LINK =
-    'https://project-catalog-storage.s3.us-east-2.amazonaws.com/images/banner.webp';
-
   public static visibilityToTable(visibility: VisibilityType): string {
     if (visibility === 'private') return this.UNPUBLISHED_TABLE_NAME;
     return this.PUBLISHED_TABLE_NAME;
+  }
+
+  /**
+   * Adds a new article to the specified database table.
+   *
+   * @param {PrivateArticle | PublicArticle} article - The article object to be added to the database.
+   * @param {string} table - The name of the database table where the article should be added.
+   *
+   * @throws {InternalError} 500 - If there is an error adding the article to the database.
+   *
+   * @returns {Promise<PrivateArticle | PublicArticle>} - Returns the added article object if successful.
+   */
+  public static async add(
+    article: PrivateArticle | PublicArticle,
+    table: string
+  ) {
+    // Request params
+    const params: PutItemCommandInput = {
+      TableName: table,
+      Item: marshall(article),
+    };
+    try {
+      await client.send(new PutItemCommand(params));
+      return article;
+    } catch (err) {
+      throw new InternalError('Addition to the database failed', 500, [
+        'addArticle',
+      ]);
+    }
   }
 
   /**
@@ -95,80 +121,6 @@ export class ArticleCrud {
     }
   }
 
-  /**
-   * Creates a new article and stores its metadata, content, and associated image in the respective storage systems.
-   *
-   * This method performs the following actions:
-   * - Generates timestamps for the article's creation and last edited fields.
-   * - Saves the article's image to an S3 bucket.
-   * - Stores the article's content in S3.
-   * - Persists the article's metadata in a DynamoDB table.
-   *
-   * @param {ArticleInput} metadata - The metadata of the article, including fields like `title`, `author`, etc.
-   * @param {string} body - The content of the article.
-   * @returns {Promise<PrivateArticle>} - A promise resolving to the created article object, containing all metadata fields and timestamps.
-   *
-   * @throws {InternalError} - If an error occurs while saving the article's metadata, image, or content.
-   *
-   * @example
-   * const metadata = {
-   *   title: 'My New Article',
-   *   author: 'John Doe',
-   *   image: 'data:image/png;base64,...'
-   * };
-   * const body = 'This is the content of the article.';
-   *
-   * try {
-   *   const createdArticle = await ArticleCrud.create(metadata, body);
-   *   console.log('Article created:', createdArticle);
-   * } catch (error) {
-   *   console.error('Failed to create article:', error.message);
-   * }
-   */
-  public static async create(
-    metadata: Partial<PrivateArticle>,
-    body: string
-  ): Promise<PrivateArticle> {
-    const currentTime = getUnixTimestamp();
-
-    // Save image
-    let imageURL;
-    if (metadata.image) {
-      imageURL = await S3.saveImage(metadata.id!, metadata.image);
-    }
-
-    // Fill in the missing fields
-    const finishedArticleObject = {
-      lastEdited: 0,
-      createdAt: currentTime,
-      status: 'Private',
-      tags: [],
-      ...metadata,
-      image: imageURL ? imageURL : this.DEFAULT_BANNER_LINK, // Replace the base64 string for S3 url
-    } as PrivateArticle;
-
-    await S3.addToS3(
-      this.UNPUBLISHED_TABLE_NAME,
-      body,
-      finishedArticleObject.id
-    );
-
-    // Request params
-    const params: PutItemCommandInput = {
-      TableName: this.UNPUBLISHED_TABLE_NAME,
-      Item: marshall(finishedArticleObject),
-    };
-
-    try {
-      await client.send(new PutItemCommand(params));
-      return finishedArticleObject;
-    } catch (err) {
-      throw new InternalError('Addition to the database failed', 500, [
-        'createArticle',
-      ]);
-    }
-  }
-
   public static async getBody(id: string, table: string) {
     return await S3.readFromS3(table, id);
   }
@@ -214,10 +166,15 @@ export class ArticleCrud {
    *
    * @param {string} id - The unique identifier of the item to delete.
    * @param {string} table - The name of the table.
+   * @param {boolean} removeImage - Determines if the image will be deleted
    * @returns {Promise<PrivateArticle | PublicArticle | null>} - Returns the unmarshalled item if found and deleted, otherwise null.
    * @throws {InternalError} - Throws if an unexpected error occurs while deleting the item.
    */
-  public static async delete(id: string, table: string) {
+  public static async delete(
+    id: string,
+    table: string,
+    removeImage: boolean = true
+  ) {
     // Request Params
     const params: DeleteItemCommandInput = {
       TableName: table,
@@ -230,7 +187,9 @@ export class ArticleCrud {
     try {
       // Remove from S3
       await S3.removeArticleFromS3(table, id);
-      await S3.removeImageFromS3(id);
+      if (removeImage) {
+        await S3.removeImageFromS3(id);
+      }
 
       // Remove from DB
       const resp = await client.send(new DeleteItemCommand(params));
