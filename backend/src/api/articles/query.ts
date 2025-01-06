@@ -138,18 +138,22 @@ router.get(
     const category = req.params.category;
     const page = Number(req.query.page) || 1;
 
+    // Check if page is a number bigger than 0
     if (isNaN(page) || page < 1) {
       throw new UserError('Invalid page parameter.');
     }
 
+    // Check if user is an admin if they want to view private articles
     if (privateArticle && !req.user?.roles.includes('admin')) {
       throw new UserError('Access denied.', 403);
     }
 
+    // Check if the category is valid
     if (!categories.includes(category)) {
       throw new UserError('Category not found', 404);
     }
 
+    // Request params
     const params = {
       TableName: privateArticle
         ? ArticleCrud.UNPUBLISHED_TABLE_NAME
@@ -161,13 +165,85 @@ router.get(
       ExpressionAttributeValues: {
         ':category': { S: category },
       },
-      Limit: 1,
+      Limit: 10,
       ScanIndexForward: scanForward,
     };
 
+    // Send the request and return the data
     const articles = await ArticleCrud.getPagination(page, params);
 
     const response: SuccessResponse<PublicArticle[] | PrivateArticle[]> = {
+      status: 'success',
+      data: articles,
+      message: 'Articles successfuly fetched.',
+      statusCode: 200,
+    };
+
+    res.status(response.statusCode).send(response);
+  })
+);
+
+/**
+ * @route GET articles/private
+ * @middleware authenticate, role(['admin'])
+ *
+ * Fetches private articles from the database with optional pagination and sorting.
+ *
+ * @description Retrieves articles from the unpublished table filtered by their status and supports pagination and sorting order. Only accessible to admin users.
+ *
+ * @query {string} [status='Private'] - The status of the articles to fetch. Must be either `'Private'` or `'In Review'`.
+ * @query {number} [page=1] - The page number to retrieve (1-based indexing).
+ * @query {boolean} [scanForward=true] - Sorting order for the articles. `true` for ascending and `false` for descending.
+ *
+ * @throws {UserError} 400 - If the `page` query parameter is invalid.
+ * @throws {UserError} 400 - If the `status` query parameter is invalid.
+ * @throws {InternalError} 500 - If there is an error fetching articles from the database.
+ *
+ * @response {200} - Returns a list of private articles matching the specified filters.
+ * @response {200.data} {PublicArticle[] | PrivateArticle[]} - Array of articles with the specified status.
+ */
+
+router.get(
+  '/private',
+  authenticate(),
+  role(['admin']),
+  asyncHandler(async (req: Request, res: Response) => {
+    let scanForward = stringToBoolean(req.query.scanForward);
+    if (scanForward == null) scanForward = true;
+
+    const status =
+      typeof req.query.status === 'string' ? req.query.status : 'Private';
+    const page = Number(req.query.page) || 1;
+
+    // Check if page is a number bigger than 0
+    if (isNaN(page) || page < 1) {
+      throw new UserError('Invalid page parameter.');
+    }
+
+    // Check if status is valid
+    if (!['Private', 'In Review'].includes(status)) {
+      throw new UserError('Invalid status value.');
+    }
+
+    // Request params
+    const params = {
+      TableName: ArticleCrud.UNPUBLISHED_TABLE_NAME,
+      IndexName: 'StatusCreatedAtIndex',
+      KeyConditionExpression: '#status = :status',
+      ExpressionAttributeNames: {
+        '#status': 'status',
+      },
+      ExpressionAttributeValues: {
+        ':status': { S: status },
+      },
+      Limit: 10,
+      ScanIndexForward: scanForward,
+    };
+
+    // Send the request and return the data
+    const articles = await ArticleCrud.getPagination(page, params);
+
+    const response: SuccessResponse<PrivateArticle[]> = {
       status: 'success',
       data: articles,
       message: 'Articles successfuly fetched.',
