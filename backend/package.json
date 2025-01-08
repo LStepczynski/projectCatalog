@@ -5,9 +5,11 @@
   "scripts": {
     "test": "npx vitest",
     "dev": "serverless offline",
+    "debug": "node --inspect-brk node_modules/serverless/bin/serverless offline",
     "deploy": "sls deploy --stage production",
     "build": "tsc && copyfiles -u 1 src/**/*.md dist",
     "docker": "docker-compose up",
+    "studio": "npx dynamodb-admin",
     "createTables": "ts-node -r tsconfig-paths/register src/scripts/dynamodbCreateTables.ts",
     "deleteTables": "ts-node -r tsconfig-paths/register src/scripts/dynamodbDeleteTables.ts",
     "scanTable": "ts-node -r tsconfig-paths/register src/scripts/dynamodbScanTable.ts"
@@ -51,7 +53,7 @@
     "serverless-esbuild": "^1.52.1",
     "supertest": "^7.0.0",
     "tsconfig-paths": "^4.2.0",
-    "typescript": "^5.4.5",
+    "typescript": "^5.7.2",
     "vitest": "^2.1.8"
   }
 }

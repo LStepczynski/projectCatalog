@@ -4,17 +4,25 @@ import {
 } from '@aws-sdk/client-dynamodb';
 
 const tokensSchema: CreateTableCommandInput = {
-  TableName: 'Tokens',
+  TableName: 'Likes',
   AttributeDefinitions: [
     {
-      AttributeName: 'content',
+      AttributeName: 'username',
+      AttributeType: ScalarAttributeType.S,
+    },
+    {
+      AttributeName: 'article',
       AttributeType: ScalarAttributeType.S,
     },
   ],
   KeySchema: [
     {
-      AttributeName: 'content',
+      AttributeName: 'username',
       KeyType: 'HASH',
+    },
+    {
+      AttributeName: 'article',
+      KeyType: 'RANGE',
     },
   ],
   BillingMode: 'PAY_PER_REQUEST',

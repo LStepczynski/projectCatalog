@@ -13,9 +13,21 @@ import { resizeImage } from '@utils/index';
 
 dotenv.config();
 
-const s3Client = new S3Client({
-  region: process.env.AWS_S3_REGION,
-});
+const s3Client = new S3Client(
+  process.env.DEV_STATE === 'development'
+    ? {
+        region: 'local',
+        endpoint: 'http://localhost:9000',
+        credentials: {
+          accessKeyId: 'admin',
+          secretAccessKey: 'password123',
+        },
+        forcePathStyle: true,
+      }
+    : {
+        region: process.env.AWS_S3_REGION,
+      }
+);
 
 export class S3 {
   public static getBucket(): string {
@@ -23,7 +35,7 @@ export class S3 {
     if (!bucketName) {
       throw new InternalError('Bucket not found', 500, ['s3BucketNotFound']);
     }
-    return bucketName
+    return bucketName;
   }
 
   /**
@@ -33,15 +45,15 @@ export class S3 {
    * @static
    * @async
    * @param {string} tableName
-   * @returns {Promise<void>}
+   * @returns {Promise<string>}
    */
   public static async addToS3(
     tableName: string,
     body: string,
     id: string
-  ): Promise<void> {
+  ): Promise<string> {
     // Get the bucket name and generate the object id
-    const objectKey = `${tableName}/${id}.md`;
+    const objectKey = `${tableName}/${id}.txt`;
 
     // Add the object to the S3
     const params = {
@@ -53,7 +65,12 @@ export class S3 {
 
     // Send command
     const command = new PutObjectCommand(params);
-    await s3Client.send(command);
+    try {
+      await s3Client.send(command);
+      return objectKey;
+    } catch (err) {
+      throw new InternalError('Addition to the S3 failed', 500, ['addToS3']);
+    }
   }
 
   /**
@@ -66,10 +83,13 @@ export class S3 {
    * @param {string} id - article id
    * @returns {Promise<void>}
    */
-  public static async removeArticleFromS3(tableName: string, id: string): Promise<void> {
+  public static async removeArticleFromS3(
+    tableName: string,
+    id: string
+  ): Promise<void> {
     const params = {
       Bucket: this.getBucket(),
-      Key: `${tableName}/${id}.md`,
+      Key: `${tableName}/${id}.txt`,
     };
 
     await s3Client.send(new DeleteObjectCommand(params));
@@ -87,7 +107,7 @@ export class S3 {
   public static async removeImageFromS3(id: string): Promise<void> {
     const params = {
       Bucket: this.getBucket(),
-      Key: `images/${id}.png`,
+      Key: `images/${id}.webp`,
     };
 
     await s3Client.send(new DeleteObjectCommand(params));
@@ -103,7 +123,6 @@ export class S3 {
    * @returns {Promise<void>} - Returns true if all deletions succeeded, otherwise false.
    */
   public static async deleteMultipleFiles(keys: string[]): Promise<void> {
-    
     // Check if there are no files to delete
     if (keys.length === 0) {
       return;
@@ -122,7 +141,11 @@ export class S3 {
 
     // Throw an internal error if there were problems deleting
     if (response.Errors && response.Errors.length > 0) {
-      throw new InternalError(`Error while batch deleting files in S3: ${response.Errors}`, 500, ['s3BatchDelete']);
+      throw new InternalError(
+        `Error while batch deleting files in S3: ${response.Errors}`,
+        500,
+        ['s3BatchDelete']
+      );
     }
   }
 
@@ -137,7 +160,7 @@ export class S3 {
    * @returns {string} - Fetched article
    */
   public static async readFromS3(tableName: string, id: string) {
-    const objectKey = `${tableName}/${id}.md`;
+    const objectKey = `${tableName}/${id}.txt`;
 
     const params = {
       Bucket: this.getBucket(),
@@ -150,10 +173,12 @@ export class S3 {
     const fileContents = await response.Body?.transformToString();
 
     if (fileContents == undefined) {
-      throw new InternalError('Article body not found in the S3', 500, ['s3GetObject']);
+      throw new InternalError('Article body not found in the S3', 500, [
+        's3GetObject',
+      ]);
     }
 
-    return fileContents
+    return fileContents;
   }
 
   /**
@@ -166,7 +191,7 @@ export class S3 {
    * @param {*} image - image
    * @param {number} [imgWidth=1280] - Width to which the image is going to be resized to
    * @param {number} [imgHeight=720] - Height to which the image is going to be resized to
-   * @returns {void} - Returns if the operation succeeded
+   * @returns {Promise<string>} - Returns if the operation succeeded
    */
   public static async saveImage(
     id: string,
@@ -175,7 +200,7 @@ export class S3 {
     imgHeight: number = 720
   ) {
     // Resizes an image
-    const resizedImage = await resizeImage(image, imgWidth, imgWidth)
+    const resizedImage = await resizeImage(image, imgWidth, imgHeight);
 
     // Get the bucket name and generate image key
     const bucketName = this.getBucket();
@@ -189,6 +214,13 @@ export class S3 {
     };
 
     const command = new PutObjectCommand(params);
-    await s3Client.send(command);
+    try {
+      await s3Client.send(command);
+      return `https://${this.getBucket()}.s3.${
+        process.env.AWS_S3_REGION
+      }.amazonaws.com/${objectKey}`;
+    } catch (err) {
+      throw new InternalError('Addition to the S3 failed', 500, ['saveImage']);
+    }
   }
 }

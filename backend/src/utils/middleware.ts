@@ -57,7 +57,8 @@ export const errorHandler = (
   if (!isAppError || process.env.DEV_STATE !== 'production') {
     console.error(
       'Error:',
-      isAppError ? err.message : err.stack || err.message
+      isAppError ? err.message : err.stack || err.message,
+      (err as AppError)?.details ?? []
     );
   }
 
@@ -152,6 +153,9 @@ export const role = (allowed: string[]) => {
     }
 
     // If no allowed roles match, deny access
+    if (allowed.includes('verified')) {
+      return next(new UserError('Verify your account to continue', 403));
+    }
     return next(new UserError('Permission denied.', 403));
   };
 };

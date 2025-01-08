@@ -3,11 +3,11 @@ import {
   PutItemCommand,
   UpdateItemCommand,
   UpdateItemCommandInput,
-  DeleteItemCommand,
-  ReturnValue,
   QueryCommand,
   PutItemCommandInput,
   GetItemCommandInput,
+  DeleteItemCommandInput,
+  DeleteItemCommand,
 } from '@aws-sdk/client-dynamodb';
 
 import { marshall, unmarshall } from '@aws-sdk/util-dynamodb';
@@ -19,8 +19,8 @@ import { QueryCommandInput } from '@aws-sdk/lib-dynamodb';
 
 export class UserCrud {
   private static TABLE_NAME = 'Users';
-  private static DEFAULT_PROFILE_URL =
-    'https://project-catalog-storage.s3.us-east-2.amazonaws.com/images/pfp.png';
+  private static DEFAULT_PROFILE_NAME = 'pfp';
+  private static DEFAULT_PROFILE_URL = `https://project-catalog-storage.s3.us-east-2.amazonaws.com/images/${this.DEFAULT_PROFILE_NAME}.png`;
 
   /**
    * Creates a User object and adds it to the database
@@ -58,6 +58,73 @@ export class UserCrud {
       throw new InternalError('Addition to the database failed', 500, [
         'createUser',
       ]);
+    }
+  }
+
+  /**
+   * Updates a user record in the database by `id` with the specified `updates`.
+   * Automatically updates the `lastPictureChange` property if the `profilePicture` is updated.
+   * Dynamically constructs the update expressions for efficient database updates.
+   *
+   * @param {string} id - The user username.
+   * @param {Record<string, any>} updates - An object containing the fields to update and their new values.
+   * @throws {InternalError} - If the database update operation fails.
+   * @returns {Promise<User | null>} - The updated user object, or `null` if no updates were applied.
+   */
+  public static async update(
+    id: string,
+    updates: Record<string, any>
+  ): Promise<User | null> {
+    // Check if `updates` is empty
+    const updateKeys = Object.keys(updates);
+    if (updateKeys.length === 0) return null;
+
+    // Update the lastPictureChange property
+    if (updateKeys.includes('profilePicture')) {
+      updateKeys.push('lastPictureChange');
+      updates.lastPictureChange = getUnixTimestamp();
+    }
+
+    // Prepare the UpdateCommand
+    let updateExpression = 'SET';
+    const expressionAttributeNames: Record<string, string> = {};
+    const expressionAttributeValues: Record<string, any> = {};
+
+    // Build UpdateExpression and ExpressionAttributeValues dynamically
+    updateKeys.forEach((key, index) => {
+      const attributePlaceholder = `#attr${index}`;
+      const valuePlaceholder = `:val${index}`;
+
+      // Append to UpdateExpression
+      updateExpression += ` ${attributePlaceholder} = ${valuePlaceholder},`;
+
+      // Add to ExpressionAttributeNames
+      expressionAttributeNames[attributePlaceholder] = key;
+
+      // Use marshall to convert the value dynamically
+      const marshalledValue = marshall({ value: updates[key] }); // Wrap in object
+      expressionAttributeValues[valuePlaceholder] = marshalledValue.value; // Extract formatted value
+    });
+
+    const params: UpdateItemCommandInput = {
+      TableName: this.TABLE_NAME,
+      Key: { username: { S: id } }, // Use marshall for the Key
+      UpdateExpression: updateExpression.slice(0, -1), // Remove trailing comma
+      ExpressionAttributeNames: expressionAttributeNames,
+      ExpressionAttributeValues: expressionAttributeValues,
+      ReturnValues: 'ALL_NEW',
+    };
+
+    // Send request
+    try {
+      const response = await client.send(new UpdateItemCommand(params));
+      return unmarshall(response.Attributes!) as User;
+    } catch (error) {
+      throw new InternalError(
+        'Failed to update the item in the database.',
+        500,
+        ['updateUser']
+      );
     }
   }
 
@@ -132,6 +199,36 @@ export class UserCrud {
         500,
         ['getUser']
       );
+    }
+  }
+
+  /**
+   * Deletes a user record from the database by username.
+   * Returns the deleted user data if the deletion was successful.
+   *
+   * @param {string} username - The unique identifier of the user to delete.
+   * @throws {InternalError} - If an error occurs during the deletion operation.
+   * @returns {Promise<User | null>} - The deleted user object, or `null` if the user did not exist.
+   */
+  public static async delete(username: string): Promise<User | null> {
+    const params: DeleteItemCommandInput = {
+      TableName: this.TABLE_NAME,
+      Key: {
+        username: { S: username },
+      },
+      ReturnValues: 'ALL_OLD',
+    };
+
+    try {
+      const response = await client.send(new DeleteItemCommand(params));
+      if (response.Attributes) {
+        return unmarshall(response.Attributes) as User;
+      }
+      return null;
+    } catch (err) {
+      throw new InternalError('Error while deleting from the databse', 500, [
+        'userDelete',
+      ]);
     }
   }
 }
