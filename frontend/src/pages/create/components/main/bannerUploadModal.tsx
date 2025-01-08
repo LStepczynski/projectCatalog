@@ -13,6 +13,12 @@ export const BannerUploadModal = ({ isOpen, closeFunc, bannerFunc }: any) => {
     fileInputRef.current.click();
   };
 
+  /**
+   * Handles the file input change event.
+   *
+   * This function processes the selected file from the input event, performs validation checks,
+   * and reads the file as a data URL if it is a valid image file.
+   */
   const handleFileChange = (event: any) => {
     const file = event.target.files[0];
     if (file) {

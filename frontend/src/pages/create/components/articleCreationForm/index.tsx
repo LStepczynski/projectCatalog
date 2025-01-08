@@ -5,6 +5,7 @@ import { CategorySelection } from '@pages/create/components/categorySelection';
 import { useScreenWidth } from '@hooks/useScreenWidth';
 
 import { Box, TextInput, Textarea, Text } from '@primer/react';
+import { Separator } from '@components/animation/separator';
 
 interface FormData {
   Title: string;
@@ -35,6 +36,7 @@ export const ArticleCreationForm = (props: FormProps) => {
     setFormData(newData);
   };
 
+  // Determines the color of the character counter based on characters left
   const getCharCounterColor = () => {
     if (charCount > maxBodyLength - 50) {
       return 'red';
@@ -47,6 +49,7 @@ export const ArticleCreationForm = (props: FormProps) => {
 
   return (
     <>
+      {/* Title */}
       <TextInput
         maxLength={45}
         value={formData.Title}
@@ -63,6 +66,8 @@ export const ArticleCreationForm = (props: FormProps) => {
           p: 2,
         }}
       />
+
+      {/* Description */}
       <Textarea
         placeholder="Description:"
         resize="none"
@@ -81,6 +86,7 @@ export const ArticleCreationForm = (props: FormProps) => {
         }}
       />
 
+      {/* Category Tags and Difficulty Selection */}
       <CategorySelection
         tags={tags}
         setTags={setTags}
@@ -88,15 +94,9 @@ export const ArticleCreationForm = (props: FormProps) => {
         setFormData={setFormData}
       />
 
-      <Box
-        sx={{
-          width: screenWidth < 768 ? '85%' : '75%',
-          height: '1px',
-          backgroundColor: 'ansi.black',
-          my: 3,
-        }}
-      ></Box>
+      <Separator sx={{ width: screenWidth < 768 ? '85%' : '75%', my: 3 }} />
 
+      {/* Body input */}
       <Box
         sx={{
           width: screenWidth < 768 ? '80%' : '60%',

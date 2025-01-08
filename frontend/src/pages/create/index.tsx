@@ -2,20 +2,18 @@ import React from 'react';
 import { useSearchParams } from 'react-router-dom';
 
 import { getUser } from '@utils/getUser';
-import { fetchWrapper } from '@utils/fetchWrapper';
 import { ArticleSubmit } from '@pages/create/components/articleSubmit/articleSubmit';
 import { useScreenWidth } from '@hooks/useScreenWidth';
 import { ArticleCreationForm } from '@pages/create/components/articleCreationForm';
 import { HeroInputImage } from '@pages/create/components/heroInputImage';
 
 import { Box, Heading } from '@primer/react';
+import { Separator } from '@components/animation/separator';
+import useAskLeave from '@hooks/useAskLeave';
+import { useFillExistingInfo } from './hooks/useFillExistingInfo';
 
 export const Create = () => {
   const [bannerFile, setBannerFile] = React.useState<any>([null, null]); // file, link
-  const [saved, setSaved] = React.useState(false);
-  const [searchParams] = useSearchParams();
-  const articleId = searchParams.get('id');
-  const screenWidth = useScreenWidth();
   const [tags, setTags] = React.useState([]);
   const [formData, setFormData] = React.useState({
     Title: '',
@@ -26,60 +24,21 @@ export const Create = () => {
     S3Link: '',
   });
 
+  const articleId = useSearchParams()[0].get('id');
+  const screenWidth = useScreenWidth();
+
+  const setSaved = useAskLeave();
+
   // Check user privliges
   const user = getUser();
   if (user && !(user.CanPost == 'true' || user.Admin == 'true')) {
     return (window.location.href = '/');
   }
 
-  React.useEffect(() => {
-    const handleBeforeUnload = (event: any) => {
-      if (!saved) {
-        event.preventDefault();
-        event.returnValue = ''; // This is necessary for some browsers to show the prompt.
-      }
-    };
-
-    window.addEventListener('beforeunload', handleBeforeUnload);
-
-    // Cleanup function to remove the event listener when the component unmounts
-    return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-    };
-  }, [saved]);
-
-  React.useEffect(() => {
-    const controller = new AbortController();
-    const signal = controller.signal;
-
-    if (!articleId) {
-      return;
-    }
-
-    const backendUrl = import.meta.env.VITE_BACKEND_URL;
-    fetchWrapper(
-      `${backendUrl}/articles/get?id=${articleId}&visibility=private`,
-      { signal },
-      true,
-      60 * 10
-    ).then((data) => {
-      const article = data.response.return;
-      setFormData({
-        Title: article.metadata.Title,
-        Description: article.metadata.Description,
-        Body: article.body,
-        PrimaryCategory: article.metadata.PrimaryCategory,
-        Difficulty: article.metadata.Difficulty,
-        S3Link: article.metadata.Image,
-      });
-      setTags(article.metadata.SecondaryCategories);
-      setBannerFile((prev: any) => [prev[0], article.metadata.Image]);
-    });
-
-    return () => {
-      controller.abort();
-    };
-  }, []);
+  // Fill the form with the existing article data if id is defined
+  if (articleId) {
+    useFillExistingInfo(articleId, setFormData, setTags, setBannerFile);
+  }
 
   return (
     <Box
@@ -95,17 +54,13 @@ export const Create = () => {
       <Heading sx={{ fontSize: screenWidth < 768 ? '28px' : '40px' }}>
         Create an Article
       </Heading>
-      <Box
-        sx={{
-          width: '80%',
-          height: '1px',
-          backgroundColor: 'ansi.black',
-          mb: 2,
-        }}
-      ></Box>
 
+      <Separator sx={{ width: '80%', mb: 2 }} />
+
+      {/* Top of the article - Displays the current selected image and allows for image upload */}
       <HeroInputImage bannerFile={bannerFile} setBannerFile={setBannerFile} />
 
+      {/* Article Creation Form */}
       <ArticleCreationForm
         tags={tags}
         setTags={setTags}
@@ -113,6 +68,7 @@ export const Create = () => {
         setFormData={setFormData}
       />
 
+      {/* Submit and Save Buttons */}
       <ArticleSubmit
         user={user}
         formData={formData}

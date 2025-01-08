@@ -22,6 +22,30 @@ interface SubmitProps {
   setSaved: any;
 }
 
+/**
+ * Custom hook to handle article submission.
+ *
+ * @param {SubmitProps} props - The properties required for submission.
+ * @param {FormData} props.formData - The form data containing article details.
+ * @param {User} props.user - The user information.
+ * @param {File[]} props.bannerFile - The banner file to be uploaded.
+ * @param {string[]} props.tags - The tags associated with the article.
+ * @param {React.Dispatch<React.SetStateAction<boolean>>} props.setSaved - The function to set the saved state.
+ *
+ * @returns {Object} - An object containing the handleSubmit function.
+ *
+ * @function validate
+ * Validates the form data to ensure all required fields are filled and at least one tag is selected.
+ *
+ * @returns {boolean} - Returns true if validation passes, otherwise false.
+ *
+ * @function handleSubmit
+ * Handles the submission of the article data and banner image.
+ *
+ * @param {string} status - The status of the article (e.g., 'private' or 'public').
+ *
+ * @throws {Error} - Throws an error if the submission fails.
+ */
 export const useArticleSubmit = (props: SubmitProps) => {
   const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
