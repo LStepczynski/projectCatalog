@@ -3,13 +3,16 @@
   "version": "1.0.0",
   "description": "",
   "scripts": {
+    "test": "npx vitest",
     "dev": "serverless offline",
+    "debug": "node --inspect-brk node_modules/serverless/bin/serverless offline",
     "deploy": "sls deploy --stage production",
     "build": "tsc && copyfiles -u 1 src/**/*.md dist",
     "docker": "docker-compose up",
-    "db-populate": "ts-node src/tools/db-setup.ts",
-    "db-clear": "ts-node src/tools/deleteTables.ts",
-    "db-reset": "npm run db-clear && npm run db-populate"
+    "studio": "npx dynamodb-admin",
+    "createTables": "ts-node -r tsconfig-paths/register src/scripts/dynamodbCreateTables.ts",
+    "deleteTables": "ts-node -r tsconfig-paths/register src/scripts/dynamodbDeleteTables.ts",
+    "scanTable": "ts-node -r tsconfig-paths/register src/scripts/dynamodbScanTable.ts"
   },
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.568.0",
@@ -23,6 +26,7 @@
     "express": "^4.21.0",
     "express-rate-limit": "^5.5.1",
     "gray-matter": "^4.0.3",
+    "joi": "^17.13.3",
     "jsonwebtoken": "^9.0.2",
     "nodemailer": "^6.9.15",
     "serverless-dotenv-plugin": "^6.0.0",
@@ -41,11 +45,15 @@
     "@types/express-rate-limit": "^6.0.0",
     "@types/jsonwebtoken": "^9.0.6",
     "@types/multer": "^1.4.11",
-    "@types/node": "^20.12.8",
+    "@types/node": "^20.17.9",
     "@types/nodemailer": "^6.4.16",
+    "@types/supertest": "^6.0.2",
     "@types/uuid": "^9.0.8",
     "copyfiles": "^2.4.1",
     "serverless-esbuild": "^1.52.1",
-    "typescript": "^5.4.5"
+    "supertest": "^7.0.0",
+    "tsconfig-paths": "^4.2.0",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
   }
 }

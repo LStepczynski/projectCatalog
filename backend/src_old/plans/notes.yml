@@ -1,0 +1,13 @@
+searchMethods:
+  - id
+  - PublishedAt && Title
+  - Rating && Title
+  - PrimaryCategory && PublishedAt
+  - PrimaryCategory && Title
+  - PrimaryCategory && Rating
+  - PrimaryCategory && Difficulty
+  - Author && rating
+  - Author && Difficulty
+  - Author && PrimaryCategory
+  - Author && PublishedAt
+  - Author && Title
