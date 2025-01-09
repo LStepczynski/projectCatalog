@@ -61,7 +61,9 @@ router.post('/sign-in', RateLimiting.login, async (req, res) => {
       response: { message: 'username or password is missing' },
     });
   }
+
   const response = await UserManagment.verifyUser(username, password);
+
   if (response.status != 200) {
     return res.status(response.status).send(response);
   }
@@ -88,6 +90,21 @@ router.post('/sign-in', RateLimiting.login, async (req, res) => {
 
   return res.status(response.status).send(response);
 });
+
+/**
+ * auth.ts
+ * user.ts
+ * profile/me.ts
+ * settings.ts
+ *
+ * articles ->
+ * fetching.ts
+ * crud/management.ts
+ * publishing.ts
+ * editing.ts
+ * comments.ts
+ * analytics.ts
+ */
 
 router.post(
   '/image',
@@ -229,11 +246,17 @@ router.post(
         .send({ status: 500, response: { message: 'server error' } });
     }
 
-    const response = await UserManagment.updateUser(
-      user.Username,
-      'Liked',
-      fullUserObject.Liked
-    );
+    let response = { status: 500, response: { message: 'server error' } };
+    try {
+      response = await UserManagment.updateUser(
+        user.Username,
+        'Liked',
+        fullUserObject.Liked
+      );
+    } catch (err: any) {
+      console.log(err);
+    }
+
     return res.status(response.status).send(response);
   }
 );
