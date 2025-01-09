@@ -150,8 +150,8 @@ export const fetchWrapper = async (
   const data = await response.json();
 
   // If the response contains an user object, save it to storage
-  if (data.response?.user) {
-    localStorage.setItem('user', JSON.stringify(data.response.user));
+  if (data?.auth.user) {
+    localStorage.setItem('user', JSON.stringify(data.auth.user));
   }
 
   // Save the response to the cache if enabled

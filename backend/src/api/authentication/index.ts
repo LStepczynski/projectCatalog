@@ -121,19 +121,13 @@ router.post(
 
     // Check if the user exists
     if (dbUser == null) {
-      throw new UserError(
-        'Error while trying to sign-in. Invalid credentials.',
-        401
-      );
+      throw new UserError('Invalid credentials.', 401);
     }
 
     // Check if the passwords match
     const isMatch = await bcrypt.compare(req.body.password, dbUser.password);
     if (!isMatch) {
-      throw new UserError(
-        'Error while trying to sign-in. Invalid credentials.',
-        401
-      );
+      throw new UserError('Invalid credentials.', 401);
     }
 
     // Generate the JWT token

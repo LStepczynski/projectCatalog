@@ -58,20 +58,20 @@ export const useFormSubmit = () => {
     setLoading(true);
     try {
       const backendUrl = import.meta.env.VITE_BACKEND_URL;
-      const response = await fetchWrapper(`${backendUrl}/user/sign-in`, {
+      const response = await fetchWrapper(`${backendUrl}/auth/sign-in`, {
         method: 'POST',
         body: JSON.stringify(formData),
       });
 
-      if (response.status !== 200) {
-        setErrorMessage(capitalize(response.response.message) + '.');
+      if (response.status !== 'success') {
+        setErrorMessage(response.message);
         return;
       }
 
       window.location.href = '/';
     } catch (err: any) {
       console.error('Login error:', err);
-      setErrorMessage(capitalize(err.message || 'An error occurred') + '.');
+      setErrorMessage('An error occurred.');
     } finally {
       setLoading(false);
     }
