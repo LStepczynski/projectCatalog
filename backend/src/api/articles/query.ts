@@ -175,7 +175,82 @@ router.get(
     const response: SuccessResponse<PublicArticle[] | PrivateArticle[]> = {
       status: 'success',
       data: articles,
-      message: 'Articles successfuly fetched.',
+      message: 'Articles successfully fetched.',
+      statusCode: 200,
+    };
+
+    res.status(response.statusCode).send(response);
+  })
+);
+
+/**
+ * @route GET articles/author/:authorName
+ * @middleware authenticate(false)
+ *
+ * Fetches articles by a specified author with optional pagination and filtering by private or public status.
+ *
+ * @description Retrieves articles written by the specified author, using query parameters for pagination, sorting order,
+ * and private/public filtering. Ensures only authorized users can access private articles.
+ *
+ * @param {string} authorName - The name of the author whose articles are being requested.
+ * @query {boolean} [private=false] - Indicates whether to fetch private articles. Defaults to `false`.
+ * @query {number} [page=1] - The page number to retrieve (1-based indexing).
+ * @query {boolean} [scanForward=true] - Sorting order for the articles. `true` for ascending and `false` for descending.
+ *
+ * @throws {UserError} 400 - If the `page` query parameter is invalid.
+ * @throws {UserError} 403 - If attempting to access private articles without proper authorization.
+ * @throws {InternalError} 500 - If there is an error fetching articles from the database.
+ *
+ * @response {200} - Returns a list of articles by the specified author.
+ * @response {200.data} {PublicArticle[] | PrivateArticle[]} - Array of articles by the specified author.
+ */
+router.get(
+  '/author/:authorName',
+  authenticate(false),
+  asyncHandler(async (req: Request, res: Response) => {
+    const privateArticle = stringToBoolean(req.query.private) || false;
+    let scanForward = stringToBoolean(req.query.scanForward);
+    if (scanForward == null) scanForward = true;
+
+    const authorName = req.params.authorName;
+    const page = Number(req.query.page) || 1;
+
+    // Check if page is a number bigger than 0
+    if (isNaN(page) || page < 1) {
+      throw new UserError('Invalid page parameter.');
+    }
+
+    // Check if user can view private articles
+    if (
+      privateArticle &&
+      !(req.user?.roles.includes('admin') || req.user?.username === authorName)
+    ) {
+      throw new UserError('Access denied.', 403);
+    }
+
+    // Request params
+    const params = {
+      TableName: privateArticle
+        ? ArticleCrud.UNPUBLISHED_TABLE_NAME
+        : ArticleCrud.PUBLISHED_TABLE_NAME,
+      IndexName: privateArticle
+        ? 'AuthorCreatedAtIndex'
+        : 'AuthorPublishedAtIndex',
+      KeyConditionExpression: 'author = :author',
+      ExpressionAttributeValues: {
+        ':author': { S: authorName },
+      },
+      Limit: 10,
+      ScanIndexForward: scanForward,
+    };
+
+    // Send the request and return the data
+    const articles = await ArticleCrud.getPagination(page, params);
+
+    const response: SuccessResponse<PublicArticle[] | PrivateArticle[]> = {
+      status: 'success',
+      data: articles,
+      message: 'Articles successfully fetched.',
       statusCode: 200,
     };
 

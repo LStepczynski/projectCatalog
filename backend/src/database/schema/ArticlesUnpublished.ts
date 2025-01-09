@@ -31,6 +31,10 @@ const articlesPublishedSchema: CreateTableCommandInput = {
       AttributeName: 'status',
       AttributeType: ScalarAttributeType.S,
     },
+    {
+      AttributeName: 'author',
+      AttributeType: ScalarAttributeType.S,
+    },
   ],
   KeySchema: [
     {
@@ -76,6 +80,22 @@ const articlesPublishedSchema: CreateTableCommandInput = {
       KeySchema: [
         {
           AttributeName: 'status',
+          KeyType: 'HASH',
+        },
+        {
+          AttributeName: 'createdAt',
+          KeyType: 'RANGE',
+        },
+      ],
+      Projection: {
+        ProjectionType: ProjectionType.ALL,
+      },
+    },
+    {
+      IndexName: 'AuthorCreatedAtIndex',
+      KeySchema: [
+        {
+          AttributeName: 'author',
           KeyType: 'HASH',
         },
         {
