@@ -4,7 +4,7 @@ const useAskLeave = () => {
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
-    if (!saved) return;
+    if (saved) return;
 
     const handleBeforeUnload = (event: BeforeUnloadEvent) => {
       event.preventDefault();

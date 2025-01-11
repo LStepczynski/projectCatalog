@@ -8,32 +8,33 @@ import { Box, TextInput, Textarea, Text } from '@primer/react';
 import { Separator } from '@components/animation/separator';
 
 interface FormData {
-  Title: string;
-  Description: string;
-  Body: string;
-  PrimaryCategory: string;
-  Difficulty: string;
-  S3Link: string;
+  title: string;
+  description: string;
+  body: string;
+  category: string;
+  difficulty: string;
+  image: string;
+  tags: string[];
 }
 
 interface FormProps {
   formData: FormData;
   setFormData: any;
-  tags: string[];
-  setTags: any;
 }
 
 export const ArticleCreationForm = (props: FormProps) => {
   const [charCount, setCharCount] = React.useState<any>(0);
-  const { formData, setFormData, tags, setTags } = props;
+  const { formData, setFormData } = props;
   const screenWidth = useScreenWidth();
 
   const maxBodyLength = 10000;
   const handleBodyChange = (event: any) => {
-    let newData = formData;
-    newData.Body = event.target.value;
-    setCharCount(newData.Body.length);
-    setFormData(newData);
+    const { value } = event.target;
+    setCharCount(value.length);
+    setFormData((prevData: Record<string, any>) => ({
+      ...prevData,
+      body: value,
+    }));
   };
 
   // Determines the color of the character counter based on characters left
@@ -52,11 +53,11 @@ export const ArticleCreationForm = (props: FormProps) => {
       {/* Title */}
       <TextInput
         maxLength={45}
-        value={formData.Title}
+        value={formData.title}
         onChange={(event) => {
           setFormData((prevData: any) => ({
             ...prevData,
-            Title: event.target.value,
+            title: event.target.value,
           }));
         }}
         placeholder="Title:"
@@ -71,11 +72,11 @@ export const ArticleCreationForm = (props: FormProps) => {
       <Textarea
         placeholder="Description:"
         resize="none"
-        value={formData.Description}
+        value={formData.description}
         onChange={(event) => {
           setFormData((prevData: any) => ({
             ...prevData,
-            Description: event.target.value,
+            description: event.target.value,
           }));
         }}
         maxLength={368}
@@ -87,12 +88,7 @@ export const ArticleCreationForm = (props: FormProps) => {
       />
 
       {/* Category Tags and Difficulty Selection */}
-      <CategorySelection
-        tags={tags}
-        setTags={setTags}
-        formData={formData}
-        setFormData={setFormData}
-      />
+      <CategorySelection formData={formData} setFormData={setFormData} />
 
       <Separator sx={{ width: screenWidth < 768 ? '85%' : '75%', my: 3 }} />
 
@@ -107,7 +103,7 @@ export const ArticleCreationForm = (props: FormProps) => {
           placeholder="Body:"
           resize="none"
           maxLength={maxBodyLength}
-          value={formData.Body}
+          value={formData.body}
           onChange={handleBodyChange}
           sx={{
             width: '100%',

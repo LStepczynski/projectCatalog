@@ -28,7 +28,7 @@ const router = Router();
 /**
  * @route POST articles/create
  * @middleware authenticate
- * @middleware role(['admin', 'publisher'])
+ * @middleware role(['publisher'])
  * @async
  *
  * @TODO: Return fields that are incorrect to lower ambiguity
@@ -60,7 +60,7 @@ const router = Router();
 router.post(
   '/create',
   authenticate(),
-  role(['admin', 'publisher']),
+  role(['publisher']),
   asyncHandler(async (req: Request, res: Response) => {
     if (!validCreateBody(req.body)) {
       throw new UserError('Invalid article schema', 400);
@@ -71,6 +71,10 @@ router.post(
     req.body.likes = 0;
     req.body.author = req.user!.username;
     req.body.authorProfilePicture = req.user!.profilePicture;
+
+    if (req.body.tags.length > 3) {
+      throw new UserError('The number of article tags is more than 3.');
+    }
 
     const { body, ...metadata } = req.body;
 
@@ -184,6 +188,10 @@ router.put(
     // Validate request
     if (!validUpdateBody(req.body)) {
       throw new UserError('Invalid request structure', 400);
+    }
+
+    if (req.body.tags.length > 3) {
+      throw new UserError('The number of article tags is more than 3.');
     }
 
     const { id: idToUpdate, ...newMetadata } = req.body;

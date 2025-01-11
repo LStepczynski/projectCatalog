@@ -12,16 +12,25 @@ import { Separator } from '@components/animation/separator';
 import useAskLeave from '@hooks/useAskLeave';
 import { useFillExistingInfo } from './hooks/useFillExistingInfo';
 
+interface FormData {
+  title: string;
+  description: string;
+  body: string;
+  category: string;
+  difficulty: string;
+  image: string;
+  tags: string[];
+}
+
 export const Create = () => {
-  const [bannerFile, setBannerFile] = React.useState<any>([null, null]); // file, link
-  const [tags, setTags] = React.useState([]);
-  const [formData, setFormData] = React.useState({
-    Title: '',
-    Description: '',
-    Body: '',
-    PrimaryCategory: 'programming',
-    Difficulty: 'Easy',
-    S3Link: '',
+  const [formData, setFormData] = React.useState<FormData>({
+    title: '',
+    description: '',
+    body: '',
+    category: 'programming',
+    difficulty: 'Easy',
+    image: '',
+    tags: [],
   });
 
   const articleId = useSearchParams()[0].get('id');
@@ -31,13 +40,16 @@ export const Create = () => {
 
   // Check user privliges
   const user = getUser();
-  if (user && !(user.CanPost == 'true' || user.Admin == 'true')) {
+  if (
+    user &&
+    !(user.roles.includes('admin') || user.roles.includes('published'))
+  ) {
     return (window.location.href = '/');
   }
 
   // Fill the form with the existing article data if id is defined
   if (articleId) {
-    useFillExistingInfo(articleId, setFormData, setTags, setBannerFile);
+    useFillExistingInfo(articleId, setFormData);
   }
 
   return (
@@ -58,24 +70,13 @@ export const Create = () => {
       <Separator sx={{ width: '80%', mb: 2 }} />
 
       {/* Top of the article - Displays the current selected image and allows for image upload */}
-      <HeroInputImage bannerFile={bannerFile} setBannerFile={setBannerFile} />
+      <HeroInputImage formData={formData} setFormData={setFormData} />
 
       {/* Article Creation Form */}
-      <ArticleCreationForm
-        tags={tags}
-        setTags={setTags}
-        formData={formData}
-        setFormData={setFormData}
-      />
+      <ArticleCreationForm formData={formData} setFormData={setFormData} />
 
       {/* Submit and Save Buttons */}
-      <ArticleSubmit
-        user={user}
-        formData={formData}
-        bannerFile={bannerFile}
-        tags={tags}
-        setSaved={setSaved}
-      />
+      <ArticleSubmit formData={formData} setSaved={setSaved} />
     </Box>
   );
 };

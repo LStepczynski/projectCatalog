@@ -11,27 +11,33 @@ import { Box, Text, Select } from '@primer/react';
 import { tags as availableTags } from '@config/tags';
 
 interface FormData {
-  Title: string;
-  Description: string;
-  Body: string;
-  PrimaryCategory: string;
-  Difficulty: string;
-  S3Link: string;
+  title: string;
+  description: string;
+  body: string;
+  category: string;
+  difficulty: string;
+  image: string;
+  tags: string[];
 }
 
 interface FormProps {
   formData: FormData;
   setFormData: any;
-  tags: string[];
-  setTags: any;
 }
 
 // Allows for category, tag, and difficulty configuration
 export const CategorySelection = (props: FormProps) => {
-  const { formData, setFormData, tags, setTags } = props;
+  const { formData, setFormData } = props;
 
   const [open, setOpen] = React.useState<boolean>(false);
   const screenWidth = useScreenWidth();
+
+  const updateTags = (newTags: string[]) => {
+    setFormData((prevFormData: Record<string, any>) => ({
+      ...prevFormData,
+      tags: newTags,
+    }));
+  };
 
   return (
     <Box
@@ -55,12 +61,12 @@ export const CategorySelection = (props: FormProps) => {
       >
         <Text sx={{ opacity: 0.6, fontSize: '14px' }}>Category:</Text>
         <Select
-          value={formData.PrimaryCategory}
+          value={formData.category}
           // Update the value of formData on change
           onChange={(event) => {
             setFormData((prevData: any) => ({
               ...prevData,
-              PrimaryCategory: event.target.value,
+              category: event.target.value,
             }));
           }}
         >
@@ -78,8 +84,8 @@ export const CategorySelection = (props: FormProps) => {
       {/* Tags */}
       <MultipleChoice
         text="Secondary Categories"
-        setSelected={setTags}
-        selected={tags}
+        setSelected={updateTags}
+        selected={formData.tags}
         setOpen={setOpen}
         maxSelected={3}
         items={availableTags}
@@ -98,18 +104,18 @@ export const CategorySelection = (props: FormProps) => {
       >
         <Text sx={{ opacity: 0.6, fontSize: '14px' }}>Difficulty:</Text>
         <Select
-          value={formData.Difficulty}
+          value={formData.difficulty}
           // Update formData on change
           onChange={(event) => {
             setFormData((prevData: any) => ({
               ...prevData,
-              Difficulty: event.target.value,
+              difficulty: event.target.value,
             }));
           }}
         >
-          <Select.Option value="EASY">Easy</Select.Option>
-          <Select.Option value="MEDIUM">Medium</Select.Option>
-          <Select.Option value="HARD">Hard</Select.Option>
+          <Select.Option value="Easy">Easy</Select.Option>
+          <Select.Option value="Medium">Medium</Select.Option>
+          <Select.Option value="Hard">Hard</Select.Option>
         </Select>
       </Box>
     </Box>

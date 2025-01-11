@@ -61,15 +61,15 @@ export const MultipleChoice = (props: Props) => {
   const [filter, setFilter] = React.useState(items);
 
   const onSelect = (selectedItem: string) => {
-    setSelected((prevData: string[]) => {
-      if (prevData.some((item) => item === selectedItem)) {
-        return prevData.filter((item) => item !== selectedItem);
-      } else if (prevData.length == maxSelected) {
-        return [...prevData.slice(1), selectedItem];
-      } else {
-        return [...prevData, selectedItem];
-      }
-    });
+    let newSelected;
+    if (selected.some((item) => item === selectedItem)) {
+      newSelected = selected.filter((item) => item !== selectedItem);
+    } else if (selected.length == maxSelected) {
+      newSelected = [...selected.slice(1), selectedItem];
+    } else {
+      newSelected = [...selected, selectedItem];
+    }
+    setSelected(newSelected);
   };
 
   const onChange = (event: any) => {

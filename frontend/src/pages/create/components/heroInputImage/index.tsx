@@ -6,14 +6,21 @@ import { AnimatedImage } from '@components/animation/animatedImage';
 import { Box } from '@primer/react';
 
 interface HeroProps {
-  bannerFile: any;
-  setBannerFile: any;
+  formData: any;
+  setFormData: any;
 }
 
 export const HeroInputImage = (props: HeroProps) => {
   const [uploadModal, setUploadModal] = React.useState<any>(false);
   const [bannerHover, setBannerHover] = React.useState<any>(false);
-  const { bannerFile, setBannerFile } = props;
+  const { formData, setFormData } = props;
+
+  const updateImage = (newImage: string) => {
+    setFormData((prevFormData: Record<string, any>) => ({
+      ...prevFormData,
+      image: newImage,
+    }));
+  };
 
   return (
     <>
@@ -51,14 +58,14 @@ export const HeroInputImage = (props: HeroProps) => {
 
           {/* Show the submitted image, otherwise display the default */}
           <AnimatedImage
-            url={bannerFile[1] || 'images/default2.png'}
+            url={formData.image != '' ? formData.Image : 'images/default2.png'}
             alt="Article image"
           />
         </Box>
 
         {/* Upload modal */}
         <BannerUploadModal
-          bannerFunc={setBannerFile}
+          bannerFunc={updateImage}
           isOpen={uploadModal}
           closeFunc={() => setUploadModal(false)}
         />
