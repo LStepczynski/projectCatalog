@@ -166,7 +166,7 @@ export const fetchWrapper = async (
   }
 
   // Save the response to the cache if enabled
-  if (cache) {
+  if (data.status == 'success' && cache) {
     saveToCache(url, data, cacheDuration);
   }
 

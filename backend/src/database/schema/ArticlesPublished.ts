@@ -27,10 +27,6 @@ const articlesPublishedSchema: CreateTableCommandInput = {
       AttributeName: 'category',
       AttributeType: ScalarAttributeType.S,
     },
-    {
-      AttributeName: 'author',
-      AttributeType: ScalarAttributeType.S,
-    },
   ],
   KeySchema: [
     {

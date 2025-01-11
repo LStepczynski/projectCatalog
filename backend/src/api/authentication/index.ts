@@ -141,7 +141,11 @@ router.post(
       message: 'Successfully signed in.',
       statusCode: 200,
       auth: {
-        user: userWithoutPassword,
+        user: {
+          ...userWithoutPassword,
+          exp:
+            getUnixTimestamp() + Number(process.env.JWT_EXPIRATION) * 60 * 24,
+        },
       },
     };
 
@@ -198,7 +202,11 @@ router.get(
       message: 'Token refresh successful.',
       statusCode: 200,
       auth: {
-        user: payload,
+        user: {
+          ...payload,
+          exp:
+            getUnixTimestamp() + Number(process.env.JWT_EXPIRATION) * 60 * 24,
+        },
       },
     };
 
@@ -460,7 +468,11 @@ router.post(
       message: 'Successfully verified the account.',
       statusCode: 200,
       auth: {
-        user: userWithoutPassword,
+        user: {
+          ...userWithoutPassword,
+          exp:
+            getUnixTimestamp() + Number(process.env.JWT_EXPIRATION) * 60 * 24,
+        },
       },
     };
 

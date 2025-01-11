@@ -7,25 +7,10 @@ import { ArticleDropdown } from '@components/articles/articleDropdown';
 import { AnimatedImage } from '@components/animation/animatedImage';
 
 import { Box, Heading, Text, Avatar } from '@primer/react';
+import { PublicArticle } from '@type/article';
 
 interface Props {
-  article: Article;
-}
-
-interface Article {
-  Title: string;
-  Description: string;
-  Author: String;
-  AuthorProfilePic: string;
-  PrimaryCategory: string;
-  SecondaryCategories: string[];
-  Rating: number;
-  UpdatedAt: number;
-  CreatedAt: number;
-  PublishedAt: number;
-  Difficulty: string;
-  Image: string;
-  ID: string;
+  article: PublicArticle;
 }
 
 export const ArticleMedium = (props: Props) => {
@@ -58,12 +43,12 @@ export const ArticleMedium = (props: Props) => {
       </Box>
       <Box
         onClick={() =>
-          (window.location.href = `/${article.ID}?visibility=public`)
+          (window.location.href = `/${article.id}?visibility=public`)
         }
         sx={{ borderRadius: '15px', overflow: 'hidden' }}
       >
         <AnimatedImage
-          url={article.Image ? article.Image : defaultImage}
+          url={article.image ? article.image : defaultImage}
           alt="Article Image"
         />
       </Box>
@@ -75,7 +60,7 @@ export const ArticleMedium = (props: Props) => {
           gap: 2,
         }}
         onClick={() =>
-          (window.location.href = `/${article.ID}?visibility=public`)
+          (window.location.href = `/${article.id}?visibility=public`)
         }
       >
         <Heading
@@ -83,7 +68,7 @@ export const ArticleMedium = (props: Props) => {
             fontSize: '22px',
           }}
         >
-          {article.Title}
+          {article.title}
         </Heading>
         <Box
           sx={{
@@ -94,10 +79,10 @@ export const ArticleMedium = (props: Props) => {
           }}
         >
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <Avatar size={30} src={article.AuthorProfilePic} />
-            <Text>{article.Author}</Text>
+            <Avatar size={30} src={article.authorProfilePicture} />
+            <Text>{article.author}</Text>
           </Box>
-          <ArticleDifficultyLabel value={article.Difficulty} />
+          <ArticleDifficultyLabel value={article.difficulty} />
         </Box>
         <Box
           sx={{
@@ -108,7 +93,7 @@ export const ArticleMedium = (props: Props) => {
           }}
         >
           <Text>
-            {article.Rating} ✰ • {getRelativeDate(article.PublishedAt)}
+            {article.likes} ✰ • {getRelativeDate(article.publishedAt)}
           </Text>
         </Box>
       </Box>

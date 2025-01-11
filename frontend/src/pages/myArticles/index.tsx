@@ -20,12 +20,15 @@ export const MyArticles = () => {
   const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
   const user = getUser();
-  if (user && !(user.CanPost == 'true' || user.Admin == 'true')) {
+  if (
+    user &&
+    !(user.roles.includes('publisher') || user.roles.includes('admin'))
+  ) {
     return (window.location.href = '/');
   }
 
   const { data: publicArticles } = useFetchData<[]>(
-    `${backendUrl}/articles/author?authorName=${user?.Username}&page=${page}`,
+    `${backendUrl}/articles/author/${user!.username}?page=${page}`,
     [],
     {},
     true,
@@ -33,7 +36,7 @@ export const MyArticles = () => {
   );
 
   const { data: privateArticles } = useFetchData<[]>(
-    `${backendUrl}/articles/author?authorName=${user?.Username}&visibility=private`,
+    `${backendUrl}/articles/author/${user!.username}?private=true`,
     [],
     {},
     true,

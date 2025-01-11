@@ -10,7 +10,7 @@ provider:
   name: aws
   runtime: nodejs18.x
   region: us-east-2
-  timeout: 900
+  timeout: 5
   iamRoleStatements:
     - Effect: 'Allow'
       Action:

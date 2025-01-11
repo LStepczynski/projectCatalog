@@ -254,6 +254,8 @@ router.get(
       statusCode: 200,
     };
 
+    console.log(response);
+
     res.status(response.statusCode).send(response);
   })
 );
