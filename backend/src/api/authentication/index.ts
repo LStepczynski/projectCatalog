@@ -396,7 +396,7 @@ router.get(
 );
 
 /**
- * GET auth/verify/:token
+ * POST auth/verify/:token
  *
  * Verifies a user's account using a unique verification token. If the token is valid,
  * the user's "verified" role is added, the token is deleted, and the user's session cookies
@@ -412,12 +412,12 @@ router.get(
  * - 400: If the token is invalid, expired, or does not match the authenticated user.
  * - 500: Internal server error for unexpected issues.
  */
-router.get(
+router.post(
   '/verify/:token',
-  authenticate(),
+  authenticate(false),
   asyncHandler(async (req: Request, res: Response) => {
     // Check if the user is already verified
-    if (req.user?.roles.includes('verified')) {
+    if (req?.user?.roles.includes('verified')) {
       throw new UserError('Account already verified', 400);
     }
 
@@ -436,11 +436,6 @@ router.get(
       throw new UserError('Invalid or expired verification token.', 400);
     }
 
-    // Check if the token belongs to the user
-    if (token.username != req.user?.username) {
-      throw new UserError('Invalid or expired verification token.', 400);
-    }
-
     // Check for expiration
     if (token.expiration < getUnixTimestamp()) {
       throw new UserError('Invalid or expired verification token.', 400);
@@ -448,7 +443,7 @@ router.get(
 
     // Append the verification role to the user
     const newUser = await UserService.appendRoleToUser(
-      req.user.username,
+      token.username,
       'verified'
     );
 
