@@ -38,6 +38,7 @@ export const SkeletonCategoryPanel = ({ bigArticles = true }) => {
         display: 'flex',
         flexWrap: 'wrap',
         justifyContent: 'center',
+        gap: '40px',
       }}
     >
       {skeletonReturn()}
