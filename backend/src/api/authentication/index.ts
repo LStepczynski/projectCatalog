@@ -144,7 +144,7 @@ router.post(
         user: {
           ...userWithoutPassword,
           exp:
-            getUnixTimestamp() + Number(process.env.JWT_EXPIRATION) * 60 * 24,
+            getUnixTimestamp() + Number(process.env.JWT_EXPIRATION) * 60 * 60,
         },
       },
     };
@@ -205,7 +205,7 @@ router.get(
         user: {
           ...payload,
           exp:
-            getUnixTimestamp() + Number(process.env.JWT_EXPIRATION) * 60 * 24,
+            getUnixTimestamp() + Number(process.env.JWT_EXPIRATION) * 60 * 60,
         },
       },
     };
@@ -422,13 +422,7 @@ router.get(
  */
 router.post(
   '/verify/:token',
-  authenticate(false),
   asyncHandler(async (req: Request, res: Response) => {
-    // Check if the user is already verified
-    if (req?.user?.roles.includes('verified')) {
-      throw new UserError('Account already verified', 400);
-    }
-
     // Check if the token is a uuid
     const isUuid =
       /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
@@ -471,7 +465,7 @@ router.post(
         user: {
           ...userWithoutPassword,
           exp:
-            getUnixTimestamp() + Number(process.env.JWT_EXPIRATION) * 60 * 24,
+            getUnixTimestamp() + Number(process.env.JWT_EXPIRATION) * 60 * 60,
         },
       },
     };
