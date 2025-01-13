@@ -23,10 +23,8 @@ export const Article = () => {
     error,
     isLoading,
   }: { data: any; error: any; isLoading: boolean } = useFetchData(
-    `${backendUrl}/articles/get?id=${id}&visibility=${visibility}`
+    `${backendUrl}/articles/get/${id}?visibility=${visibility}`
   );
-
-  const defaultImage = `${import.meta.env.VITE_S3_LINK}/images/default.png`;
 
   const screenWidth = useScreenWidth();
 
@@ -37,7 +35,7 @@ export const Article = () => {
   if (data == null) {
     return <NotFound />;
   }
-
+  console.log(data);
   return (
     <Box
       sx={{
@@ -57,10 +55,7 @@ export const Article = () => {
           mb: 4,
         }}
       >
-        <AnimatedImage
-          url={data.metadata.Image ? data.metadata.Image : defaultImage}
-          alt="Article image"
-        />
+        <AnimatedImage url={data.metadata.image} alt="Article image" />
       </Box>
 
       <ArticleDetails visibility={visibility} article={data} />

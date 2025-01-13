@@ -8,10 +8,14 @@ import { Tags } from '@pages/article/components/articleDetails/components/tags';
 import { Like } from '@pages/article/components/like';
 
 import { Box, Heading, Text, Avatar } from '@primer/react';
+import { PrivateArticle, PublicArticle } from '@type/article';
 
 interface DetailsProps {
   visibility: string;
-  article: any;
+  article: {
+    metadata: Omit<PrivateArticle | PublicArticle, 'body'>;
+    body: string;
+  };
 }
 
 export const ArticleDetails = (props: DetailsProps) => {
@@ -30,7 +34,7 @@ export const ArticleDetails = (props: DetailsProps) => {
       >
         {/* Article Title */}
         <Heading sx={{ fontSize: screenWidth < 700 ? '30px' : '38px' }}>
-          {article.metadata.Title}
+          {article.metadata.title}
         </Heading>
 
         {/* Description */}
@@ -42,7 +46,7 @@ export const ArticleDetails = (props: DetailsProps) => {
             textAlign: 'justify',
           }}
         >
-          {article.metadata.Description}
+          {article.metadata.description}
         </Text>
 
         <Box
@@ -56,22 +60,22 @@ export const ArticleDetails = (props: DetailsProps) => {
         >
           {/* Author profile picture and username */}
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
-            <Avatar size={40} src={article.metadata.AuthorProfilePic} />
+            <Avatar size={40} src={article.metadata.authorProfilePicture} />
             <Text
               sx={{
                 fontWeight: 'bold',
                 fontSize: screenWidth < 768 ? '14px' : '20px',
               }}
             >
-              {article.metadata.Author}
+              {article.metadata.author}
             </Text>
           </Box>
 
           {/* Like button */}
           {visibility == 'public' && (
             <Like
-              count={article.metadata.Rating}
-              id={article.metadata.ID}
+              count={article.metadata.likes}
+              id={article.metadata.id}
               setIsLiked={setIsLiked}
               isLiked={isLiked}
             />
@@ -101,12 +105,12 @@ export const ArticleDetails = (props: DetailsProps) => {
                 py: 1,
               }}
             >
-              {capitalize(article.metadata.PrimaryCategory)}
+              {capitalize(article.metadata.category)}
             </Text>
           </Box>
 
           {/* Tags */}
-          <Tags tags={article.metadata.SecondaryCategories} />
+          <Tags tags={article.metadata.tags} />
         </Box>
 
         {/* Difficulty label, Rating/Status, PublishedAt/CreatedAt */}
