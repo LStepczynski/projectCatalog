@@ -55,6 +55,12 @@ export const useArticleSubmit = (props: SubmitProps) => {
 
   const user = getUser();
 
+  function isBase64(str: string) {
+    const base64Regex =
+      /^(data:image\/[a-zA-Z]+;base64,)?[A-Za-z0-9+/]+={0,2}$/;
+    return base64Regex.test(str);
+  }
+
   const validate = (): boolean => {
     // Extract required fields
     const { image, tags, ...requiredFields } = formData;
@@ -95,8 +101,8 @@ export const useArticleSubmit = (props: SubmitProps) => {
             category: formData.category,
             tags: formData.tags,
             difficulty: formData.difficulty,
-            image: formData.image,
             status: status,
+            ...(isBase64(formData.image) && { image: formData.image }),
           }),
         }
       );
@@ -116,7 +122,7 @@ export const useArticleSubmit = (props: SubmitProps) => {
     ShowInformationPopup(
       'Success',
       `Your article has been ${
-        status == 'private' ? 'saved' : 'submited for review'
+        status == 'Private' ? 'saved' : 'submited for review'
       }.`,
       () => {
         setSaved(true);
