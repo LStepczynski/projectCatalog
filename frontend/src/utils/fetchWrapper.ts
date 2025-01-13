@@ -13,7 +13,7 @@ const checkUserExpiration = async (user: any) => {
 
   // Check if the user object expired
   if (now > user.exp) {
-    requestNewToken();
+    await requestNewToken();
   }
 };
 
@@ -33,7 +33,7 @@ const requestNewToken = async () => {
   }
 
   // Save the new user object in storage
-  localStorage.setItem('user', JSON.stringify(renewRes.response.user));
+  localStorage.setItem('user', JSON.stringify(renewRes.auth.user));
 };
 
 /**
