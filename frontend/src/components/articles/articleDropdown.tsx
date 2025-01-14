@@ -68,7 +68,7 @@ export const ArticleDropdown = ({ setHovering, article, visibility }: any) => {
         const publishData = await fetchWrapper(
           `${backendUrl}/articles/publish/${article.id}`,
           {
-            method: 'POST',
+            method: 'PUT',
           }
         );
 
@@ -96,7 +96,7 @@ export const ArticleDropdown = ({ setHovering, article, visibility }: any) => {
         const hideData = await fetchWrapper(
           `${backendUrl}/articles/hide/${article.id}`,
           {
-            method: 'POST',
+            method: 'PUT',
           }
         );
 
@@ -112,7 +112,7 @@ export const ArticleDropdown = ({ setHovering, article, visibility }: any) => {
     };
     ShowConfirmationPopup(
       'Unpublish Article',
-      'Are you sure you want to unpublish this article? You will lose all of your likes.',
+      'Are you sure you want to unpublish this article?',
       () => {},
       unpublishArticle
     );
@@ -171,7 +171,7 @@ export const ArticleDropdown = ({ setHovering, article, visibility }: any) => {
         isAdmin &&
         visibility == 'private' &&
         window.location.pathname.split('/')[1] == 'adminView' &&
-        article.status == 'review',
+        article.status == 'In Review',
       onSelect: handleDecline,
       text: 'Decline',
       icon: <CircleSlashIcon size={20} />,

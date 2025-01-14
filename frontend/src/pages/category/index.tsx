@@ -20,7 +20,7 @@ export const Category: React.FC = () => {
   }>();
 
   const { data, isLoading }: any = useFetchData(
-    `${backendUrl}/articles/${categoryName}?page=${page}`,
+    `${backendUrl}/articles/category/${categoryName}?page=${page}`,
     [],
     {},
     true
@@ -40,7 +40,7 @@ export const Category: React.FC = () => {
     );
   }
 
-  if (data.length == 0) {
+  if (data == null || data.length == 0) {
     return <NotFound />;
   }
 
