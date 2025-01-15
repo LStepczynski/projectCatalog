@@ -43,7 +43,7 @@ const items = [
 ];
 
 const user = getUser();
-if (user && (user.CanPost == 'true' || user.Admin == 'true')) {
+if (user && user.roles.includes('publisher')) {
   items[0].items.push({
     name: 'My Articles',
     value: '',
@@ -51,7 +51,7 @@ if (user && (user.CanPost == 'true' || user.Admin == 'true')) {
     action: '/myArticles/1',
   });
 }
-if (user && user.Admin == 'true') {
+if (user && user.roles.includes('admin')) {
   items[0].items.push({
     name: 'Admin View',
     value: '',
