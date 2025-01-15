@@ -3,7 +3,7 @@ import { Box, Select, Text } from '@primer/react';
 export const QuerySettings = ({
   setStatus,
 }: {
-  setStatus: (event: 'review' | 'private') => void;
+  setStatus: (event: 'In Review' | 'Private') => void;
 }) => {
   return (
     <Box
@@ -31,13 +31,13 @@ export const QuerySettings = ({
         <Select
           onChange={(event) => {
             const val = event?.target.value;
-            if (val === 'private' || val === 'review') {
+            if (val === 'Private' || val === 'In Review') {
               setStatus(val);
             }
           }}
         >
-          <Select.Option value="review">Review</Select.Option>
-          <Select.Option value="private">Private</Select.Option>
+          <Select.Option value="In Review">Review</Select.Option>
+          <Select.Option value="Private">Private</Select.Option>
         </Select>
       </Box>
     </Box>

@@ -11,11 +11,14 @@ import { ArticlePrivate } from '@components/articles/articlePrivate';
 import { Separator } from '@components/animation/separator';
 
 import { Box, Heading, Pagination } from '@primer/react';
+import { NotFound } from './components/main/notFound';
 
 const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
 export const AdminView = () => {
-  const [status, setStatus] = React.useState<'review' | 'private'>('review');
+  const [status, setStatus] = React.useState<'In Review' | 'Private'>(
+    'In Review'
+  );
   const { page } = useParams();
 
   useCheckPermission();
@@ -60,9 +63,13 @@ export const AdminView = () => {
       >
         {!isLoading ? (
           <>
-            {data.map((item: any, index: any) => (
-              <ArticlePrivate key={index} article={item} />
-            ))}
+            {data.length == 0 ? (
+              <NotFound />
+            ) : (
+              data.map((item: any, index: any) => (
+                <ArticlePrivate key={index} article={item} />
+              ))
+            )}
           </>
         ) : (
           <SkeletonCategoryPanel bigArticles={false} />
@@ -70,13 +77,15 @@ export const AdminView = () => {
       </Box>
 
       {/* Switch between pages */}
-      <Pagination
-        currentPage={Number(page) || 1}
-        pageCount={99}
-        hrefBuilder={(page) => {
-          return `/adminView/${page}`;
-        }}
-      />
+      {!isLoading && data.length > 0 && (
+        <Pagination
+          currentPage={Number(page) || 1}
+          pageCount={99}
+          hrefBuilder={(page) => {
+            return `/adminView/${page}`;
+          }}
+        />
+      )}
     </Box>
   );
 };
