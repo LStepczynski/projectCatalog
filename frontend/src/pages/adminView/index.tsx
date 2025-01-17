@@ -11,7 +11,7 @@ import { ArticlePrivate } from '@components/articles/articlePrivate';
 import { Separator } from '@components/animation/separator';
 
 import { Box, Heading, Pagination } from '@primer/react';
-import { NotFound } from './components/main/notFound';
+import { NotFound } from '@components/common/notFound';
 
 const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
@@ -64,7 +64,10 @@ export const AdminView = () => {
         {!isLoading ? (
           <>
             {data.length == 0 ? (
-              <NotFound />
+              <NotFound
+                title="No Articles Found"
+                message="No articles to check right now. Good job!"
+              />
             ) : (
               data.map((item: any, index: any) => (
                 <ArticlePrivate key={index} article={item} />

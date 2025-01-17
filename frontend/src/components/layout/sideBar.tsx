@@ -27,7 +27,7 @@ const items = [
       {
         name: 'Categories',
         icon: <TelescopeIcon size={iconSize} />,
-        action: '/categories',
+        action: '/categories/1',
       },
       {
         name: 'Account',

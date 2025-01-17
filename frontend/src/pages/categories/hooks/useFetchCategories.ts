@@ -1,60 +1,35 @@
-import React from 'react';
-
-import { fetchWrapper } from '@utils/fetchWrapper';
+import { useFetchData } from '@hooks/useFetchData';
 
 import { categories as appCategories } from '@config/categories';
+import { PublicArticle } from '@type/article';
 
-export const useFetchCategories = () => {
-  // Initialize categories as a dict of {categoryName: null}
-  const [categories, setCategories] = React.useState(() => {
-    const initialArticles = appCategories.reduce((acc: any, category) => {
-      acc[category.value] = null;
-      return acc;
-    }, {});
+interface ReturnVal {
+  categories: Record<string, PublicArticle[]> | null;
+  error: any;
+  isLoading: boolean;
+  maxPage: number;
+}
 
-    return initialArticles;
-  });
-  const [error, setError] = React.useState<any>(null);
-  const [isLoading, setIsLoading] = React.useState<boolean>(false);
+export const useFetchCategories = (page: number): ReturnVal => {
+  const maxPage = Math.ceil(appCategories.length / 4);
+  if (page > maxPage) {
+    page = maxPage;
+  }
 
   const backendUrl = import.meta.env.VITE_BACKEND_URL;
+  const { data, error, isLoading } = useFetchData(
+    `${backendUrl}/articles/category/overview?page=${page}`,
+    [page],
+    {},
+    true,
+    900
+  );
 
-  React.useEffect(() => {
-    const controller = new AbortController();
-    const signal = controller.signal;
+  // Transform `data` to match `categories`
+  const categories =
+    data && typeof data === 'object'
+      ? (data as Record<string, PublicArticle[]>)
+      : null;
 
-    const fetchArticles = async () => {
-      setIsLoading(true);
-      setError(null);
-
-      try {
-        // Fetch articles for each category in the `categories` dict
-        const newArticles: any = {};
-        for (const category of Object.keys(categories)) {
-          const data = await fetchWrapper(
-            `${backendUrl}/articles/${category}?limit=5`,
-            { signal },
-            true,
-            60 * 60 * 5
-          );
-          newArticles[category] = data.response.return;
-        }
-        setCategories(newArticles);
-      } catch (err) {
-        if (err instanceof Error && err.name !== 'AbortError') {
-          setError(err);
-        }
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchArticles();
-
-    return () => {
-      controller.abort();
-    };
-  }, []);
-
-  return { categories, error, isLoading };
+  return { categories, error, isLoading, maxPage };
 };

@@ -1,4 +1,4 @@
-import { Box } from '@primer/react';
+import { Box, Pagination } from '@primer/react';
 
 import { capitalize } from '@utils/capitalize';
 
@@ -7,17 +7,21 @@ import { useRenderHelp } from './hooks/useRenderHelp';
 import { CategoryHeader } from '@pages/categories/components/main/categoryHeader';
 import { SkeletonCategoriesPanel } from '@pages/categories/components/main/skeletonCategoriesPanel';
 import { useFetchCategories } from './hooks/useFetchCategories';
+import { useParams } from 'react-router-dom';
+import { NotFound } from '@components/common/notFound';
 
 export const Categories = () => {
-  const { categories, isLoading } = useFetchCategories();
+  const { page } = useParams<{ page: string }>();
+
+  const { categories, isLoading, maxPage } = useFetchCategories(page);
 
   const { getArticlesToRender, getHeaderWidth } = useRenderHelp(categories);
 
   // Return skeletons if still fetching
-  if (isLoading) {
-    Object.keys(categories).map((keyName: string) => {
+  if (isLoading || categories === null) {
+    return [0, 1, 2, 3].map((key: number) => {
       return (
-        <SkeletonCategoriesPanel headerWidth={getHeaderWidth()} key={keyName} />
+        <SkeletonCategoriesPanel headerWidth={getHeaderWidth()} key={key} />
       );
     });
   }
@@ -26,11 +30,6 @@ export const Categories = () => {
     <Box>
       {/* Iterate over the categories and render the articles */}
       {Object.keys(categories).map((keyName: string) => {
-        // Render nothing if there are no articles in a category
-        if (categories[keyName].length == 0) {
-          return null;
-        }
-
         return (
           <Box
             key={keyName}
@@ -50,19 +49,39 @@ export const Categories = () => {
             </Box>
 
             {/* Render the category articles */}
-            <Box
-              sx={{
-                display: 'flex',
-                flexWrap: 'wrap',
-                justifyContent: 'center',
-                mt: 4,
-              }}
-            >
-              {getArticlesToRender(keyName)}
-            </Box>
+            {categories[keyName].length != 0 ? (
+              <Box
+                sx={{
+                  display: 'flex',
+                  flexWrap: 'wrap',
+                  justifyContent: 'center',
+                  mt: 4,
+                }}
+              >
+                {getArticlesToRender(keyName)}
+              </Box>
+            ) : (
+              <Box
+                sx={{
+                  mb: 4,
+                }}
+              >
+                <NotFound
+                  title="No Articles Found"
+                  message="Sorry, no articles have been published yet. Check again later."
+                />
+              </Box>
+            )}
           </Box>
         );
       })}
+      <Pagination
+        currentPage={Number(page) || 1}
+        pageCount={maxPage}
+        hrefBuilder={(page) => {
+          return `/categories/${page}`;
+        }}
+      />
     </Box>
   );
 };

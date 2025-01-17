@@ -5,7 +5,7 @@ import { useGetArticles } from '@pages/category/hooks/useGetArticles';
 import { useFetchData } from '@hooks/useFetchData';
 
 import { SkeletonCategoryPanel } from '@components/common/skeletons/skeletonCategoryPanel';
-import { NotFound } from '@pages/category/components/main/notFound';
+import { NotFound } from '@components/common/notFound';
 
 import { Box, Pagination } from '@primer/react';
 
@@ -41,7 +41,12 @@ export const Category: React.FC = () => {
   }
 
   if (data == null || data.length == 0) {
-    return <NotFound />;
+    return (
+      <NotFound
+        title="No Articles Found"
+        message="Sorry, no articles have been published yet. Check again later."
+      />
+    );
   }
 
   return (
