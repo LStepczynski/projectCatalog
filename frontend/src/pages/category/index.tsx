@@ -8,6 +8,7 @@ import { SkeletonCategoryPanel } from '@components/common/skeletons/skeletonCate
 import { NotFound } from '@components/common/notFound';
 
 import { Box, Pagination } from '@primer/react';
+import { isInteger } from '@utils/isInteger';
 
 const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
@@ -18,6 +19,10 @@ export const Category: React.FC = () => {
     categoryName: string;
     page: string;
   }>();
+
+  if (!page || !isInteger(page)) {
+    window.location.href = `/categories/${categoryName}/1`;
+  }
 
   const { data, isLoading }: any = useFetchData(
     `${backendUrl}/articles/category/${categoryName}?page=${page}`,

@@ -9,11 +9,15 @@ import { SkeletonCategoriesPanel } from '@pages/categories/components/main/skele
 import { useFetchCategories } from './hooks/useFetchCategories';
 import { useParams } from 'react-router-dom';
 import { NotFound } from '@components/common/notFound';
+import { isInteger } from '@utils/isInteger';
 
 export const Categories = () => {
   const { page } = useParams<{ page: string }>();
+  if (!page || !isInteger(page)) {
+    window.location.href = '/categories/1';
+  }
 
-  const { categories, isLoading, maxPage } = useFetchCategories(page);
+  const { categories, isLoading, maxPage } = useFetchCategories(Number(page));
 
   const { getArticlesToRender, getHeaderWidth } = useRenderHelp(categories);
 

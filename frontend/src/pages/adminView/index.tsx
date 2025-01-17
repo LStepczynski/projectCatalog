@@ -12,6 +12,7 @@ import { Separator } from '@components/animation/separator';
 
 import { Box, Heading, Pagination } from '@primer/react';
 import { NotFound } from '@components/common/notFound';
+import { isInteger } from '@utils/isInteger';
 
 const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
@@ -20,6 +21,9 @@ export const AdminView = () => {
     'In Review'
   );
   const { page } = useParams();
+  if (!page || !isInteger(page)) {
+    window.location.href = '/adminView/1';
+  }
 
   useCheckPermission();
 

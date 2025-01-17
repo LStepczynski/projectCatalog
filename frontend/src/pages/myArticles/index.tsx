@@ -12,10 +12,14 @@ import { ArticleRender } from '@pages/myArticles/components/main/articleRender';
 import { CreateButton } from '@pages/myArticles/components/main/createButton';
 
 import { Box, Heading, Pagination } from '@primer/react';
+import { isInteger } from '@utils/isInteger';
 
 export const MyArticles = () => {
   const screenWidth = useScreenWidth();
   const { page } = useParams();
+  if (!page || !isInteger(page)) {
+    window.location.href = '/myArticles/1';
+  }
 
   const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
