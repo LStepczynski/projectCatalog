@@ -27,6 +27,10 @@ const articlesPublishedSchema: CreateTableCommandInput = {
       AttributeName: 'category',
       AttributeType: ScalarAttributeType.S,
     },
+    {
+      AttributeName: 'likes',
+      AttributeType: ScalarAttributeType.N,
+    },
   ],
   KeySchema: [
     {
@@ -60,6 +64,22 @@ const articlesPublishedSchema: CreateTableCommandInput = {
         },
         {
           AttributeName: 'publishedAt',
+          KeyType: 'RANGE',
+        },
+      ],
+      Projection: {
+        ProjectionType: ProjectionType.ALL,
+      },
+    },
+    {
+      IndexName: 'CategoryLikesIndex',
+      KeySchema: [
+        {
+          AttributeName: 'category',
+          KeyType: 'HASH',
+        },
+        {
+          AttributeName: 'likes',
           KeyType: 'RANGE',
         },
       ],

@@ -14,6 +14,7 @@ import { validGetBody } from '@api/articles/utils/validGetBody';
 import { ArticleCrud } from '@services/articleCrud';
 import { categories } from '@config/categories';
 import { stringToBoolean } from '@utils/stringToBoolean';
+import { QueryCommandInput } from '@aws-sdk/lib-dynamodb';
 
 dotenv.config();
 
@@ -101,6 +102,70 @@ router.get(
       },
       message: 'Article fetched successfuly.',
     };
+
+    res.status(response.statusCode).send(response);
+  })
+);
+
+router.get(
+  '/category/overview',
+  asyncHandler(async (req: Request, res: Response) => {
+    const page = Number(req.query.page) || 1;
+
+    // Check if page is a number bigger than 0
+    if (isNaN(page) || page < 1) {
+      throw new UserError('Invalid page parameter.');
+    }
+
+    const totalPages = Math.ceil(categories.length / 4);
+
+    // Check if there are categories to fetch
+    let response: SuccessResponse<Record<string, PublicArticle[]>>;
+    if (page > totalPages) {
+      response = {
+        status: 'success',
+        data: {},
+        message: 'No more categories to fetch.',
+        statusCode: 200,
+      };
+    } else {
+      // Get 4 catetgories per page
+      const categoriesToFetch = categories.slice(
+        0 + (page - 1) * 4,
+        4 + (page - 1) * 4
+      );
+
+      // Fetch 5 articles per category
+      const data: Record<string, PublicArticle[]> = {};
+      for (const category of categoriesToFetch) {
+        const params: QueryCommandInput = {
+          TableName: ArticleCrud.PUBLISHED_TABLE_NAME,
+          IndexName: 'CategoryLikesIndex',
+          KeyConditionExpression: 'category = :category',
+          ExpressionAttributeValues: {
+            ':category': { S: category },
+          },
+          Limit: 5,
+          ScanIndexForward: false,
+        };
+
+        try {
+          const articles = await ArticleCrud.query(params);
+          data[category] = articles as PublicArticle[];
+        } catch (err) {
+          console.log(err);
+          // Set data to [] if an error occurs
+          data[category] = [];
+        }
+      }
+
+      response = {
+        status: 'success',
+        data: data,
+        message: 'Categories successfully fetched.',
+        statusCode: 200,
+      };
+    }
 
     res.status(response.statusCode).send(response);
   })
