@@ -20,6 +20,7 @@ import { Likes } from '@services/likes';
 import { ArticleService } from '@services/articleService';
 import { S3 } from '@services/s3';
 import { getUnixTimestamp } from '@utils/getUnixTimestamp';
+import { tags } from '@config/tags';
 
 dotenv.config();
 
@@ -72,8 +73,17 @@ router.post(
     req.body.author = req.user!.username;
     req.body.authorProfilePicture = req.user!.profilePicture;
 
+    // Check if the number of tags is more than 3
     if (req.body.tags.length > 3) {
       throw new UserError('The number of article tags is more than 3.');
+    }
+
+    // Check if the tags are valid
+    if (
+      Array.isArray(req.body.tags) &&
+      req.body.tags.some((tag: string) => !tags.includes(tag))
+    ) {
+      throw new UserError('Invalid tag.', 400);
     }
 
     const { body, ...metadata } = req.body;
@@ -192,6 +202,14 @@ router.put(
 
     if (req.body.tags.length > 3) {
       throw new UserError('The number of article tags is more than 3.');
+    }
+
+    // Check if the tags are valid
+    if (
+      Array.isArray(req.body.tags) &&
+      req.body.tags.some((tag: string) => !tags.includes(tag))
+    ) {
+      throw new UserError('Invalid tag.', 400);
     }
 
     const { id: idToUpdate, ...newMetadata } = req.body;
