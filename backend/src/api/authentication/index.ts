@@ -232,6 +232,8 @@ router.get(
 router.post(
   '/password-reset',
   asyncHandler(async (req: Request, res: Response) => {
+    const resetCooldown = 3;
+
     // Validations
     if (typeof req.body.username != 'string' || req.body.username == '') {
       throw new UserError('Invalid username.');
@@ -248,6 +250,11 @@ router.post(
     // Fetch the user
     const user = await UserCrud.get(req.body.username);
     if (user == null) {
+      return res.status(response.statusCode).send(response);
+    }
+
+    // Check if the user reset their password recently
+    if (user.lastPasswordReset + resetCooldown * 60 * 60 > getUnixTimestamp()) {
       return res.status(response.statusCode).send(response);
     }
 
@@ -289,6 +296,8 @@ router.post(
 router.post(
   '/password-reset/:token',
   asyncHandler(async (req: Request, res: Response) => {
+    const resetCooldown = 3;
+
     // Check if the token is a uuid
     const isUuid =
       /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
@@ -309,20 +318,34 @@ router.post(
       throw new UserError('Invalid or expired verification token.', 400);
     }
 
+    const user = await UserCrud.get(token.username);
+    if (user == null) {
+      throw new UserError('User does not exits', 404);
+    }
+
+    if (user.lastPasswordReset + 60 * 60 * resetCooldown > getUnixTimestamp()) {
+      throw new UserError('Too many password resets.', 429);
+    }
+
     // Generate a new password and hash it
     const newPassword = randString(12);
     const newHashedPassword = await bcrypt.hash(newPassword, 10);
 
     // Update the user's password
-    const user = await UserCrud.update(token.username, {
+    const updatedUser = await UserCrud.update(token.username, {
       password: newHashedPassword,
+      lastPasswordReset: getUnixTimestamp(),
     });
-    if (user == null) {
+    if (updatedUser == null) {
       throw new UserError('Invalid or expired verification token.', 400);
     }
 
     // Send an email with the new password to the user
-    await Email.sendNewPasswordEmail(user.email, user.username, newPassword);
+    await Email.sendNewPasswordEmail(
+      updatedUser.email,
+      updatedUser.username,
+      newPassword
+    );
 
     // Delete the token after use
     await Tokens.deleteToken(token.content);

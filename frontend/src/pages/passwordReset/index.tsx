@@ -6,6 +6,8 @@ import { logOut } from '@utils/logOut';
 
 import { ShowInformationPopup } from '@components/common/popups/informationPopup';
 
+import { Spinner, Box } from '@primer/react';
+
 export const PasswordReset = () => {
   const [response, setResponse] = React.useState<any>(null);
   const { code } = useParams();
@@ -15,7 +17,7 @@ export const PasswordReset = () => {
     const controller = new AbortController();
     const signal = controller.signal;
 
-    fetchWrapper(`${backendUrl}/user/password-reset/${code}`, {
+    fetchWrapper(`${backendUrl}/auth/password-reset/${code}`, {
       method: 'POST',
       signal,
     }).then((data) => {
@@ -27,9 +29,22 @@ export const PasswordReset = () => {
     };
   }, []);
 
+  console.log(response);
+
   if (!response) {
-    return null;
-  } else if (response.status == 200) {
+    return (
+      <Box
+        sx={{
+          position: 'absolute',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+        }}
+      >
+        <Spinner />
+      </Box>
+    );
+  } else if (response.statusCode == 200) {
     ShowInformationPopup(
       'Password Reset',
       'Your password has been reset. Check your inbox to view your new password.',
@@ -39,7 +54,7 @@ export const PasswordReset = () => {
       }
     );
     return null;
-  } else if (response.status == 404) {
+  } else if (response.statusCode == 400) {
     ShowInformationPopup(
       'Password Reset',
       'This verification link is invalid. Please try a different one.',
@@ -48,16 +63,25 @@ export const PasswordReset = () => {
       }
     );
     return null;
-  } else if (response.status == 410) {
+  } else if (response.statusCode == 404) {
     ShowInformationPopup(
       'Password Reset',
-      'This verification link is invalid. Please request a new one.',
+      'This verification link is invalid. User does not exist.',
       () => {
         window.location.href = '/';
       }
     );
     return null;
-  } else if (response.status == 500) {
+  } else if (response.statusCode == 429) {
+    ShowInformationPopup(
+      'Password Reset',
+      'Your password was reset recently. Please try again later',
+      () => {
+        window.location.href = '/';
+      }
+    );
+    return null;
+  } else if (response.statusCode == 500) {
     ShowInformationPopup(
       'Password Reset',
       'There was a problem the password reset. Please try again later.',

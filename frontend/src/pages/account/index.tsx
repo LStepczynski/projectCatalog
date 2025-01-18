@@ -58,7 +58,7 @@ export const Account = () => {
         <Box sx={{ display: 'grid', gap: 6, my: 3 }}>
           <PasswordSettings />
 
-          <EmailSettings />
+          {/* <EmailSettings /> */}
         </Box>
 
         <Separator sx={{ my: 4 }} />
