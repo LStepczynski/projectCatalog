@@ -43,17 +43,17 @@ export const useIsLiked = (article: any, visibility: string) => {
      */
     const fetchIsLiked = () => {
       fetchWrapper(
-        `${backendUrl}/user/isLiked?articleId=${article.metadata.ID}`,
+        `${backendUrl}/articles/like/${article.metadata.id}`,
         { signal },
         true, // Enable caching for this request
-        60 * 60 // Cache duration of 1 hour
+        60 * 15 // Cache duration of 15 minutes
       ).then((data) => {
-        setIsLiked(data.response.result || false);
+        setIsLiked(data.data.isLiked || false);
       });
     };
 
     // Only fetch for public articles with a non-zero rating
-    if (visibility == 'public' && article.metadata.Rating != 0) {
+    if (visibility == 'public' && article.metadata.likes != 0) {
       fetchIsLiked();
     }
 

@@ -36,7 +36,7 @@ export const MyArticles = () => {
     [],
     {},
     true,
-    60 * 15
+    60 * 5
   );
 
   const { data: privateArticles } = useFetchData<[]>(
@@ -44,7 +44,7 @@ export const MyArticles = () => {
     [],
     {},
     true,
-    60 * 15
+    60 * 5
   );
 
   return (

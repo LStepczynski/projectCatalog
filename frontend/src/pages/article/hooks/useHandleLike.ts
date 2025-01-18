@@ -17,7 +17,7 @@ const validate = (isButtonDisabled: boolean): boolean => {
   }
 
   // Check if user is verified
-  if (user?.Verified != 'true') {
+  if (!user?.roles.includes('verified')) {
     alert(
       'Your account is not verified. Please verify your email to like this post.'
     );
@@ -61,13 +61,12 @@ export const useHandleLike = (
     const signal = controller.signal;
 
     // Send request
-    const likeRes = await fetchWrapper(`${backendUrl}/user/like`, {
-      method: 'POST',
-      body: JSON.stringify({ articleId: id }),
+    const likeRes = await fetchWrapper(`${backendUrl}/articles/like/${id}`, {
+      method: 'PUT',
       signal,
     });
 
-    if (likeRes.status != 200) {
+    if (likeRes.status != 'success') {
       return alert('There was an error while rating the article');
     }
 
@@ -82,9 +81,9 @@ export const useHandleLike = (
     setIsLiked(!isLiked);
 
     // Remove the article from the cache
-    sessionStorage.removeItem(`${backendUrl}/user/isLiked?articleId=${id}`);
+    sessionStorage.removeItem(`${backendUrl}/articles/like/${id}`);
     sessionStorage.removeItem(
-      `${backendUrl}/articles/get?id=${id}&visibility=${visibility}`
+      `${backendUrl}/articles/get/${id}?visibility=${visibility}`
     );
 
     // Cleanup
