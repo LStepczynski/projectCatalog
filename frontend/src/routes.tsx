@@ -26,7 +26,7 @@ export const Routes = () => {
       element: <Faq />,
     },
     {
-      path: '/categories',
+      path: '/categories/:page',
       element: <Categories />,
     },
     {

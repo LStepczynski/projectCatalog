@@ -1,5 +1,7 @@
-import { Box } from '@primer/react';
 import { useState, useRef } from 'react';
+
+import { Box } from '@primer/react';
+import { SkeletonBox } from '@components/common/skeletons/skeletonBox';
 
 interface Props {
   url: string;
@@ -25,25 +27,29 @@ export const AnimatedImage = ({ url, alt }: Props) => {
       onMouseLeave={() => setHovering(false)}
       sx={{
         width: '100%',
-        overflow: 'hidden',
+        height: '100%',
         position: 'relative',
       }}
     >
-      <img
-        ref={imageRef}
-        onLoad={handleImageLoad}
-        style={{
-          transform: 'translate(-50%, -50%)',
-          width: hovering ? '101.5%' : '100%',
-          aspectRatio: 16 / 9,
-          position: 'absolute',
-          top: '50%',
-          left: '50%',
-          transition: 'all .3s ease',
-        }}
-        src={url}
-        alt={alt}
-      />
+      {url ? (
+        <img
+          ref={imageRef}
+          onLoad={handleImageLoad}
+          style={{
+            transform: 'translate(-50%, -50%)',
+            width: hovering ? '101.5%' : '100%',
+            aspectRatio: 16 / 9,
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transition: 'all .3s ease',
+          }}
+          src={url}
+          alt={alt}
+        />
+      ) : (
+        <SkeletonBox width="100%" height="100%" borderRadius="0px" />
+      )}
     </Box>
   );
 };

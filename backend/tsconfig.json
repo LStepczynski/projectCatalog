@@ -1,19 +1,27 @@
 {
-    "compilerOptions": {
-      "target": "ES2019",
-      "module": "CommonJS",
-      "outDir": "./dist",
-      "strict": true,
-      "baseUrl": ".",
-      "esModuleInterop": true,
-      "moduleResolution": "node",
-      "paths": {
-        ":api/services/*": [
-          "src/services/*"
-        ],
-      }
-    },
-    "include": [
-      "src/**/*", "src/test.ts",
-    ],
-  }
+  "compilerOptions": {
+    "typeRoots": ["./node_modules/@types", "./types", "./src/types"],
+    "types": ["vitest/globals"],
+    "target": "ES2019",
+    "module": "CommonJS",
+    "outDir": "./dist",
+    "strict": true,
+    "baseUrl": ".",
+    "sourceMap": true,
+    "inlineSources": true,
+    "esModuleInterop": true,
+    "moduleResolution": "node",
+    "paths": {
+      "@api/*": ["src/api/*"],
+      "@assets/*": ["src/assets/*"],
+      "@config/*": ["src/config/*"],
+      "@images/*": ["src/images/*"],
+      "@scripts/*": ["src/scripts/*"],
+      "@services/*": ["src/services/*"],
+      "@type/*": ["src/types/*"],
+      "@utils/*": ["src/utils/*"],
+      "@database/*": ["src/database/*"]
+    }
+  },
+  "include": ["src/**/*", "test/**/*"]
+}

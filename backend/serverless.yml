@@ -10,6 +10,7 @@ provider:
   name: aws
   runtime: nodejs18.x
   region: us-east-2
+  timeout: 5
   iamRoleStatements:
     - Effect: 'Allow'
       Action:
@@ -27,6 +28,13 @@ provider:
         - 'arn:aws:dynamodb:us-east-2:228073560233:table/Users/index/*'
         - 'arn:aws:dynamodb:us-east-2:228073560233:table/Tokens'
         - 'arn:aws:dynamodb:us-east-2:228073560233:table/Tokens/index/*'
+    - Effect: 'Allow'
+      Action:
+        - 'ses:SendEmail'
+        - 'ses:SendRawEmail'
+      Resource:
+        - 'arn:aws:ses:us-east-2:228073560233:identity/projectcatalog.click'
+        - 'arn:aws:ses:us-east-2:228073560233:identity/no-reply@projectcatalog.click'
 
 functions:
   api:
@@ -40,10 +48,10 @@ custom:
   dotenv:
     path: .env.${opt:stage, 'dev'}
   esbuild:
-    minify: true
+    minify: false # switch to true later
     bundle: true
     target: 'node18'
-    sourcemap: false
+    sourcemap: true
     packagerOptions:
       scripts:
         - npm install --os=linux --cpu=x64 sharp
