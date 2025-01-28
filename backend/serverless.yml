@@ -48,7 +48,7 @@ custom:
   dotenv:
     path: .env.${opt:stage, 'dev'}
   esbuild:
-    minify: false # switch to true later
+    minify: true
     bundle: true
     target: 'node18'
     sourcemap: true

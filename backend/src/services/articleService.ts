@@ -15,11 +15,11 @@ export class ArticleService {
   public static UNPUBLISHED_TABLE_NAME = 'ArticlesUnpublished';
   public static PUBLISHED_TABLE_NAME = 'ArticlesPublished';
 
-  // private static DEFAULT_BANNER_LINK =
-  //   'https://project-catalog-storage.s3.us-east-2.amazonaws.com/images/banner.webp';
-
   private static DEFAULT_BANNER_LINK =
-    'http://localhost:9000/project-catalog-storage/images/banner.webp';
+    'https://project-catalog-storage.s3.us-east-2.amazonaws.com/images/banner.webp';
+
+  // private static DEFAULT_BANNER_LINK =
+  //   'http://localhost:9000/project-catalog-storage/images/banner.webp';
 
   /**
    * Creates a new article and stores its metadata, content, and associated image in the respective storage systems.

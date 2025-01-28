@@ -218,10 +218,10 @@ export class S3 {
       await s3Client.send(command);
 
       // Temporary fix for localstack
-      return `http://localhost:9000/${bucketName}/${objectKey}`;
-      // return `https://${this.getBucket()}.s3.${
-      //   process.env.AWS_S3_REGION
-      // }.amazonaws.com/${objectKey}`;
+      // return `http://localhost:9000/${bucketName}/${objectKey}`;
+      return `https://${this.getBucket()}.s3.${
+        process.env.AWS_S3_REGION
+      }.amazonaws.com/${objectKey}`;
     } catch (err) {
       throw new InternalError('Addition to the S3 failed', 500, ['saveImage']);
     }
