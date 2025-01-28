@@ -7,8 +7,6 @@ import { fetchWrapper } from '@utils/fetchWrapper';
  *
  * @param {string} articleId - The ID of the article to fetch.
  * @param {Function} setFormData - Function to set the form data.
- * @param {Function} setTags - Function to set the tags.
- * @param {Function} setBannerFile - Function to set the banner file.
  *
  * @returns {void}
  *
@@ -20,12 +18,7 @@ import { fetchWrapper } from '@utils/fetchWrapper';
  * and fills the form with the fetched data. It also sets the tags and banner file.
  * The fetch request is aborted when the component is unmounted.
  */
-export const useFillExistingInfo = (
-  articleId: string,
-  setFormData: any,
-  setTags: any,
-  setBannerFile: any
-) => {
+export const useFillExistingInfo = (articleId: string, setFormData: any) => {
   React.useEffect(() => {
     const controller = new AbortController();
     const signal = controller.signal;
@@ -33,22 +26,23 @@ export const useFillExistingInfo = (
     // Fetch the data for the existing article and fill the form with it
     const backendUrl = import.meta.env.VITE_BACKEND_URL;
     fetchWrapper(
-      `${backendUrl}/articles/get?id=${articleId}&visibility=private`,
+      `${backendUrl}/articles/get/${articleId}?visibility=private`,
       { signal },
       true,
       60 * 10
     ).then((data) => {
-      const article = data.response.return;
+      const article = data.data;
+      console.log(article);
+
       setFormData({
-        Title: article.metadata.Title,
-        Description: article.metadata.Description,
-        Body: article.body,
-        PrimaryCategory: article.metadata.PrimaryCategory,
-        Difficulty: article.metadata.Difficulty,
-        S3Link: article.metadata.Image,
+        title: article.metadata.title,
+        description: article.metadata.description,
+        body: article.body,
+        category: article.metadata.category,
+        difficulty: article.metadata.difficulty,
+        image: article.metadata.image,
+        tags: article.metadata.tags,
       });
-      setTags(article.metadata.SecondaryCategories);
-      setBannerFile((prev: any) => [prev[0], article.metadata.Image]);
     });
 
     return () => {

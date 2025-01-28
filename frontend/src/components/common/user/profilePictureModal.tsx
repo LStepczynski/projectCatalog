@@ -51,8 +51,8 @@ export const ProfilePictureModal = (props: Props) => {
           mx: 3,
         }}
       >
-        <ProfilePicture src={user.ProfilePic} />
-        <Text sx={{ fontWeight: 'bold' }}>{user.Username}</Text>
+        <ProfilePicture src={user.profilePicture} />
+        <Text sx={{ fontWeight: 'bold' }}>{user.username}</Text>
       </Box>
 
       <Box
@@ -71,19 +71,21 @@ export const ProfilePictureModal = (props: Props) => {
           </ActionList.LeadingVisual>
           Account
         </ActionList.Item>
-        {user && (user.CanPost === 'true' || user.Admin === 'true') && (
-          <ActionList.Item
-            sx={{ py: 2, fontSize: '16px' }}
-            onSelect={() => {
-              window.location.href = '/myArticles/1';
-            }}
-          >
-            <ActionList.LeadingVisual>
-              <PencilIcon size={20} />
-            </ActionList.LeadingVisual>
-            My Articles
-          </ActionList.Item>
-        )}
+        {user &&
+          (user.roles.includes('publisher') ||
+            user.roles.includes('admin')) && (
+            <ActionList.Item
+              sx={{ py: 2, fontSize: '16px' }}
+              onSelect={() => {
+                window.location.href = '/myArticles/1';
+              }}
+            >
+              <ActionList.LeadingVisual>
+                <PencilIcon size={20} />
+              </ActionList.LeadingVisual>
+              My Articles
+            </ActionList.Item>
+          )}
         <ActionList.Item
           variant="danger"
           sx={{ py: 2, fontSize: '16px' }}

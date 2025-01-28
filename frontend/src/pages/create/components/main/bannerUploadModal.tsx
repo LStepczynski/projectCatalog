@@ -35,7 +35,7 @@ export const BannerUploadModal = ({ isOpen, closeFunc, bannerFunc }: any) => {
 
       const reader = new FileReader();
       reader.onloadend = () => {
-        bannerFunc([file, reader.result]);
+        bannerFunc(reader.result);
       };
       reader.readAsDataURL(file);
 

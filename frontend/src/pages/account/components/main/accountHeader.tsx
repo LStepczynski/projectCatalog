@@ -81,11 +81,11 @@ export const AccountHeader = () => {
             />
 
             {/* User's Profile Picture */}
-            <ProfilePicture src={user.ProfilePic} />
+            <ProfilePicture src={user.profilePicture} />
 
             {/* Modal for submiting new profiles */}
             <ProfileUploadModal
-              endpoint={`${backendUrl}/user/image?username=${user.Username}`}
+              endpoint={`${backendUrl}/user/image?username=${user.username}`}
               isOpen={uploadModal}
               closeFunc={() => setUploadModal(false)}
             />
@@ -100,7 +100,7 @@ export const AccountHeader = () => {
               textAlign: screenWidth > 499 ? undefined : 'center',
             }}
           >
-            {user.Username}
+            {user.username}
           </Text>
           <Text
             sx={{
@@ -108,7 +108,7 @@ export const AccountHeader = () => {
               textAlign: screenWidth > 499 ? undefined : 'center',
             }}
           >
-            {user.Email}
+            {user.email}
           </Text>
         </Box>
       </Box>

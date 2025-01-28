@@ -11,13 +11,24 @@ dotenv.config();
  *
  * @returns {string} The generated JWT.
  */
-export const generateToken = (payload: JwtPayload) => {
+export const generateToken = (payload: jwt.JwtPayload) => {
   const secret = process.env.JWT_KEY || 'default';
-  if (secret == 'default') {
+  const expireAfter = Number(process.env.JWT_EXPIRATION) || 0.5;
+
+  if (secret === 'default') {
     console.warn('\n!!! SECRET TOKEN FOR JWT NOT DEFINED !!!\n');
   }
-  const options = { expiresIn: '30m' };
-  return jwt.sign(payload, secret, options);
+
+  // Calculate the expiration time as a UNIX timestamp
+  const expirationTime = Math.floor(Date.now() / 1000) + expireAfter * 60 * 60;
+
+  // Add the exp property to the payload
+  const tokenPayload = {
+    ...payload,
+    exp: expirationTime,
+  };
+
+  return jwt.sign(tokenPayload, secret);
 };
 
 /**
@@ -29,9 +40,18 @@ export const generateToken = (payload: JwtPayload) => {
  */
 export const generateRefresh = (payload: JwtPayload) => {
   const secret = process.env.JWT_REFRESH_KEY || 'refresh';
+  const expireAfter = Number(process.env.JWT_REFRESH_EXPIRATION) || 72;
+
   if (secret == 'refresh') {
     console.warn('\n!!! SECRET TOKEN FOR JWT NOT DEFINED !!!\n');
   }
-  const options = { expiresIn: '3d' };
-  return jwt.sign(payload, secret, options);
+
+  const expirationTime = Math.floor(Date.now() / 1000) + expireAfter * 60 * 60;
+
+  const tokenPayload = {
+    ...payload,
+    exp: expirationTime,
+  };
+
+  return jwt.sign(tokenPayload, secret);
 };

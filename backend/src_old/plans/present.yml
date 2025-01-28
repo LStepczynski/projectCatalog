@@ -1,7 +1,0 @@
-API:
-  - Querying:
-      - Author
-      - Category
-      - Category/Difficulty
-      - ID
-  - Deletion

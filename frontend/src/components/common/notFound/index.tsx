@@ -1,17 +1,24 @@
 import { Box, Heading, Text } from '@primer/react';
 
-export const NotFound = () => {
+interface Props {
+  title: string;
+  message: string;
+}
+
+export const NotFound = (props: Props) => {
+  const { title, message } = props;
+
   return (
     <Box sx={{ mt: '100px' }}>
       <Box sx={{ mb: 4 }}>
         <Heading
           sx={{
-            fontSize: '42px',
+            fontSize: '38px',
             display: 'grid',
             justifyContent: 'center',
           }}
         >
-          No Articles Found
+          {title}
         </Heading>
       </Box>
       <Box>
@@ -25,7 +32,7 @@ export const NotFound = () => {
             mx: 2,
           }}
         >
-          Sorry, no articles have been published yet. Check again later.
+          {message}
         </Text>
       </Box>
     </Box>

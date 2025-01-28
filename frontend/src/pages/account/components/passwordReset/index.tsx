@@ -14,32 +14,22 @@ export const PasswordReset = () => {
 
   const handleResetPassword = async () => {
     // Check if user is verified
-    if (user?.Verified != 'true') return;
-
-    // Check if user did not request a password change recently
-    if (
-      !(
-        typeof user.LastPasswordChange == 'number' &&
-        user.LastPasswordChange + 15 * 60 < Math.floor(Date.now() / 1000)
-      )
-    ) {
+    if (!user?.roles.includes('verified')) {
       ShowInformationPopup(
         'Password Reset',
-        'You have requested too many password resets. Please try later.'
+        'You need to verify your account to reset your password.'
       );
       return;
     }
 
     // Send request
-    const response = await fetchWrapper(`${backendUrl}/user/password-reset`, {
+    const response = await fetchWrapper(`${backendUrl}/auth/password-reset`, {
       method: 'POST',
+      body: JSON.stringify({ username: user!.username }),
     });
 
     // Display the result
-    ShowInformationPopup(
-      'Password Reset',
-      capitalize(response.response.message)
-    );
+    ShowInformationPopup('Password Reset', capitalize(response.message));
   };
 
   return (

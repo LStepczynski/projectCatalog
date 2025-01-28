@@ -12,32 +12,39 @@ import { ArticleRender } from '@pages/myArticles/components/main/articleRender';
 import { CreateButton } from '@pages/myArticles/components/main/createButton';
 
 import { Box, Heading, Pagination } from '@primer/react';
+import { isInteger } from '@utils/isInteger';
 
 export const MyArticles = () => {
   const screenWidth = useScreenWidth();
   const { page } = useParams();
+  if (!page || !isInteger(page)) {
+    window.location.href = '/myArticles/1';
+  }
 
   const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
   const user = getUser();
-  if (user && !(user.CanPost == 'true' || user.Admin == 'true')) {
+  if (
+    user &&
+    !(user.roles.includes('publisher') || user.roles.includes('admin'))
+  ) {
     return (window.location.href = '/');
   }
 
   const { data: publicArticles } = useFetchData<[]>(
-    `${backendUrl}/articles/author?authorName=${user?.Username}&page=${page}`,
+    `${backendUrl}/articles/author/${user!.username}?page=${page}`,
     [],
     {},
     true,
-    60 * 15
+    60 * 5
   );
 
   const { data: privateArticles } = useFetchData<[]>(
-    `${backendUrl}/articles/author?authorName=${user?.Username}&visibility=private`,
+    `${backendUrl}/articles/author/${user!.username}?private=true`,
     [],
     {},
     true,
-    60 * 15
+    60 * 5
   );
 
   return (

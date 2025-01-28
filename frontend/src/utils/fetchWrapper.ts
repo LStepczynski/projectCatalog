@@ -9,26 +9,31 @@ import { logOut } from './logOut';
  * @returns {void}
  */
 const checkUserExpiration = async (user: any) => {
-  const backendUrl = import.meta.env.VITE_BACKEND_URL;
   const now = Math.floor(Date.now() / 1000);
 
   // Check if the user object expired
   if (now > user.exp) {
-    // Request a new user object
-    const renewReq = await fetch(`${backendUrl}/user/token-refresh`, {
-      credentials: 'include',
-    });
-    const renewRes = await renewReq.json();
-
-    // Log out on error
-    if (renewRes.status != 200) {
-      logOut();
-      throw Error('User token verification failed');
-    }
-
-    // Save the new user object in storage
-    localStorage.setItem('user', JSON.stringify(renewRes.response.user));
+    await requestNewToken();
   }
+};
+
+const requestNewToken = async () => {
+  const backendUrl = import.meta.env.VITE_BACKEND_URL;
+
+  // Request a new user object
+  const renewReq = await fetch(`${backendUrl}/auth/refresh`, {
+    credentials: 'include',
+  });
+  const renewRes = await renewReq.json();
+
+  // Log out on error
+  if (renewRes.statusCode != 200) {
+    logOut();
+    throw Error('User token verification failed');
+  }
+
+  // Save the new user object in storage
+  localStorage.setItem('user', JSON.stringify(renewRes.auth.user));
 };
 
 /**
@@ -144,18 +149,24 @@ export const fetchWrapper = async (
 
   const fetchOptions = getFetchOptions(options);
 
-  const response = await fetch(url, fetchOptions);
+  let response = await fetch(url, fetchOptions);
 
   // Parse response as JSON if content-type is application/json
-  const data = await response.json();
+  let data = await response.json();
+
+  if (data?.message === 'Invalid or expired token.') {
+    await requestNewToken();
+    response = await fetch(url, fetchOptions);
+    data = await response.json();
+  }
 
   // If the response contains an user object, save it to storage
-  if (data.response?.user) {
-    localStorage.setItem('user', JSON.stringify(data.response.user));
+  if (data?.auth?.user) {
+    localStorage.setItem('user', JSON.stringify(data.auth.user));
   }
 
   // Save the response to the cache if enabled
-  if (cache) {
+  if (data.status == 'success' && cache) {
     saveToCache(url, data, cacheDuration);
   }
 

@@ -71,13 +71,13 @@ export const useFormSubmit = () => {
     setLoading(true);
     try {
       const backendUrl = import.meta.env.VITE_BACKEND_URL;
-      const response = await fetchWrapper(`${backendUrl}/user/sign-up`, {
+      const response = await fetchWrapper(`${backendUrl}/auth/sign-up`, {
         method: 'POST',
         body: JSON.stringify(formData),
       });
 
-      if (response.status !== 200) {
-        setErrorMessage(capitalize(response.response.message) + '.');
+      if (response.status !== 'success') {
+        setErrorMessage(response.message);
         return;
       }
 
@@ -89,7 +89,7 @@ export const useFormSubmit = () => {
       });
     } catch (err: any) {
       console.error('Registration error:', err);
-      setErrorMessage(capitalize(err.message || 'An error occurred') + '.');
+      setErrorMessage('An error occurred');
     } finally {
       setLoading(false);
     }

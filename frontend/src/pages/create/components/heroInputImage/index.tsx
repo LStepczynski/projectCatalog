@@ -6,14 +6,40 @@ import { AnimatedImage } from '@components/animation/animatedImage';
 import { Box } from '@primer/react';
 
 interface HeroProps {
-  bannerFile: any;
-  setBannerFile: any;
+  formData: any;
+  setFormData: any;
 }
 
 export const HeroInputImage = (props: HeroProps) => {
   const [uploadModal, setUploadModal] = React.useState<any>(false);
   const [bannerHover, setBannerHover] = React.useState<any>(false);
-  const { bannerFile, setBannerFile } = props;
+  const { formData, setFormData } = props;
+
+  const updateImage = (newImage: string) => {
+    setFormData((prevFormData: Record<string, any>) => ({
+      ...prevFormData,
+      image: newImage,
+    }));
+  };
+
+  const boxSize = {
+    '--box-width': '80vw', // 80% of 100vw
+    '--box-height': 'calc(var(--box-width) / (16 / 9))',
+    width: 'var(--box-width)',
+    height: 'var(--box-height)',
+    '@media screen and (min-width: 544px)': {
+      '--box-width': '435.2px', // 80% of 544px
+    },
+    '@media screen and (min-width: 768px)': {
+      '--box-width': '614.4px', // 80% of 768px
+    },
+    '@media screen and (min-width: 1012px)': {
+      '--box-width': '809.6px', // 80% of 1012px
+    },
+    '@media screen and (min-width: 1280px)': {
+      '--box-width': '1024px', // 80% of 1280px
+    },
+  };
 
   return (
     <>
@@ -50,15 +76,14 @@ export const HeroInputImage = (props: HeroProps) => {
           />
 
           {/* Show the submitted image, otherwise display the default */}
-          <AnimatedImage
-            url={bannerFile[1] || 'images/default2.png'}
-            alt="Article image"
-          />
+          <Box sx={{ ...boxSize, borderRadius: '15px', overflow: 'hidden' }}>
+            <AnimatedImage url={formData.image} alt="Article image" />
+          </Box>
         </Box>
 
         {/* Upload modal */}
         <BannerUploadModal
-          bannerFunc={setBannerFile}
+          bannerFunc={updateImage}
           isOpen={uploadModal}
           closeFunc={() => setUploadModal(false)}
         />

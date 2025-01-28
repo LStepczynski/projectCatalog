@@ -8,7 +8,7 @@ export const randString = (length = 12) => {
   const lowerCase = 'abcdefghijklmnopqrstuvwxyz';
   const upperCase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
   const numbers = '0123456789';
-  const specialCharacters = '!@#$%^&*()-_=+[]{}|;:,.<>?';
+  const specialCharacters = '!@#$%^&*(),.?":{}|<>';
 
   // Ensure at least one character from each set
   const requiredCharacters = [

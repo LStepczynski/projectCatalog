@@ -6,14 +6,6 @@ import { logOut } from '@utils/logOut';
 
 import { ShowInformationPopup } from '@components/common/popups/informationPopup';
 
-interface DeleteAccountResponse {
-  status: number;
-  response: {
-    message: string;
-    user?: any;
-  };
-}
-
 export const useDeleteAccount = () => {
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
@@ -40,23 +32,23 @@ export const useDeleteAccount = () => {
     setIsSubmitting(true);
 
     try {
-      const response: DeleteAccountResponse = await fetchWrapper(
-        `${backendUrl}/user/remove-account`,
+      const response = await fetchWrapper(
+        `${backendUrl}/users/delete-account`,
         {
-          method: 'POST',
+          method: 'DELETE',
           body: JSON.stringify({ password }),
         }
       );
 
-      if (response.status === 200) {
+      if (response.status === 'success') {
         ShowInformationPopup(
           'Success',
-          'Your account has been successfully deleted.'
+          'Your account has been successfully deleted.',
+          logOut
         );
-        logOut();
         closeModal();
       } else {
-        ShowInformationPopup('Error', capitalize(response.response.message));
+        ShowInformationPopup('Error', capitalize(response.message));
       }
     } catch (error) {
       console.error('Error deleting account:', error);

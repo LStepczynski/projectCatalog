@@ -5,9 +5,10 @@ import { useGetArticles } from '@pages/category/hooks/useGetArticles';
 import { useFetchData } from '@hooks/useFetchData';
 
 import { SkeletonCategoryPanel } from '@components/common/skeletons/skeletonCategoryPanel';
-import { NotFound } from '@pages/category/components/main/notFound';
+import { NotFound } from '@components/common/notFound';
 
 import { Box, Pagination } from '@primer/react';
+import { isInteger } from '@utils/isInteger';
 
 const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
@@ -19,8 +20,12 @@ export const Category: React.FC = () => {
     page: string;
   }>();
 
+  if (!page || !isInteger(page)) {
+    window.location.href = `/categories/${categoryName}/1`;
+  }
+
   const { data, isLoading }: any = useFetchData(
-    `${backendUrl}/articles/${categoryName}?page=${page}`,
+    `${backendUrl}/articles/category/${categoryName}?page=${page}`,
     [],
     {},
     true
@@ -40,8 +45,13 @@ export const Category: React.FC = () => {
     );
   }
 
-  if (data.length == 0) {
-    return <NotFound />;
+  if (data == null || data.length == 0) {
+    return (
+      <NotFound
+        title="No Articles Found"
+        message="Sorry, no articles have been published yet. Check again later."
+      />
+    );
   }
 
   return (

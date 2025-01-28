@@ -23,7 +23,7 @@ const SkeletonBoxWrapper = styled.div<SkeletonBoxProps>`
   overflow: hidden;
   width: ${({ width }) => width || '100%'};
   height: ${({ height }) => height || '20px'};
-  margin: 20px;
+  margin: 0px;
 
   &::after {
     content: '';

@@ -1,10 +1,4 @@
 import {
-  DeleteItemCommand,
-  DeleteItemCommandInput,
-  GetItemCommand,
-  GetItemCommandInput,
-  PutItemCommand,
-  PutItemCommandInput,
   QueryCommandInput,
   UpdateItemCommand,
   UpdateItemCommandInput,
@@ -16,18 +10,16 @@ import { client } from '@database/dynamodb';
 import { InternalError } from '@utils/statusError';
 import { S3 } from '@services/s3';
 import { ArticleCrud } from '@services/articleCrud';
-import {
-  BatchWriteCommand,
-  BatchWriteCommandInput,
-} from '@aws-sdk/lib-dynamodb';
 
-type VisibilityType = 'public' | 'private';
 export class ArticleService {
   public static UNPUBLISHED_TABLE_NAME = 'ArticlesUnpublished';
   public static PUBLISHED_TABLE_NAME = 'ArticlesPublished';
 
+  // private static DEFAULT_BANNER_LINK =
+  //   'https://project-catalog-storage.s3.us-east-2.amazonaws.com/images/banner.webp';
+
   private static DEFAULT_BANNER_LINK =
-    'https://project-catalog-storage.s3.us-east-2.amazonaws.com/images/banner.webp';
+    'http://localhost:9000/project-catalog-storage/images/banner.webp';
 
   /**
    * Creates a new article and stores its metadata, content, and associated image in the respective storage systems.

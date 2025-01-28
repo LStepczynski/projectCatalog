@@ -20,7 +20,8 @@ import { QueryCommandInput } from '@aws-sdk/lib-dynamodb';
 export class UserCrud {
   private static TABLE_NAME = 'Users';
   private static DEFAULT_PROFILE_NAME = 'pfp';
-  private static DEFAULT_PROFILE_URL = `https://project-catalog-storage.s3.us-east-2.amazonaws.com/images/${this.DEFAULT_PROFILE_NAME}.png`;
+  // private static DEFAULT_PROFILE_URL = `https://project-catalog-storage.s3.us-east-2.amazonaws.com/images/${this.DEFAULT_PROFILE_NAME}.png`;
+  private static DEFAULT_PROFILE_URL = `http://localhost:9000/project-catalog-storage/images/${this.DEFAULT_PROFILE_NAME}.webp`;
 
   /**
    * Creates a User object and adds it to the database

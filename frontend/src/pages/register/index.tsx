@@ -22,6 +22,7 @@ export const Register: React.FC = () => {
         sx={{
           backgroundColor: 'menu.bgActive',
           borderRadius: '10px',
+          width: '350px',
           display: 'grid',
           mt: '10vh',
           gap: 4,
@@ -48,7 +49,13 @@ export const Register: React.FC = () => {
 
         {/* Error message */}
         {errorMessage && (
-          <Text sx={{ color: 'red', fontSize: '14px', textAlign: 'center' }}>
+          <Text
+            sx={{
+              color: 'red',
+              fontSize: '14px',
+              textAlign: 'center',
+            }}
+          >
             {errorMessage}
           </Text>
         )}

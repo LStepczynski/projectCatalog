@@ -1,11 +1,12 @@
+import { SESClient, SendRawEmailCommand } from '@aws-sdk/client-ses';
 import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
+
 import { InternalError } from '@utils/statusError';
 dotenv.config();
 
 export class Email {
-  private static EMAIL_PASSWORD = process.env.MAIL_PASSWORD;
-  private static EMAIL_ADDRESS = process.env.MAIL_ADDRESS;
+  private static SES_REGION = process.env.SES_REGION;
 
   /**
    * Sends an email to the specified recipient.
@@ -23,16 +24,17 @@ export class Email {
     subject: string,
     body: string
   ): Promise<void> {
+    // Configure AWS SDK
+    const ses = new SESClient({ region: this.SES_REGION });
+
+    // Create SES transporter
     const transporter = nodemailer.createTransport({
-      service: 'gmail',
-      auth: {
-        user: this.EMAIL_ADDRESS,
-        pass: this.EMAIL_PASSWORD,
-      },
+      SES: { ses, aws: { SendRawEmailCommand } },
     });
 
+    // Email options
     const mailOptions = {
-      from: `Project Catalog <${this.EMAIL_ADDRESS}>`,
+      from: `Project Catalog <no-reply@projectcatalog.click>`,
       to: recipient,
       subject: subject,
       text: body,
@@ -40,7 +42,8 @@ export class Email {
 
     try {
       await transporter.sendMail(mailOptions);
-    } catch (error) {
+    } catch (err) {
+      console.log(err);
       throw new InternalError('Error while sending an email', 500, [
         'sendMail',
       ]);

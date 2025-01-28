@@ -56,6 +56,10 @@ router.put(
       throw new UserError('User does not exist.', 404);
     }
 
+    if (user.lastPasswordChange + 15 * 60 > getUnixTimestamp()) {
+      throw new UserError('Too many requests. Try again in 15 minutes.', 429);
+    }
+
     // Check if the passwords match
     const isMatch = await bcrypt.compare(oldPassword, user.password);
     if (!isMatch) {
@@ -141,7 +145,11 @@ router.put(
       message: 'Profile picture successfuly changed.',
       statusCode: 200,
       auth: {
-        user: userWithoutPassword,
+        user: {
+          ...userWithoutPassword,
+          exp:
+            getUnixTimestamp() + Number(process.env.JWT_EXPIRATION) * 60 * 60,
+        },
       },
     };
 

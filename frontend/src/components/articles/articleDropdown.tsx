@@ -22,11 +22,11 @@ export const ArticleDropdown = ({ setHovering, article, visibility }: any) => {
   const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
   const user = getUser();
-  const verified = user?.Verified == 'true' || false;
-  let articleOwner = false;
-  if (user && (article.Author == user.Username || user.Admin == 'true')) {
-    articleOwner = true;
-  }
+  if (!user) return null;
+
+  const isVerified = user.roles.includes('verified');
+  const isOwner = article.author == user.username;
+  const isAdmin = user.roles.includes('admin');
 
   const actionListStyle = {
     textAlign: 'center',
@@ -36,14 +36,15 @@ export const ArticleDropdown = ({ setHovering, article, visibility }: any) => {
   const handleDelete = () => {
     const deleteArticle = async () => {
       try {
-        const deleteData = await fetchWrapper(
-          `${backendUrl}/articles/delete?id=${article.ID}&visibility=${visibility}`,
-          {
-            method: 'DELETE',
-          }
-        );
+        const deleteData = await fetchWrapper(`${backendUrl}/articles/delete`, {
+          method: 'DELETE',
+          body: JSON.stringify({
+            id: article.id,
+            visibility: visibility,
+          }),
+        });
 
-        if (deleteData.status == 200) {
+        if (deleteData.status == 'success') {
           sessionStorage.clear();
           location.reload();
         } else {
@@ -65,13 +66,13 @@ export const ArticleDropdown = ({ setHovering, article, visibility }: any) => {
     const publishArticle = async () => {
       try {
         const publishData = await fetchWrapper(
-          `${backendUrl}/articles/publish?id=${article.ID}`,
+          `${backendUrl}/articles/publish/${article.id}`,
           {
-            method: 'POST',
+            method: 'PUT',
           }
         );
 
-        if (publishData.status == 200) {
+        if (publishData.status == 'success') {
           sessionStorage.clear();
           location.reload();
         } else {
@@ -93,13 +94,13 @@ export const ArticleDropdown = ({ setHovering, article, visibility }: any) => {
     const unpublishArticle = async () => {
       try {
         const hideData = await fetchWrapper(
-          `${backendUrl}/articles/hide?id=${article.ID}`,
+          `${backendUrl}/articles/hide/${article.id}`,
           {
-            method: 'POST',
+            method: 'PUT',
           }
         );
 
-        if (hideData.status == 200) {
+        if (hideData.status == 'success') {
           sessionStorage.clear();
           location.reload();
         } else {
@@ -111,7 +112,7 @@ export const ArticleDropdown = ({ setHovering, article, visibility }: any) => {
     };
     ShowConfirmationPopup(
       'Unpublish Article',
-      'Are you sure you want to unpublish this article? You will lose all of your likes.',
+      'Are you sure you want to unpublish this article?',
       () => {},
       unpublishArticle
     );
@@ -120,16 +121,13 @@ export const ArticleDropdown = ({ setHovering, article, visibility }: any) => {
   const handleDecline = () => {
     const unpublishArticle = async () => {
       try {
-        const hideData = await fetchWrapper(
-          `${backendUrl}/articles/?id=${article.ID}&visibility=private`,
-          {
-            method: 'PATCH',
-            body: JSON.stringify({
-              key: 'Status',
-              value: 'private',
-            }),
-          }
-        );
+        const hideData = await fetchWrapper(`${backendUrl}/articles/update`, {
+          method: 'PUT',
+          body: JSON.stringify({
+            id: article.id,
+            status: 'Private',
+          }),
+        });
 
         if (hideData.status == 200) {
           sessionStorage.clear();
@@ -150,16 +148,16 @@ export const ArticleDropdown = ({ setHovering, article, visibility }: any) => {
   };
 
   const handleEdit = () => {
-    window.location.href = `/create?id=${article.ID}`;
+    window.location.href = `/create?id=${article.id}`;
   };
 
   const dropdownItems = [
     {
       show:
-        verified &&
-        user?.Admin &&
+        isVerified &&
+        isAdmin &&
         visibility == 'private' &&
-        article.Status == 'review',
+        article.status == 'In Review',
       onSelect: handlePublish,
       text:
         window.location.pathname.split('/')[1] == 'adminView'
@@ -169,29 +167,29 @@ export const ArticleDropdown = ({ setHovering, article, visibility }: any) => {
     },
     {
       show:
-        verified &&
-        user?.Admin &&
+        isVerified &&
+        isAdmin &&
         visibility == 'private' &&
         window.location.pathname.split('/')[1] == 'adminView' &&
-        article.Status == 'review',
+        article.status == 'In Review',
       onSelect: handleDecline,
       text: 'Decline',
       icon: <CircleSlashIcon size={20} />,
     },
     {
-      show: verified && articleOwner,
+      show: isVerified && (isOwner || isAdmin),
       onSelect: handleDelete,
       text: 'Delete',
       icon: <TrashIcon size={20} />,
     },
     {
-      show: article.Author == user?.Username && visibility == 'private',
+      show: article.author == user.username && visibility == 'private',
       onSelect: handleEdit,
       text: 'Edit',
       icon: <PencilIcon size={20} />,
     },
     {
-      show: verified && articleOwner && visibility == 'public',
+      show: isVerified && (isOwner || isAdmin) && visibility == 'public',
       onSelect: handleUnpublish,
       text: 'Unpublish',
       icon: <RepoDeletedIcon size={20} />,

@@ -3,19 +3,17 @@ import { useArticleSubmit } from '@pages/create/hooks/useArticleSubmit';
 import { Box, Text, Button, Link } from '@primer/react';
 
 interface FormData {
-  Title: string;
-  Description: string;
-  Body: string;
-  PrimaryCategory: string;
-  Difficulty: string;
-  S3Link: string;
+  title: string;
+  description: string;
+  body: string;
+  category: string;
+  difficulty: string;
+  image: string;
+  tags: string[];
 }
 
 interface SubmitProps {
   formData: FormData;
-  user: any;
-  bannerFile: any;
-  tags: string[];
   setSaved: any;
 }
 
@@ -23,7 +21,7 @@ export const ArticleSubmit = (props: SubmitProps) => {
   const { handleSubmit } = useArticleSubmit(props);
 
   const onSave = () => {
-    handleSubmit('private');
+    handleSubmit('Private');
   };
 
   const onSubmit = () => {
@@ -45,7 +43,7 @@ export const ArticleSubmit = (props: SubmitProps) => {
       () => {},
       // On Accept
       () => {
-        handleSubmit('review');
+        handleSubmit('In Review');
       }
     );
   };

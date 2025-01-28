@@ -3,7 +3,7 @@ import { PencilIcon } from '@primer/octicons-react';
 
 export const CreateButton = ({ user }: any) => {
   const handleCreate = () => {
-    if (user?.Verified == 'true') {
+    if (user?.roles.includes('verified')) {
       return (window.location.href = '/create');
     }
     alert(

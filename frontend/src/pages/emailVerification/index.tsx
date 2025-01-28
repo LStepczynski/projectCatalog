@@ -5,66 +5,66 @@ import { fetchWrapper } from '@utils/fetchWrapper';
 import { logOut } from '@utils/logOut';
 
 import { ShowInformationPopup } from '@components/common/popups/informationPopup';
+import { Spinner, Box } from '@primer/react';
 
 export const EmailVerification = () => {
   const [response, setResponse] = React.useState<any>(null);
   const { code } = useParams();
 
   const backendUrl = import.meta.env.VITE_BACKEND_URL;
+
   React.useEffect(() => {
     const controller = new AbortController();
     const signal = controller.signal;
 
-    fetchWrapper(`${backendUrl}/user/email-verification/${code}`, {
+    fetchWrapper(`${backendUrl}/auth/verify/${code}`, {
       method: 'POST',
       signal,
-    }).then((data) => {
-      setResponse(data);
-    });
+    })
+      .then((data) => {
+        setResponse(data);
+      })
+      .catch((error) => {
+        console.error('Error verifying email:', error);
+        setResponse({ status: 'error', message: 'An error occurred.' });
+      });
 
     return () => {
       controller.abort();
     };
-  }, []);
+  }, [backendUrl, code]);
+
+  React.useEffect(() => {
+    if (response?.status === 'success') {
+      ShowInformationPopup(
+        'Email Verification',
+        'Your account has been verified. Please log into your account to view changes.',
+        () => {
+          logOut();
+          window.location.href = '/sign-in';
+        }
+      );
+    } else if (response?.status === 'error') {
+      ShowInformationPopup('Email Verification', response.message, () => {
+        window.location.href = '/';
+      });
+    }
+  }, [response]);
 
   if (!response) {
-    return null;
-  } else if (response.status == 200) {
-    ShowInformationPopup(
-      'Email Verification',
-      'Your account has been verified. Please log into your account to view changes.',
-      () => {
-        logOut();
-        window.location.href = '/sign-in';
-      }
+    return (
+      <Box
+        sx={{
+          position: 'absolute',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+        }}
+      >
+        <Spinner />
+      </Box>
     );
-    return null;
-  } else if (response.status == 404) {
-    ShowInformationPopup(
-      'Email Verification',
-      'This verification link is invalid. Please try a different one.',
-      () => {
-        window.location.href = '/';
-      }
-    );
-    return null;
-  } else if (response.status == 410) {
-    ShowInformationPopup(
-      'Email Verification',
-      'This verification link is invalid. Your account is already verified.',
-      () => {
-        window.location.href = '/';
-      }
-    );
-    return null;
-  } else if (response.status == 500) {
-    ShowInformationPopup(
-      'Email Verification',
-      'There was a problem with verification. Please try again later.',
-      () => {
-        window.location.href = '/';
-      }
-    );
-    return null;
   }
+
+  return null;
 };

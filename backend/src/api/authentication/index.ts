@@ -121,19 +121,13 @@ router.post(
 
     // Check if the user exists
     if (dbUser == null) {
-      throw new UserError(
-        'Error while trying to sign-in. Invalid credentials.',
-        401
-      );
+      throw new UserError('Invalid credentials.', 401);
     }
 
     // Check if the passwords match
     const isMatch = await bcrypt.compare(req.body.password, dbUser.password);
     if (!isMatch) {
-      throw new UserError(
-        'Error while trying to sign-in. Invalid credentials.',
-        401
-      );
+      throw new UserError('Invalid credentials.', 401);
     }
 
     // Generate the JWT token
@@ -147,7 +141,11 @@ router.post(
       message: 'Successfully signed in.',
       statusCode: 200,
       auth: {
-        user: userWithoutPassword,
+        user: {
+          ...userWithoutPassword,
+          exp:
+            getUnixTimestamp() + Number(process.env.JWT_EXPIRATION) * 60 * 60,
+        },
       },
     };
 
@@ -204,7 +202,11 @@ router.get(
       message: 'Token refresh successful.',
       statusCode: 200,
       auth: {
-        user: payload,
+        user: {
+          ...payload,
+          exp:
+            getUnixTimestamp() + Number(process.env.JWT_EXPIRATION) * 60 * 60,
+        },
       },
     };
 
@@ -230,6 +232,8 @@ router.get(
 router.post(
   '/password-reset',
   asyncHandler(async (req: Request, res: Response) => {
+    const resetCooldown = 3;
+
     // Validations
     if (typeof req.body.username != 'string' || req.body.username == '') {
       throw new UserError('Invalid username.');
@@ -246,6 +250,11 @@ router.post(
     // Fetch the user
     const user = await UserCrud.get(req.body.username);
     if (user == null) {
+      return res.status(response.statusCode).send(response);
+    }
+
+    // Check if the user reset their password recently
+    if (user.lastPasswordReset + resetCooldown * 60 * 60 > getUnixTimestamp()) {
       return res.status(response.statusCode).send(response);
     }
 
@@ -287,6 +296,8 @@ router.post(
 router.post(
   '/password-reset/:token',
   asyncHandler(async (req: Request, res: Response) => {
+    const resetCooldown = 3;
+
     // Check if the token is a uuid
     const isUuid =
       /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
@@ -307,20 +318,34 @@ router.post(
       throw new UserError('Invalid or expired verification token.', 400);
     }
 
+    const user = await UserCrud.get(token.username);
+    if (user == null) {
+      throw new UserError('User does not exits', 404);
+    }
+
+    if (user.lastPasswordReset + 60 * 60 * resetCooldown > getUnixTimestamp()) {
+      throw new UserError('Too many password resets.', 429);
+    }
+
     // Generate a new password and hash it
     const newPassword = randString(12);
     const newHashedPassword = await bcrypt.hash(newPassword, 10);
 
     // Update the user's password
-    const user = await UserCrud.update(token.username, {
+    const updatedUser = await UserCrud.update(token.username, {
       password: newHashedPassword,
+      lastPasswordReset: getUnixTimestamp(),
     });
-    if (user == null) {
+    if (updatedUser == null) {
       throw new UserError('Invalid or expired verification token.', 400);
     }
 
     // Send an email with the new password to the user
-    await Email.sendNewPasswordEmail(user.email, user.username, newPassword);
+    await Email.sendNewPasswordEmail(
+      updatedUser.email,
+      updatedUser.username,
+      newPassword
+    );
 
     // Delete the token after use
     await Tokens.deleteToken(token.content);
@@ -402,7 +427,7 @@ router.get(
 );
 
 /**
- * GET auth/verify/:token
+ * POST auth/verify/:token
  *
  * Verifies a user's account using a unique verification token. If the token is valid,
  * the user's "verified" role is added, the token is deleted, and the user's session cookies
@@ -418,15 +443,9 @@ router.get(
  * - 400: If the token is invalid, expired, or does not match the authenticated user.
  * - 500: Internal server error for unexpected issues.
  */
-router.get(
+router.post(
   '/verify/:token',
-  authenticate(),
   asyncHandler(async (req: Request, res: Response) => {
-    // Check if the user is already verified
-    if (req.user?.roles.includes('verified')) {
-      throw new UserError('Account already verified', 400);
-    }
-
     // Check if the token is a uuid
     const isUuid =
       /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
@@ -442,11 +461,6 @@ router.get(
       throw new UserError('Invalid or expired verification token.', 400);
     }
 
-    // Check if the token belongs to the user
-    if (token.username != req.user?.username) {
-      throw new UserError('Invalid or expired verification token.', 400);
-    }
-
     // Check for expiration
     if (token.expiration < getUnixTimestamp()) {
       throw new UserError('Invalid or expired verification token.', 400);
@@ -454,7 +468,7 @@ router.get(
 
     // Append the verification role to the user
     const newUser = await UserService.appendRoleToUser(
-      req.user.username,
+      token.username,
       'verified'
     );
 
@@ -471,7 +485,11 @@ router.get(
       message: 'Successfully verified the account.',
       statusCode: 200,
       auth: {
-        user: userWithoutPassword,
+        user: {
+          ...userWithoutPassword,
+          exp:
+            getUnixTimestamp() + Number(process.env.JWT_EXPIRATION) * 60 * 60,
+        },
       },
     };
 

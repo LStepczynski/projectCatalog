@@ -15,8 +15,8 @@ export const ProfileDropdown = (props: Props) => {
 
   const { state } = props;
 
-  const user = getUser() || {};
-  return (
+  const user = getUser();
+  return user ? (
     <Box
       sx={{
         height: '100%',
@@ -26,9 +26,9 @@ export const ProfileDropdown = (props: Props) => {
         onClick={() => setDropdownVis(!dropdownVis)}
         sx={{ width: '100%', height: '100%' }}
       >
-        <ProfilePicture src={user.ProfilePic && user.ProfilePic} />
+        <ProfilePicture src={user.profilePicture} />
       </Box>
       <ProfilePictureModal state={dropdownVis && state} />
     </Box>
-  );
+  ) : null;
 };

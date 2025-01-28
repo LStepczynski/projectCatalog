@@ -8,26 +8,10 @@ import { ArticleDropdown } from '@components/articles/articleDropdown';
 import { AnimatedImage } from '@components/animation/animatedImage';
 
 import { Box, Heading, Text, Avatar } from '@primer/react';
+import { PrivateArticle } from '@type/article';
 
 interface Props {
-  article: Article;
-}
-
-interface Article {
-  Title: string;
-  Description: string;
-  Author: String;
-  AuthorProfilePic: string;
-  PrimaryCategory: string;
-  SecondaryCategories: string[];
-  Rating: number;
-  UpdatedAt: number;
-  CreatedAt: number;
-  PublishedAt: number;
-  Difficulty: string;
-  Image: string;
-  Status: string;
-  ID: string;
+  article: PrivateArticle;
 }
 
 export const ArticlePrivate = (props: Props) => {
@@ -60,12 +44,12 @@ export const ArticlePrivate = (props: Props) => {
       </Box>
       <Box
         onClick={() =>
-          (window.location.href = `/${article.ID}?visibility=private`)
+          (window.location.href = `/${article.id}?visibility=private`)
         }
         sx={{ borderRadius: '15px', overflow: 'hidden' }}
       >
         <AnimatedImage
-          url={article.Image ? article.Image : defaultImage}
+          url={article.image ? article.image : defaultImage}
           alt="Article Image"
         />
       </Box>
@@ -77,7 +61,7 @@ export const ArticlePrivate = (props: Props) => {
           gap: 2,
         }}
         onClick={() =>
-          (window.location.href = `/${article.ID}?visibility=private`)
+          (window.location.href = `/${article.id}?visibility=private`)
         }
       >
         <Heading
@@ -85,7 +69,7 @@ export const ArticlePrivate = (props: Props) => {
             fontSize: '18px',
           }}
         >
-          {article.Title}
+          {article.title}
         </Heading>
         <Box
           sx={{
@@ -96,10 +80,10 @@ export const ArticlePrivate = (props: Props) => {
           }}
         >
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <Avatar size={24} src={article.AuthorProfilePic} />
-            <Text sx={{ fontSize: '12px' }}>{article.Author}</Text>
+            <Avatar size={24} src={article.authorProfilePicture} />
+            <Text sx={{ fontSize: '12px' }}>{article.author}</Text>
           </Box>
-          <ArticleDifficultyLabel size="small" value={article.Difficulty} />
+          <ArticleDifficultyLabel size="small" value={article.difficulty} />
         </Box>
         <Box
           sx={{
@@ -114,7 +98,7 @@ export const ArticlePrivate = (props: Props) => {
               fontSize: '12px',
             }}
           >
-            {capitalize(article.Status)} • {getRelativeDate(article.CreatedAt)}
+            {capitalize(article.status)} • {getRelativeDate(article.createdAt)}
           </Text>
         </Box>
       </Box>

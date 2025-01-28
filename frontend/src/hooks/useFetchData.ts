@@ -16,7 +16,6 @@ export const useFetchData = <T>(
   React.useEffect(() => {
     const controller = new AbortController();
     const signal = controller.signal;
-
     const fetchData = async () => {
       setIsLoading(true);
       setError(null);
@@ -28,7 +27,7 @@ export const useFetchData = <T>(
           cache,
           cacheDuration
         );
-        setData(response?.response?.return ?? null);
+        setData(response?.data ?? null);
       } catch (err) {
         if (err instanceof Error && err.name !== 'AbortError') {
           setError(err);
@@ -43,7 +42,7 @@ export const useFetchData = <T>(
     return () => {
       controller.abort();
     };
-  }, [url, fetchParams, cache, cacheDuration, ...dependencies]);
+  }, [url, ...dependencies]);
 
   return { data, error, isLoading };
 };
