@@ -186,10 +186,10 @@ router.get(
     // Return the JWT access token in a cookie
     res.cookie('token', newToken, {
       httpOnly: true,
-      sameSite: process.env.STATE === 'PRODUCTION' ? 'none' : 'lax',
-      secure: process.env.STATE === 'PRODUCTION',
+      sameSite: process.env.DEV_STATE === 'production' ? 'none' : 'lax',
+      secure: process.env.DEV_STATE === 'production',
       domain:
-        process.env.STATE === 'PRODUCTION'
+        process.env.DEV_STATE === 'production'
           ? '.projectcatalog.click'
           : undefined,
       maxAge: 30 * 60 * 1000,

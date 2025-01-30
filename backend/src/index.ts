@@ -15,6 +15,8 @@ const app = express();
 app.use(express.json({ limit: '3mb' })); // Limit payload size
 app.use(cookieParser()); // Allow for reading cookies in routes
 
+console.log(`✅ Allowed CORS Origin: ${process.env.FRONTEND_URL}`);
+
 app.use(
   cors({
     origin: process.env.FRONTEND_URL || '',

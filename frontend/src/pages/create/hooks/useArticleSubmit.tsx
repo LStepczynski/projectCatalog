@@ -114,7 +114,7 @@ export const useArticleSubmit = (props: SubmitProps) => {
       );
 
       sessionStorage.removeItem(
-        `${backendUrl}/articles/author/${user!.username}?visibility=private`
+        `${backendUrl}/articles/author/${user!.username}?private=true`
       );
     } catch (error: any) {
       return ShowInformationPopup('Error', capitalize(error.message));

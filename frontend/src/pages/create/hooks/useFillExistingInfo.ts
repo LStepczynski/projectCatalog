@@ -32,7 +32,6 @@ export const useFillExistingInfo = (articleId: string, setFormData: any) => {
       60 * 10
     ).then((data) => {
       const article = data.data;
-      console.log(article);
 
       setFormData({
         title: article.metadata.title,

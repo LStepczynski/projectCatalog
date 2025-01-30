@@ -11,7 +11,7 @@ export const EmailVerificationPopup = () => {
     const recentlyClosed = sessionStorage.getItem('verificationBanner');
 
     const shouldOpen =
-      user && user.Verified == 'false' && recentlyClosed != 'true';
+      user && !user.roles.includes('verified') && recentlyClosed != 'true';
     if (shouldOpen) {
       setTimeout(() => setBannerVis(true), 700);
     }

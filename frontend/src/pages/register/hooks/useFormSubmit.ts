@@ -1,6 +1,5 @@
 import { useState, FormEvent } from 'react';
 
-import { capitalize } from '@utils/capitalize';
 import { fetchWrapper } from '@utils/fetchWrapper';
 
 interface FormData {

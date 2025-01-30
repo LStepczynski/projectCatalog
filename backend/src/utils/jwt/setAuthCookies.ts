@@ -13,7 +13,7 @@ export const setAuthCookies = (
   res: Response
 ): void => {
   // Extract environment-specific settings
-  const isProduction = process.env.STATE === 'PRODUCTION';
+  const isProduction = process.env.DEV_STATE === 'production';
   const domain = isProduction ? '.projectcatalog.click' : undefined;
 
   // Generate JWT tokens

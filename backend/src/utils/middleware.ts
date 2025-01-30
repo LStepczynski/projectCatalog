@@ -54,10 +54,15 @@ export const errorHandler = (
   }
 
   // Log error if it is not an App error or if the app is not in production
-  if (!isAppError || process.env.DEV_STATE !== 'production') {
+  if (
+    !isAppError ||
+    (isAppError && err.status == 500) ||
+    process.env.DEV_STATE !== 'production'
+  ) {
     console.error(
       'Error:',
-      isAppError ? err.message : err.stack || err.message,
+      isAppError ? err.message : '',
+      `Error Stack: ${err.stack}`,
       (err as AppError)?.details ?? []
     );
   }

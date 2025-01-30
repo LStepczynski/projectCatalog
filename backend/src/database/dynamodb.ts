@@ -4,10 +4,10 @@ dotenv.config();
 
 console.log(
   `❗❗❗\n\nTABLE REGION: ${
-    process.env.STATE === 'production' ? 'us-east-2' : 'local'
+    process.env.DEV_STATE === 'production' ? 'us-east-2' : 'local'
   }\n\n❗❗❗\n`
 );
 
 export const client = new DynamoDB({
-  region: process.env.STATE === 'production' ? 'us-east-2' : 'local',
+  region: process.env.DEV_STATE === 'production' ? 'us-east-2' : 'local',
 });

@@ -6,7 +6,6 @@ import { useScreenWidth } from '@hooks/useScreenWidth';
 import { NotVerifiedNotfication } from '@pages/account/components/main/notVerifiedNotfication';
 import { PasswordSettings } from '@pages/account/components/main/passwordSettings';
 import { AccountHeader } from '@pages/account/components/main/accountHeader';
-import { EmailSettings } from '@pages/account/components/main/emailSettings';
 import { RemoveAccount } from '@pages/account/components/removeAccount';
 
 import { Separator } from '@components/animation/separator';

@@ -31,8 +31,8 @@ export const useEmailChange = (onClose: () => void) => {
 
     // Check if the user didn't change their email recently
     if (
-      typeof user?.LastEmailChange === 'number' &&
-      user.LastEmailChange + 3 * 60 * 60 >= Math.floor(Date.now() / 1000)
+      typeof user?.lastEmailChange === 'number' &&
+      user.lastEmailChange + 3 * 60 * 60 >= Math.floor(Date.now() / 1000)
     ) {
       ShowInformationPopup(
         'Password Reset',

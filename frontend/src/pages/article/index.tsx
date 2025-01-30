@@ -18,13 +18,8 @@ export const Article = () => {
 
   // Fetch article
   const backendUrl = import.meta.env.VITE_BACKEND_URL;
-  const {
-    data,
-    error,
-    isLoading,
-  }: { data: any; error: any; isLoading: boolean } = useFetchData(
-    `${backendUrl}/articles/get/${id}?visibility=${visibility}`
-  );
+  const { data, isLoading }: { data: any; error: any; isLoading: boolean } =
+    useFetchData(`${backendUrl}/articles/get/${id}?visibility=${visibility}`);
 
   const screenWidth = useScreenWidth();
 
@@ -35,7 +30,7 @@ export const Article = () => {
   if (data == null) {
     return <NotFound />;
   }
-  console.log(data);
+
   return (
     <Box
       sx={{

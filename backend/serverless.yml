@@ -28,6 +28,8 @@ provider:
         - 'arn:aws:dynamodb:us-east-2:228073560233:table/Users/index/*'
         - 'arn:aws:dynamodb:us-east-2:228073560233:table/Tokens'
         - 'arn:aws:dynamodb:us-east-2:228073560233:table/Tokens/index/*'
+        - 'arn:aws:dynamodb:us-east-2:228073560233:table/Likes'
+        - 'arn:aws:dynamodb:us-east-2:228073560233:table/Likes/index/*'
     - Effect: 'Allow'
       Action:
         - 'ses:SendEmail'

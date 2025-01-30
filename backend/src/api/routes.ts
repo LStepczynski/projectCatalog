@@ -7,7 +7,7 @@ import userRoute from '@api/users';
 
 const router = Router();
 
-router.get('/', async (req: Request, res: Response) => {
+router.get('/health', async (req: Request, res: Response) => {
   res.status(200).json('Health check');
 });
 

@@ -29,8 +29,6 @@ export const PasswordReset = () => {
     };
   }, []);
 
-  console.log(response);
-
   if (!response) {
     return (
       <Box

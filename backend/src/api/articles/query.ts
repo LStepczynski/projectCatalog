@@ -153,7 +153,7 @@ router.get(
           const articles = await ArticleCrud.query(params);
           data[category] = articles as PublicArticle[];
         } catch (err) {
-          console.log(err);
+          console.error(err);
           // Set data to [] if an error occurs
           data[category] = [];
         }

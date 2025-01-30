@@ -19,11 +19,11 @@ export const ProfileUploadModal = ({ endpoint, isOpen, closeFunc }: any) => {
     if (!fileInputRef.current) return;
     if (!user) return;
     const currentTime = Math.floor(Date.now() / 1000);
-    const cooldown = 7 * 24 * 60 * 60;
+    const cooldown = 3 * 24 * 60 * 60;
 
     if (
-      user.ProfilePicChange == 'null' ||
-      currentTime - user.ProfilePicChange > cooldown
+      user.lastPictureChange == 0 ||
+      currentTime - user.lastPictureChange > cooldown
     ) {
       ShowConfirmationPopup(
         'Change profile picture',
