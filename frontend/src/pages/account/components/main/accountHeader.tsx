@@ -85,7 +85,7 @@ export const AccountHeader = () => {
 
             {/* Modal for submiting new profiles */}
             <ProfileUploadModal
-              endpoint={`${backendUrl}/user/image?username=${user.username}`}
+              endpoint={`${backendUrl}/users/change-icon`}
               isOpen={uploadModal}
               closeFunc={() => setUploadModal(false)}
             />

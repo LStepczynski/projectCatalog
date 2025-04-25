@@ -90,9 +90,9 @@ export const ProfileUploadModal = ({ endpoint, isOpen, closeFunc }: any) => {
   // Function to send the Base64 image string
   const sendImage = async (base64String: string) => {
     return await fetchWrapper(endpoint, {
-      method: 'POST',
+      method: 'PUT',
       body: JSON.stringify({
-        image: base64String, // Send the Base64 string
+        profilePicture: base64String, // Send the Base64 string
       }),
     });
   };
