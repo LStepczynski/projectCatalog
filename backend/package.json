@@ -10,6 +10,7 @@
     "build": "tsc && copyfiles -u 1 src/**/*.md dist",
     "docker": "docker-compose up",
     "studio": "npx dynamodb-admin",
+    "createEnv": "ts-node src/scripts/createEnv.ts",
     "createTables": "ts-node -r tsconfig-paths/register src/scripts/dynamodbCreateTables.ts",
     "deleteTables": "ts-node -r tsconfig-paths/register src/scripts/dynamodbDeleteTables.ts",
     "scanTable": "ts-node -r tsconfig-paths/register src/scripts/dynamodbScanTable.ts"

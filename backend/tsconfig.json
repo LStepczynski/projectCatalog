@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "typeRoots": ["./node_modules/@types", "./types", "./src/types"],
-    "types": ["vitest/globals"],
+    "types": ["node", "vitest/globals"],
     "target": "ES2019",
     "module": "CommonJS",
     "outDir": "./dist",
